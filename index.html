@@ -1,0 +1,260 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>远辰</title><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta property="og:type" content="website">
+<meta property="og:title" content="远辰">
+<meta property="og:url" content="https://shippomx.github.io/index.html">
+<meta property="og:site_name" content="远辰">
+<meta property="og:locale">
+<meta property="og:image" content="https://shippomx.github.io/img/%E8%8D%89%E8%8E%93%E6%9E%9C%E9%85%B13.gif">
+<meta property="article:author" content="哪吒藕霸">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://shippomx.github.io/img/%E8%8D%89%E8%8E%93%E6%9E%9C%E9%85%B13.gif"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://shippomx.github.io/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: 'Just',
+    min: 'minutes ago',
+    hour: 'hours ago',
+    day: 'days ago',
+    month: 'months ago'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: false,
+  isHome: true,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2021-01-01 13:15:12'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><meta name="generator" content="Hexo 5.2.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/img/%E8%8D%89%E8%8E%93%E6%9E%9C%E9%85%B13.gif" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">10</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">Tags</div><div class="length-num">2</div></a></div></div></div><hr/></div></div><div class="page" id="body-wrap"><header class="full_page" id="page-header" style="background-image: url(/img/little_forest.jpeg)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">远辰</a></span><div id="menus"><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="site-info"><h1 id="site-title">远辰</h1><div id="site-subtitle"><span id="subtitle"></span></div><div id="site_social_icons"><a class="social-icon" href="https://github.com/shippomx" target="_blank" title="Github"><i class="fa fa-github"></i></a><a class="social-icon" href="mailto:flysommer@outlook.com" target="_blank" title="Email"><i class="fa fa-envelope"></i></a></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><div class="recent-posts" id="recent-posts"><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2020/07/08/IPFS%E7%99%BD%E7%9A%AE%E4%B9%A6/" title="分布式文件系统 IPFS 与 FileCoin">分布式文件系统 IPFS 与 FileCoin</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2020-07-08T05:14:56.000Z" title="Created 2020-07-08 13:14:56">2020-07-08</time></span></div><div class="content">分布式文件系统 IPFS 与 FileCoin在这篇文章中，我想聊一聊最近比较热门的 IPFS（InterPlanetary File System），一个点对点的分布式文件系统；从 HTTP 协议出现到今天已经过去了半个多世纪，很少有一些设计能够增强整个 HTTP 网络或者为它带来新的功能。
+使用 HTTP 协议传递相对小的文件其实是非常廉价和方便的，但是随着计算资源和存储空间的指数增长，我们面临了需要随时获取大量数据的问题，而 IPFS 就是为了解决这一问题出现的。
+架构设计作为一个分布式的文件系统，IPFS 提供了一个支持部署和写入的平台，同时能够支持大文件的分发和版本管理；为了达到上述的目的，IPFS 协议被分成如下的几个子协议：
+
+上述的七个子协议分别负责 IPFS 中的不同功能，我们将在接下来的章节中分别介绍各个协议分别做了哪些工作以及 IPFS 是如何实现的。
+身份在 IPFS 网络中，所有的节点都通过唯一的 NodeId 进行标识，与 Bitcoin 的地址有一些相似， 它其实是一个公钥的哈希，然而为了增加攻击者的成本，IPFS 使用 S/Kademlia 中提到的算法 ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2020/07/07/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%8F%8D%E5%B0%84/" title="深入理解Golang的反射">深入理解Golang的反射</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2020-07-07T02:09:14.000Z" title="Created 2020-07-07 10:09:14">2020-07-07</time></span></div><div class="content">深入理解反射反射是 Go 语言比较重要的特性。虽然在大多数的应用和服务中并不常见，但是很多框架都依赖 Go 语言的反射机制实现简化代码的逻辑。因为 Go 语言的语法元素很少、设计简单，所以它没有特别强的表达能力，但是 Go 语言的 reflect 包能够弥补它在语法上的一些劣势。
+reflect 实现了运行时的反射能力，能够让程序操作不同类型的对象1。反射包中有两对非常重要的函数和类型，reflect.TypeOf 能获取类型信息，reflect.ValueOf 能获取数据的运行时表示，另外两个类型是 Type 和 Value，它们与函数是一一对应的关系：
+
+图 1 反射函数和类型
+类型 Type 是反射包定义的一个接口，我们可以使用 reflect.TypeOf 函数获取任意变量的的类型，Type 接口中定义了一些有趣的方法，MethodByName 可以获取当前类型对应方法的引用、Implements 可以判断当前类型是否实现了某个接口：
+12345678910type Type interface &#123;        Align() int        FieldAli ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2020/06/08/Rust%E7%9A%84%E4%B8%80%E4%BA%9B%E6%9D%82%E8%AE%B0/" title="Rust的一些杂记">Rust的一些杂记</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2020-06-08T06:23:56.000Z" title="Created 2020-06-08 14:23:56">2020-06-08</time></span></div><div class="content">Rust的一些杂记首先上一个中文版的文档地址:
+https://kaisery.github.io/trpl-zh-cn/
+习惯于使用例子进行学习:
+https://doc.rust-lang.org/stable/rust-by-example
+官方文档(英文)：
+https://doc.rust-lang.org/book/
+类型转换From和Into12345678910111213141516171819202122use std::convert::From;#[derive(Debug)]struct Number &#123;    value: i32,&#125;impl From&lt;i32&gt; for Number &#123;    fn from(item:i32) -&gt; Self &#123;        Number&#123;value: item&#125;    &#125;&#125;fn main() &#123;    let num = Number::from(20);    println!(&quot;&#123;:?&# ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2020/06/04/%E7%90%86%E8%A7%A3Rust%E7%9A%84Task/" title="理解Rust的Task">理解Rust的Task</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2020-06-04T14:23:56.000Z" title="Created 2020-06-04 22:23:56">2020-06-04</time></span></div><div class="content">理解Rust的Task定义Task 是一种允许计算以更灵活的方式被中断或者恢复的流程控制特性。这个特性有时被叫做其它名字，例如，对称协程（symmetric coroutines），轻量级线程（lightweight threads），合作多任务处理（cooperative multitasking），或者单次续延（one-shot continuations）。
+当一部分计算任务（在实际中，执行一个特定的函数）可以被设计成一个 Task 时，就可以中断它，并切换到另一个 Task.Task可以以任意次序切换，而不像函数调用那样，被调用函数必须在返回主调用函数之前结束执行。
+这种流程控制的方式使得解决一个特定问题更简便。在一些问题中，多个需求并不是有函数调用来自然连接的；在需要完成的工作之间并没有明确的“调用者”或者“被调用者”。一个例子是生产-消费问题，一个复杂的流程产生数据，另一个复杂的流程消费他们。消费者不能简单的调用生产函数来获得一个值，因为生产者可能有更多的值需要创建，还没有准备好返回。用Task的话，生产者和消费者能同时运行他们所需要的任意时间，根据需要传递值回来或者过去。 ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2020/06/03/%E7%90%86%E8%A7%A3Rust%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/" title="理解Rust的生命周期">理解Rust的生命周期</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2020-06-03T06:44:56.000Z" title="Created 2020-06-03 14:44:56">2020-06-03</time></span></div><div class="content">理解Rust的生命周期高级语言很方便地处理我们代码中的每个对象的存活的范围(scope), 我们不需要理解这些对象的生命周期。Rust同样为我们管理着生命周期，我们可以通过所有权(ownership)和借用(borrowing)对简单情况进行更多的控制,但是对于复杂的情况，我们需要在代码中给出识别标识，以便编译器能够理解更大的生命周期的范围。
+简单的说，一切的一切归根结底都是为了在对象使用完之后就释放它。高级语言如Go、Ruby、Python等等，使用垃圾回收器在整个代码中扫描和标记对象，以查看它们是否准备好从内存中释放掉，并将对所有已标记可释放的对象执行释放操作。当你不再使用对象时，低级语言如C、汇编要求你手工释放它们。
+Rust避免了垃圾回收和手写代码释放内存的成本，它根据代码库中每个对象的生命周期维护释放内存的时间。生存期主要由所有权系统决定（描述代码的哪个部分负责拥有内存中对象的系统），以及在复杂情况下，由帮助编译器而提供的手动生命周期描述符来决定。一旦对象的生命周期束，内存将立即释放。
+简单的生命周期Rust的const类型的生命周期是整个程序，它的值可以内联到代码中的任何地 ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2020/06/01/20%E5%BC%A0%E5%8A%A8%E5%9B%BE%E4%B8%BA%E4%BD%A0%E6%BC%94%E7%A4%BAGo%E5%B9%B6%E5%8F%91/" title="20 张动图为你演示 Go 并发">20 张动图为你演示 Go 并发</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2020-06-01T04:44:56.000Z" title="Created 2020-06-01 12:44:56">2020-06-01</time></span></div><div class="content">20 张动图为你演示 Go 并发
+英文原文 
+如果你更喜欢通过视频了解本文，请点击观看我在 GopherCon 上的演讲 https://www.youtube.com/watch?v=KyuFeiG3Y6…
+Go 语言最强大的特性之一就是基于 Tony Hoare’s CSP 这篇论文实现的内置并发. Go 在设计时就考虑了并发并允许我们构建复杂的并发管道。那你有没有想过，各种并发模式看起来是怎样的？
+你一定想过。 我们多数情况下都会通过想象来思考问题。如果我问你一个关于 “1 到 100 的数字” 的问题，你脑子里就会下意识的出现一系列画面。例如，我会把它想象成一条从我开始的直线，从数字 1 到 20 然后右转 90 度一直到 1000+。我记得我很小的时候，在我们的幼儿园里，衣帽间里有很多数字，写在墙上，数字 20 恰好在拐角处。你可能有你自己的关于数字的画面。另一个常见的例子是一年四季的视觉展现 —— 有人将之想象成一个盒子，有人将之想象成一个圈。
+无论如何，我想用 Go 和 WebGL 把我对于常见的并发模式的具象化尝试展现给大家。这多多少少代表了我对于并发程序的理解。如果能 ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2018/05/20/Golang%20%E7%AE%80%E6%B4%81%E5%85%A5%E9%97%A8/" title="Golang简洁入门">Golang简洁入门</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2018-05-20T05:14:56.000Z" title="Created 2018-05-20 13:14:56">2018-05-20</time></span></div><div class="content">为什么选择golang?从一个程序说起为什么我不从基础说起​        在这里，假定的是你已经有了一定的程序基础，能够明白字符串，结构体等是什么，为了避免大几百页码的书本讲述，如果认认真真读下去，需要耗费比较长的时间，而其中的很多特性在看了新的章节又会忘了之前的。所以，我决定还是从编程实际的例子出发，尽量在一个程序中把大部分重要特性放进去，如果需要纠结里面的底层技术细节，或为了准备面试，则需要把厚厚的教科书拿出来，把自己遗忘或不确定的内容进行翔实地复习。
+​        那么，现在我们开始。
+Golang开发环境搭建
+Linux环境搭建
+建议使用Manjaro，或者MacOS，如果对MacOS下的brew命令或者Manjaro下的软件包源设置有疑问，可以参考我的博客文章。
+
+安装go
+Manjaro: sudo pacman -S go
+MacOS: brew install go
+
+
+
+
+安装开发工具Goland
+
+Manjaro: sudo pacman -s goland
+MacOS: brew cask install goland
+
+
+
+实现cd命令​        我 ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2017/10/10/%E5%85%B3%E4%BA%8EMacOS%E9%85%8D%E7%BD%AE/" title="关于MacOS安装后的配置">关于MacOS安装后的配置</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2017-10-10T06:44:56.000Z" title="Created 2017-10-10 14:44:56">2017-10-10</time></span></div><div class="content">系统配置由于安装环境是一个非常繁琐的步骤，很多时候又常常忘记一些基本配置，又不想使用time machine来完全恢复，处女座的洁癖无疑了。那么本文就从最初的配置开始做起，说一说具体步骤，很多工具大家可能都不需要，那么这里就还是各取所需吧～
+MacOSbrew及一些必备工具的安装12345678910111213141516171819202122232425262728ruby -e &quot;$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)&quot;cd &quot;$(brew --repo)&quot;git remote set-url origin https://mirrors.tuna.tsinghua.edu.cn/git/homebrew/brew.gitcd &quot;$(brew --repo)/Library/Taps/homebrew/homebrew-core&quot;git remote set-url origin https://mi ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/" title="Nginx 配置 HTTPS 服务器">Nginx 配置 HTTPS 服务器</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2017-06-08T10:23:56.000Z" title="Created 2017-06-08 18:23:56">2017-06-08</time></span></div><div class="content">Nginx 配置 HTTPS 服务器Chrome 浏览器地址栏标志着 HTTPS 的绿色小锁头从心理层面上可以给用户专业安全的心理暗示，本文简单总结一下如何在 Nginx 配置 HTTPS 服务器，让自己站点上『绿锁』
+Nginx 配置 HTTPS 并不复杂，主要有两个步骤：签署第三方可信任的 SSL 证书 和 配置 HTTPS
+签署第三方可信任的 SSL 证书关于 SSL 证书有关 SSL 的介绍可以参阅维基百科的传输层安全协议和阮一峰先生的 《SSL/TLS协议运行机制的概述》。
+SSL 证书主要有两个功能：加密和身份证明，通常需要购买，也有免费的，通过第三方 SSL 证书机构颁发.
+StartCom 机构上的 SSL 证书有以下几种：
+
+企业级别：EV(Extended Validation)、OV(Organization Validation)
+个人级别：IV(Identity Validation)、DV（Domain Validation）
+
+其中 EV、OV、IV 需要付费
+免费的证书安全认证级别一般比较低，不显示单位名称，不能证明网站的真实身份，仅起到加密传输信息的作 ...</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/2012/08/20/IPFS%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/" title="IPFS源码分析">IPFS源码分析</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">Created</span><time datetime="2012-08-20T05:14:56.000Z" title="Created 2012-08-20 13:14:56">2012-08-20</time></span></div><div class="content">IPFS源码分析IPFS设计在IPFS白皮书中，将IPFS协议分为以下七个子协议：
+
+认证： 管理节点的指纹生成，以及对节点进行认证。
+网络： 管理节点之间的连接。
+路由： 保持节点和对象的位置信息。是分布式路由表。
+交换： 一种创新的数据块交换协议，是文件交换市场、数据交易所。
+对象： 基于MerkleDAG数据结构保存的文件对象。
+文件： 受到Git启发的版本化的文件系统。
+命名： 自我认证的可变命名系统。
+
+IPFS架构IPFS有一个模块化的技术协议栈。每一层都有多个实现。IPFS架构对上述七个协议进行了组织封装，整个架构分为以下5层，从上到下以此为：
+
+命名（naming）层 — 自证的PKI命名空间(IPNS)，也就是上述提到的命名协议。
+MerkleDAG 层 — IPFS中核心的数据结构(thin waist)。 其中包含了上述协议中的对象和文件协议。
+交换层 — 数据块的交换和复制 。 主要是上述协议中的交换协议(bitswap)。
+路由层 — 路由层主要包含上述协议中的路由协议（DHT）。
+网络层 — 在节点之间建立连接。 包含上述协议中的网络和认证协议。
+
+架构与协 ...</div></div></div><nav id="pagination"><div class="pagination"><span class="page-number current">1</span></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-info-avatar is-center"><img class="avatar-img" src="/img/%E8%8D%89%E8%8E%93%E6%9E%9C%E9%85%B13.gif" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">哪吒藕霸</div><div class="author-info__description"></div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">Articles</div><div class="length-num">10</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">Tags</div><div class="length-num">2</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/shippomx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/shippomx" target="_blank" title="Github"><i class="fa fa-github"></i></a><a class="social-icon" href="mailto:flysommer@outlook.com" target="_blank" title="Email"><i class="fa fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>Announcement</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>Recent Post</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2020/07/08/IPFS%E7%99%BD%E7%9A%AE%E4%B9%A6/" title="分布式文件系统 IPFS 与 FileCoin">分布式文件系统 IPFS 与 FileCoin</a><time datetime="2020-07-08T05:14:56.000Z" title="Created 2020-07-08 13:14:56">2020-07-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2020/07/07/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%8F%8D%E5%B0%84/" title="深入理解Golang的反射">深入理解Golang的反射</a><time datetime="2020-07-07T02:09:14.000Z" title="Created 2020-07-07 10:09:14">2020-07-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2020/06/08/Rust%E7%9A%84%E4%B8%80%E4%BA%9B%E6%9D%82%E8%AE%B0/" title="Rust的一些杂记">Rust的一些杂记</a><time datetime="2020-06-08T06:23:56.000Z" title="Created 2020-06-08 14:23:56">2020-06-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2020/06/04/%E7%90%86%E8%A7%A3Rust%E7%9A%84Task/" title="理解Rust的Task">理解Rust的Task</a><time datetime="2020-06-04T14:23:56.000Z" title="Created 2020-06-04 22:23:56">2020-06-04</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2020/06/03/%E7%90%86%E8%A7%A3Rust%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/" title="理解Rust的生命周期">理解Rust的生命周期</a><time datetime="2020-06-03T06:44:56.000Z" title="Created 2020-06-03 14:44:56">2020-06-03</time></div></div></div></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>Tags</span></div><div class="card-tag-cloud"><a href="/tags/Golang/" style="font-size: 1.1em; color: #999">Golang</a> <a href="/tags/Rust/" style="font-size: 1.5em; color: #99a9bf">Rust</a></div></div><div class="card-widget card-archives"><div class="item-headline"><i class="fas fa-archive"></i><span>Archives</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/07/"><span class="card-archive-list-date">July 2020</span><span class="card-archive-list-count">2</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2020/06/"><span class="card-archive-list-date">June 2020</span><span class="card-archive-list-count">4</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2018/05/"><span class="card-archive-list-date">May 2018</span><span class="card-archive-list-count">1</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2017/10/"><span class="card-archive-list-date">October 2017</span><span class="card-archive-list-count">1</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2017/06/"><span class="card-archive-list-date">June 2017</span><span class="card-archive-list-count">1</span></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2012/08/"><span class="card-archive-list-date">August 2012</span><span class="card-archive-list-count">1</span></a></li></ul></div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>Info</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">Article :</div><div class="item-count">10</div></div><div class="webinfo-item"><div class="item-name">UV :</div><div class="item-count" id="busuanzi_value_site_uv"></div></div><div class="webinfo-item"><div class="item-name">PV :</div><div class="item-count" id="busuanzi_value_site_pv"></div></div><div class="webinfo-item"><div class="item-name">Last Push :</div><div class="item-count" id="last-push-date" data-lastPushDate="2021-01-01T05:15:12.322Z"></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2021 By 哪吒藕霸</div><div class="framework-info"><span>Framework </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>Theme </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="Toggle Between Light And Dark Mode"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="Toggle between single-column and double-column"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="Setting"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="Back To Top"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>function subtitleType () {
+  if (true) { 
+    var typed = new Typed("#subtitle", {
+      strings: "人生没有重来&#44;贪婪有何不可,人生は一度きりなんです。がっついていこう！".split(","),
+      startDelay: 300,
+      typeSpeed: 150,
+      loop: true,
+      backSpeed: 50
+    })
+  } else {
+    document.getElementById("subtitle").innerHTML = '人生没有重来&#44;贪婪有何不可'
+  }
+}
+
+if (true) {
+  if (typeof Typed === 'function') {
+    subtitleType()
+  } else {
+    getScript('https://cdn.jsdelivr.net/npm/typed.js/lib/typed.min.js').then(subtitleType)
+  }
+} else {
+  subtitleType()
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></div></body></html>
