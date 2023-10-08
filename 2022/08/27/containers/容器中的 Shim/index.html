@@ -1,0 +1,399 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>containerd中的shim | 远辰</title><meta name="keywords" content="container"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="containerd中的shim"><meta name="application-name" content="containerd中的shim"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="containerd中的shim"><meta property="og:url" content="https://shippomx.github.io/2022/08/27/containers/%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%20Shim/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="每一个 Containerd 或 Docker 容器都有一个相应的 “shim” 守护进程，这个守护进程会提供一个 API，Containerd 使用该 API 来管理容器基本的生命周期（启动 &amp;#x2F; 停止），在容器中执行新的进程、调整 TTY 的大小以及与特定平台相关的其他操作。shim 还"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="每一个 Containerd 或 Docker 容器都有一个相应的 “shim” 守护进程，这个守护进程会提供一个 API，Containerd 使用该 API 来管理容器基本的生命周期（启动 &amp;#x2F; 停止），在容器中执行新的进程、调整 TTY 的大小以及与特定平台相关的其他操作。shim 还"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2022/08/27/containers/%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%20Shim/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: 'containerd中的shim',
+  postAI: '',
+  pageFillDescription: 'Containerd 支持哪些 shim？, io.containerd.runtime.v1.linux, io.containerd.runc.v1, io.containerd.runc.v2, io.containerd.runhcs.v1, 创建容器的 RPC 调用流程, 总结, 引用链接每一个或容器都有一个相应的守护进程这个守护进程会提供一个使用该来管理容器基本的生命周期启动停止在容器中执行新的进程调整的大小以及与特定平台相关的其他操作还有一个作用是向报告容器的退出状态在容器退出状态被收集之前会一直存在这一点和僵尸进程很像僵尸进程在被父进程回收之前会一直存在只不过僵尸进程不会占用资源而会占用资源将进程从容器的生命周期中分离出来具体的做法是在创建和运行容器之后退出并将作为容器的父进程即使进程挂掉或者重启也不会对容器造成任何影响这样做的好处很明显你可以高枕无忧地升级或者重启不会对运行中的容器产生任何影响的特征也实现了类似的功能支持哪些目前官方支持的清单是最原始的和实现的版本在之前被设计出来该使用来执行容器并且只支持目前版已被废弃并将于被删除与的实现类似唯一的区别是它使用了版本该仍然只支持该与采用了完全不同的实现并且使用了版本同时支持和该进程以运行多个容器用于的实现可以在一个中运行多个容器这是平台的使用的来管理容器当然除了官方正式支持的之外任何人都可以编写自己的并让调用该在调用时会将的名称解析为二进制文件并在中查找这个二进制文件例如会被解析成二进制文件会被解析成二进制文件客户端在创建容器时可以指定使用哪个如果不指定就使用默认的下面是一个示例用来指定将要使用的注意将作为第二个参数可以传递任何类型给只要确保你的能够识别这个类型的数据并在包中注册这个类型以便它能被正确编码每个都有自己支持的一组配置选项可以单独针对每个容器进行配置例如可以将容器的转发到一个单独的进程为的运行设置自定义的等等你可以创建自定义的在容器运行时添加自定义的选项总的来说的包含了和一些二进制调用用于创建删除以及到进程的反向通道如果你想实现自己的下面是相关参考资料的详细定义实现二进制和的辅助工具的使用方式你只需要实现一个接口会处理剩下的事情需要重点关注的是内存使用因为每个容器都有一个进程随着容器数量的增加的内存使用会急剧上升的是在中定义的看起来有点像的但实际上使用的是一个叫做的自定义协议与并不兼容是一个原协议专为降低内存使用而设计创建容器的调用流程中有一个对象当你创建一个对象只是创建了一些与容器相关的数据并将这些数据存储到本地数据库中并不会在系统中启动任何容器对象创建成功后客户端会从对象中创建一个接下来是调用以下是调用的总体流程客户端调用根据指定或默认的运行时名称解析二进制文件例如通过命令启动二进制文件并加上一些额外的参数用于定义命名空间路径调试模式返回给的路径等在这一步调用中当前工作目录设置为的工作路径此时新创建的进程会向写一个连接字符串以允许连接到进行调用一旦连接字符串初始化完成开始监听之后命令就会返回使用命令返回的连接字符串打开一个与的连接使用路径和其他选项调用这一步会创建所有必要的沙箱并返回沙箱进程的以为例我们使用命令创建容器会分叉出一个新进程用来设置沙箱然后等待调用所有这些都准备好后命令就会返回结果在返回结果之前会将进程的写入定义的文件中客户端可以使用这个来做一些操作比如在沙箱中设置网络网络命名空间可以在中设置调用还会提供一个挂载列表以构建还包含信息下一步客户端调用触发调用这是一个持久化的请求只有在容器退出后才会返回到这一步仍然不会启动容器客户端继续调用触发调用这一步才会真正启动容器并返回容器进程的这一步客户端就可以针对进行一些额外的调用请求例如如果包含会请求或者请求来发送一个信号等等比较特殊它会调用但并没有在容器中执行某个进程只是在中注册了后面会使用来调用在容器或进程退出后将会调用清理进程或容器的所有资源例如对于这一步会调用调用此时将会退出的另一个重要部分是将容器的生命周期事件返回给包括可参考的详细定义总结通过为底层的容器运行时提供了可插拔能力虽然这不是使用管理容器的唯一手段但目前内置的使用了该方式通过调用来创建也是使用的由此可见这种方式很受欢迎它不但增强了的扩展能力以支持更多平台和基于虚拟机的运行时而且允许尝试其他实现引用链接的详细定义实现二进制和的辅助工具的使用方式的详细定义原文链接发行版部署尝鲜',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/container/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>container</span></a></span></div></div><h1 class="post-title" itemprop="name headline">containerd中的shim</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2022-08-27T13:43:30.000Z" title="发表于 2022-08-27 21:43:30">2022-08-27</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.043Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2022/08/27/containers/%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%20Shim/"><header><a href="/tags/container/" tabindex="-1" itemprop="url">container</a><h1 id="CrawlerTitle" itemprop="name headline">containerd中的shim</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2022-08-27T13:43:30.000Z" title="发表于 2022-08-27 21:43:30">2022-08-27</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.043Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><p>每一个 Containerd 或 Docker 容器都有一个相应的 “shim” 守护进程，这个守护进程会提供一个 API，Containerd 使用该 API 来管理容器基本的生命周期（启动 &#x2F; 停止），在容器中执行新的进程、调整 TTY 的大小以及与特定平台相关的其他操作。shim 还有一个作用是向 Containerd 报告容器的退出状态，在容器退出状态被 Containerd 收集之前，shim 会一直存在。这一点和僵尸进程很像，僵尸进程在被父进程回收之前会一直存在，只不过僵尸进程不会占用资源，而 shim 会占用资源。</p>
+<p>shim 将 Containerd 进程从容器的生命周期中分离出来，具体的做法是 runc 在创建和运行容器之后退出，并将 shim 作为容器的父进程，即使 Containerd 进程挂掉或者重启，也不会对容器造成任何影响。这样做的好处很明显，你可以高枕无忧地升级或者重启 Containerd，不会对运行中的容器产生任何影响。Docker 的 <strong>–live-restore[2]</strong> 特征也实现了类似的功能。</p>
+<h2 id="Containerd-支持哪些-shim？"><a href="#Containerd-支持哪些-shim？" class="headerlink" title="Containerd 支持哪些 shim？"></a><strong>Containerd 支持哪些 shim？</strong></h2><p>Containerd 目前官方支持的 shim 清单：</p>
+<h3 id="io-containerd-runtime-v1-linux"><a href="#io-containerd-runtime-v1-linux" class="headerlink" title="io.containerd.runtime.v1.linux"></a><strong>io.containerd.runtime.v1.linux</strong></h3><p><code>io.containerd.runtime.v1.linux</code> 是最原始的 shim API 和实现的 v1 版本，在 Containerd 1.0 之前被设计出来。该 shim 使用 <code>runc</code> 来执行容器，并且只支持 <code>cgroup v1</code>。目前 v1 版 shim API 已被废弃，并将于 Containerd 2.0 被删除。</p>
+<h3 id="io-containerd-runc-v1"><a href="#io-containerd-runc-v1" class="headerlink" title="io.containerd.runc.v1"></a><strong>io.containerd.runc.v1</strong></h3><p><code>io.containerd.runc.v1</code> 与 <code>io.containerd.runtime.v1.linux</code> 的实现类似，唯一的区别是它使用了 v2 版本 shim API。该 shim 仍然只支持 cgroup v1。</p>
+<h3 id="io-containerd-runc-v2"><a href="#io-containerd-runc-v2" class="headerlink" title="io.containerd.runc.v2"></a><strong>io.containerd.runc.v2</strong></h3><p>该 shim 与 <strong>v1</strong> 采用了完全不同的实现，并且使用了 v2 版本 shim API，同时支持 cgroup v1 和 v2。该 shim 进程以运行多个容器，用于 Kubernetes 的 CRI 实现，可以在一个 Pod 中运行多个容器。</p>
+<h3 id="io-containerd-runhcs-v1"><a href="#io-containerd-runhcs-v1" class="headerlink" title="io.containerd.runhcs.v1"></a><strong>io.containerd.runhcs.v1</strong></h3><p>这是 Windows 平台的 shim，使用 Window 的 <code>HCSv2 API</code> 来管理容器。</p>
+<p>当然，除了官方正式支持的 shim 之外，任何人都可以编写自己的 shim，并让 Containerd 调用该 shim。Containerd 在调用时会将 shim 的名称解析为二进制文件，并在 <code>$PATH</code> 中查找这个二进制文件。例如 io.containerd.runc.v2 会被解析成二进制文件 <code>containerd-shim-runc-v2</code>，<code>io.containerd.runhcs.v1</code> 会被解析成二进制文件 <code>containerd-shim-runhcs-v1.exe</code>。客户端在创建容器时可以指定使用哪个 shim，如果不指定就使用默认的 shim。</p>
+<p>下面是一个示例，用来指定将要使用的 shim：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">    &quot;context&quot;</span><br><span class="line"></span><br><span class="line">    &quot;github.com/containerd/containerd&quot;</span><br><span class="line">    &quot;github.com/containerd/containerd/namespaces&quot;</span><br><span class="line">    &quot;github.com/containerd/containerd/oci&quot;</span><br><span class="line">    v1opts &quot;github.com/containerd/containerd/pkg/runtimeoptions/v1&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">    ctx := namespaces.WithNamespace(context.TODO(), &quot;default&quot;)</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    client, err := containerd.New(&quot;/run/containerd/containerd.sock&quot;)</span><br><span class="line">    if err != nil &#123;</span><br><span class="line">        panic(err)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    img, err := client.GetImage(ctx, &quot;docker.io/library/busybox:latest&quot;)</span><br><span class="line">    if err != nil &#123;</span><br><span class="line">        panic(err)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    var opts v1opts.Options</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    cntr, err := client.NewContainer(ctx, &quot;myContainer&quot;,</span><br><span class="line">        </span><br><span class="line">        containerd.WithSnapshotter(&quot;overlayfs&quot;),</span><br><span class="line">        containerd.WithNewSnapshot(&quot;myContainer-snapshot&quot;, img),</span><br><span class="line">        containerd.WithImage(img),</span><br><span class="line">        containerd.WithNewSpec(oci.WithImageConfig(img)),</span><br><span class="line"></span><br><span class="line">        </span><br><span class="line">        containerd.WithRuntime(&quot;io.containerd.runc.v1&quot;, &amp;opts),</span><br><span class="line">    )</span><br><span class="line">    if err != nil &#123;</span><br><span class="line">        panic(err)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    cntr.Delete(ctx)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>⚠️注意</strong>：<code>WithRuntime</code> 将 <code>interface&#123;&#125;</code> 作为第二个参数，可以传递任何类型给 shim。只要确保你的 shim 能够识别这个类型的数据，并在 typeurl 包中注册这个类型，以便它能被正确编码。</p>
+</blockquote>
+<p>每个 shim 都有自己支持的一组配置选项，可以单独针对每个容器进行配置。例如 <code>io.containerd.runc.v2</code> 可以将容器的 stdout&#x2F;stderr 转发到一个单独的进程，为 shim 的运行设置自定义的 cgroup 等等。你可以创建自定义的 shim，在容器运行时添加自定义的选项。总的来说，shim 的 API 包含了 RPC 和一些二进制调用用于创建 &#x2F; 删除 shim，以及到 Containerd 进程的反向通道。</p>
+<p>如果你想实现自己的 shim，下面是相关参考资料：</p>
+<ul>
+<li><strong>(v2) shim RPC API 的详细定义 [3]</strong></li>
+<li><strong>实现 shim 二进制和 RPC API 的辅助工具 [4]</strong></li>
+<li><strong>shim 的使用方式 [5]</strong></li>
+</ul>
+<p>你只需要实现一个接口，<code>shim.Run</code> 会处理剩下的事情。shim 需要重点关注的是内存使用，因为每个容器都有一个 shim 进程，随着容器数量的增加，shim 的内存使用会急剧上升。shim 的 API 是在 <code>protobuf</code> 中定义的，看起来有点像 <code>gRPC</code> 的 API，但实际上 shim 使用的是一个叫做 <strong>ttrpc[6]</strong> 的自定义协议，与 gRPC 并不兼容。ttrpc 是一个原 RPC 协议，专为降低内存使用而设计。</p>
+<h2 id="创建容器的-RPC-调用流程"><a href="#创建容器的-RPC-调用流程" class="headerlink" title="创建容器的 RPC 调用流程"></a><strong>创建容器的 RPC 调用流程</strong></h2><p>Containerd 中有一个 container 对象，当你创建一个 container 对象，只是创建了一些与容器相关的数据，并将这些<a target="_blank" rel="noopener" href="https://cloud.tencent.com/product/cdcs?from=10680">数据存储</a>到本地<a target="_blank" rel="noopener" href="https://cloud.tencent.com/solution/database?from=10680">数据库</a>中，并不会在系统中启动任何容器。container 对象创建成功后，客户端会从 container 对象中创建一个 task，接下来是调用 shim API。</p>
+<p>以下是 RPC 调用的总体流程：</p>
+<ol>
+<li>客户端调用 <code>container.NewTask(…)</code>，containerd 根据指定或默认的运行时名称解析 shim 二进制文件，例如：<code>io.containerd.runc.v2</code> -&gt; <code>containerd-shim-runc-v2</code>。</li>
+<li>containerd 通过 <strong>start</strong> 命令启动 shim 二进制文件，并加上一些额外的参数，用于定义命名空间、OCI bundle 路径、调试模式、返回给 containerd 的 unix socket 路径等。在这一步调用中，当前工作目录设置为 shim 的工作路径。 此时，新创建的 shim 进程会向 <code>stdout</code> 写一个连接字符串，以允许 containerd 连接到 shim ，进行 API 调用。一旦连接字符串初始化完成，shim 开始监听之后，start 命令就会返回。</li>
+<li>containerd 使用 shim start 命令返回的连接字符串，打开一个与 shim API 的连接。</li>
+<li>containerd 使用 OCI bundle 路径和其他选项，调用 Create shim RPC。这一步会创建所有必要的 沙箱，并返回沙箱进程的 pid。以 runc 为例，我们使用 <code>runc create --pid-file=&lt;path&gt;</code> 命令创建容器，runc 会分叉出一个新进程（<code>runc init</code>）用来设置沙箱，然后等待调用 <code>runc start</code>，所有这些都准备好后，runc create 命令就会返回结果。在 runc create 返回结果之前，runc 会将 runc-init 进程的 pid 写入定义的 pid 文件中，客户端可以使用这个 pid 来做一些操作，比如在沙箱中设置网络（网络命名空间可以在 <code>/proc/&lt;pid&gt;/ns/net</code> 中设置）。 create 调用还会提供一个挂载列表以构建 rootfs，还包含 checkpoint 信息。</li>
+<li>下一步客户端调用 <code>task.Wait</code>，触发 containerd 调用 shim <code>Wait</code> API。这是一个持久化的请求，只有在容器退出后才会返回。到这一步仍然不会启动容器。</li>
+<li>客户端继续调用 <code>task.Start</code>，触发 containerd 调用 Start shim RPC。<strong>这一步才会真正启动容器</strong>，并返回容器进程的 pid。</li>
+<li>这一步，客户端就可以针对 task 进行一些额外的调用请求。例如，如果 task 包含 TTY，会请求 <code>task.ResizePTY</code>，或者请求 <code>task.Kill</code> 来发送一个信号等等。 <code>task.Exec</code> 比较特殊，它会调用 shim Exec RPC，但并没有在容器中执行某个进程，只是在 shim 中注册了 exec，后面会使用 exec ID 来调用 shim <code>Start</code> RPC。</li>
+<li>在容器或 exec 进程退出后，containerd 将会调用 shim <code>Delete</code> RPC，清理 exec 进程或容器的所有资源。例如，对于 runc shim， 这一步会调用 runc delete。</li>
+<li>containerd 调用 <code>Shutdown</code> RPC，此时 shim 将会退出。</li>
+</ol>
+<p>shim 的另一个重要部分是将容器的生命周期事件返回给 containerd ，包括：<code>TaskCreate</code> <code>TaskStart</code> <code>TaskDelete</code> <code>TaskExit</code>, <code>TaskOOM</code>, <code>TaskExecAdded</code>, <code>TaskExecStarted</code>, <code>TaskPaused</code>, <code>TaskResumed</code>, <code>TaskCheckpointed</code>。可参考 **task 的详细定义 [7]**。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><p><strong>Containerd 通过 shim 为底层的容器运行时提供了可插拔能力</strong>。虽然这不是使用 Containerd 管理容器的唯一手段，但目前内置的 TaskService 使用了该方式，Kubernetes 通过调用 CRI 来创建 Pod 也是使用的 shim。由此可见 shim 这种方式很受欢迎，它不但增强了 Containerd 的扩展能力，以支持更多平台和基于虚拟机的运行时（<strong>firecracker[8]</strong>, **kata[9]<strong>），而且允许尝试其他 shim 实现（</strong>systemd[10]**）。</p>
+<h3 id="引用链接"><a href="#引用链接" class="headerlink" title="引用链接"></a><strong>引用链接</strong></h3><p>[1]</p>
+<p>Containerd: <em><a target="_blank" rel="noopener" href="https://containerd.io/">https://containerd.io/</a></em></p>
+<p>[2]</p>
+<p>–live-restore: <em><a target="_blank" rel="noopener" href="https://docs.docker.com/config/containers/live-restore/">https://docs.docker.com/config/containers/live-restore/</a></em></p>
+<p>[3]</p>
+<p>(v2) shim RPC API 的详细定义: <em><a target="_blank" rel="noopener" href="https://github.com/containerd/containerd/blob/v1.5.8/runtime/v2/task/shim.proto">https://github.com/containerd/containerd/blob/v1.5.8/runtime/v2/task/shim.proto</a></em></p>
+<p>[4]</p>
+<p>实现 shim 二进制和 RPC API 的辅助工具: <em><a target="_blank" rel="noopener" href="https://github.com/containerd/containerd/blob/89370122089d9cba9875f468db525f03eaf61e96/runtime/v2/shim/shim.go#L181-L194">https://github.com/containerd/containerd/blob/89370122089d9cba9875f468db525f03eaf61e96/runtime/v2/shim/shim.go#L181-L194</a></em></p>
+<p>[5]</p>
+<p>shim 的使用方式: <em><a target="_blank" rel="noopener" href="https://github.com/containerd/containerd/blob/v1.5.8/cmd/containerd-shim-runc-v2/main.go">https://github.com/containerd/containerd/blob/v1.5.8/cmd/containerd-shim-runc-v2/main.go</a></em></p>
+<p>[6]</p>
+<p>ttrpc: <em><a target="_blank" rel="noopener" href="https://github.com/containerd/ttrpc">https://github.com/containerd/ttrpc</a></em></p>
+<p>[7]</p>
+<p>task 的详细定义: <em><a target="_blank" rel="noopener" href="https://github.com/containerd/containerd/blob/v1.5.6/api/events/task.proto">https://github.com/containerd/containerd/blob/v1.5.6/api/events/task.proto</a></em></p>
+<p>[8]</p>
+<p>firecracker: <em><a target="_blank" rel="noopener" href="https://github.com/firecracker-microvm/firecracker-containerd/tree/main/runtime">https://github.com/firecracker-microvm/firecracker-containerd/tree/main/runtime</a></em></p>
+<p>[9]</p>
+<p>kata: <em><a target="_blank" rel="noopener" href="https://github.com/kata-containers/kata-containers/tree/2.3.0/src/runtime">https://github.com/kata-containers/kata-containers/tree/2.3.0/src/runtime</a></em></p>
+<p>[10]</p>
+<p>systemd: <em><a target="_blank" rel="noopener" href="https://github.com/cpuguy83/containerd-shim-systemd-v1">https://github.com/cpuguy83/containerd-shim-systemd-v1</a></em></p>
+<p>原文链接：<strong><a target="_blank" rel="noopener" href="https://container42.com/2022/01/10/shim-shiminey-shim-shiminey/">https://container42.com/2022/01/10/shim-shiminey-shim-shiminey/</a></strong> VMware Tanzu Kubernetes 发行版部署尝鲜</p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2022/08/27/containers/%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%20Shim/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2022/08/27/containers/%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%20Shim/')">containerd中的shim</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2022/08/27/containers/%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%20Shim/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=containerd中的shim&amp;url=https://shippomx.github.io/2022/08/27/containers/%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%20Shim/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/container/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>container<span class="tagsPageCount">27</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/06/17/linux/%E5%86%85%E5%AD%98/%E5%B7%A8%E9%A1%B5%E7%9A%84%E9%85%8D%E7%BD%AE%E5%92%8C%E4%BF%AE%E6%94%B9/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">linux中的巨页</div></div></a></div><div class="next-post pull-right"><a href="/2022/10/22/linux/%E5%86%85%E5%AD%98/linux%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">linux中的内存分配</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2023/10/04/containers/Calico%20%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86%E6%8F%AD%E7%A7%98/" title="Calico网络通信简略原理"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-04</div><div class="title">Calico网络通信简略原理</div></div></a></div><div><a href="/2021/12/21/containers/Docker%20%E7%9A%84%E7%BD%91%E7%BB%9C%20%E5%B0%86%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%A4%96%E9%83%A8%E4%B8%96%E7%95%8C%E8%BF%9E%E6%8E%A5/" title="docker中的网络"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-12-21</div><div class="title">docker中的网络</div></div></a></div><div><a href="/2021/12/21/containers/Docker%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%AE%B9%E5%99%A8%E9%97%B4%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/" title="docker中的网络模式"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-12-21</div><div class="title">docker中的网络模式</div></div></a></div><div><a href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-07</div><div class="title">Docker与虚拟化</div></div></a></div><div><a href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-06</div><div class="title">Kubernetes CNI 网络插件</div></div></a></div><div><a href="/2020/12/20/containers/Kata%20Containers%202.0%20%E4%BB%8B%E7%BB%8D/" title="Kata Containers 2.0"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-12-20</div><div class="title">Kata Containers 2.0</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Containerd-%E6%94%AF%E6%8C%81%E5%93%AA%E4%BA%9B-shim%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">Containerd 支持哪些 shim？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#io-containerd-runtime-v1-linux"><span class="toc-number">1.1.</span> <span class="toc-text">io.containerd.runtime.v1.linux</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#io-containerd-runc-v1"><span class="toc-number">1.2.</span> <span class="toc-text">io.containerd.runc.v1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#io-containerd-runc-v2"><span class="toc-number">1.3.</span> <span class="toc-text">io.containerd.runc.v2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#io-containerd-runhcs-v1"><span class="toc-number">1.4.</span> <span class="toc-text">io.containerd.runhcs.v1</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E5%AE%B9%E5%99%A8%E7%9A%84-RPC-%E8%B0%83%E7%94%A8%E6%B5%81%E7%A8%8B"><span class="toc-number">2.</span> <span class="toc-text">创建容器的 RPC 调用流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%95%E7%94%A8%E9%93%BE%E6%8E%A5"><span class="toc-number">3.1.</span> <span class="toc-text">引用链接</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

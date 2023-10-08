@@ -1,0 +1,612 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>内存泄露的定位与排查 | 远辰</title><meta name="keywords" content="linux"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="内存泄露的定位与排查"><meta name="application-name" content="内存泄露的定位与排查"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="内存泄露的定位与排查"><meta property="og:url" content="https://shippomx.github.io/2022/11/18/linux/%E5%86%85%E5%AD%98/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E6%8E%92%E6%9F%A5%EF%BC%9AHeap%20Profiling%20%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="系统长时间运行之后，可用内存越来越少，甚至导致了某些服务失败，这就是典型的内存泄漏问题。这类问题通常难以预测，也很难通过静态代码梳理的方式定位。Heap Profiling 就是帮助我们解决此类问题的。 TiKV 作为分布式系统的一部分，已经初步拥有了 Heap Profiling 的能力。本文将介"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="系统长时间运行之后，可用内存越来越少，甚至导致了某些服务失败，这就是典型的内存泄漏问题。这类问题通常难以预测，也很难通过静态代码梳理的方式定位。Heap Profiling 就是帮助我们解决此类问题的。 TiKV 作为分布式系统的一部分，已经初步拥有了 Heap Profiling 的能力。本文将介"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2022/11/18/linux/%E5%86%85%E5%AD%98/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E6%8E%92%E6%9F%A5%EF%BC%9AHeap%20Profiling%20%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: '内存泄露的定位与排查',
+  postAI: '',
+  pageFillDescription: '系统长时间运行之后可用内存越来越少甚至导致了某些服务失败这就是典型的内存泄漏问题这类问题通常难以预测也很难通过静态代码梳理的方式定位就是帮助我们解决此类问题的作为分布式系统的一部分已经初步拥有了的能力本文将介绍一些常见的的实现原理及使用方法帮助读者更容易地理解中相关实现或将这类分析手段更好地运用到自己项目中什么是运行时的内存泄漏问题在很多场景下都相当难以排查因为这类问题通常难以预测也很难通过静态代码梳理的方式定位就是帮助我们解决此类问题的通常指对应用程序的堆分配进行收集或采样来向我们报告程序的内存使用情况以便分析内存占用原因或定位内存泄漏根源是如何工作的作为对比我们先简单了解下是如何工作的当我们准备进行时通常需要选定某一时间窗口在该窗口内会向目标程序注册一个定时执行的有多种手段譬如信号在这个内我们每次会获取业务线程此刻的我们将的执行频率控制在特定的数值譬如这样就做到每采集一个业务代码的调用栈样本当时间窗口结束后我们将采集到的所有样本进行聚合最终得到每个函数被采集到的次数相较于总样本数也就得到了每个函数的相对占比借助此模型我们可以发现占比较高的函数进而定位热点在数据结构上与十分相似都是的模型如果你使用过提供的会发现二者的展示格式是几乎相同的与不同的是的数据采集工作并非简单通过定时器开展而是需要侵入到内存分配路径内这样才能拿到内存分配的数量所以通常的做法是直接将自己集成在内存分配器内当应用程序进行内存分配时拿到当前的最终将所有样本聚合在一起这样我们便能知道每个函数直接或间接地内存分配数量了的数据模型与是一致的接下来我们将介绍多款的使用和实现原理注诸如等工具的使用场景与我们的目的场景不匹配因此本文不会展开原因参考大部分读者应该对会更加熟悉一些因此我们以为起点和基底来进行调研注如果一个概念我们在靠前的小节讲过了后边的小节则不再赘述即使它们不是同一个项目另外出于完整性目的每个项目都配有小节来阐述其用法对此已经熟悉的同学可以直接跳过内置了方便的是其中一种类型我们可以通过如下方式开启一个端口然后在程序运行期间使用命令行拿到当前的快照或者也可以在应用程序代码的特定位置直接获取一次快照这里我们用一个完整的来串一下的用法代码持续地在和分别进行内存分配每秒共分配堆内存将程序运行一段时间后执行如下命令拿到快照并开启一个服务来进行浏览从图中我们能够很直观的看出哪些函数的内存分配占大头方框更大同时也能很直观的看到函数的调用关系通过连线譬如上图中很明显看出是和的分配占大头且被调用注意由于也是采样的默认每分配采样一次所以这里展示的内存大小要小于实际分配的内存大小同一样这个数值仅仅是用于计算相对占比进而定位内存分配热点注事实上对采样到的结果有估算原始大小的逻辑但这个结论并不一定准确此外方框中的表示什么是和我们先换一种浏览方式在左上角的栏下拉点击列表示相应的函数名列表示该函数自身分配了多少内存列表示相对总分配大小的占比列表示该函数及其调用的所有子函数一共分配了多少内存列表示相对总分配大小的占比列表示自上而下的累加可以直观的判断出从哪一行往上一共分配的多少内存上述两种方式可以帮助我们定位到具体的函数提供了更细粒度的代码行数级别的分配源统计在左上角栏下拉点击在中我们常用火焰图找宽顶来快速直观地定位热点函数当然由于数据模型的同质性数据也可以通过火焰图来展现在左上角栏下拉点击通过上述各种方式我们可以很简单地看出内存分配大头在和然而现实场景中绝不会这么简单就让我们定位到问题根源由于我们拿到的是某一刻的快照对于内存泄漏问题来说这并不够用我们需要的是一个增量数据来判断哪些内存在持续地增长所以可以在间隔一定时间后再获取一次对两次结果做本节我们重点关注的实现原理回顾是如何工作的一节通常的做法是直接将自己集成在内存分配器内当应用程序进行内存分配时拿到当前的而正是这么做的的内存分配入口是中的函数其中一段关键代码如下这也就意味着每通过分配的堆内存就调用记录一次为什么需要定义一个采样粒度每次都记录下当前的不是更准确吗完全精确地拿到所有函数的内存分配看似更加吸引人但这样带来的性能开销是巨大的作为用户态库函数会被应用程序非常频繁地调用优化内存分配性能是的责任如果每次调用都伴随一次栈回溯带来的开销几乎是不可接受的尤其是在服务端长期持续进行的场景选择采样并非结果上更优而仅仅是一种妥协当然我们也可以自行修改变量将其设置为会导致每次必定进行记录设置为则会完全关闭用户可以根据实际场景来权衡性能与精确度注意当我们将设置为一个通常的采样粒度时这个值并不是完全精确的而是每次都在以为平均值的指数分布中随机取一个值由于很多情况下内存分配是有规律的如果按照固定的粒度进行采样最终得到的结果可能会存在很大的误差可能刚好每次采样都赶上了某个特定类型的内存分配这就是这里选择随机化的原因不只是基于的各类总会有一些误差存在例在审阅基于的结果时需要时刻提醒自己不要忽视误差存在的可能性位于的函数负责具体的采样工作通过调用以及进一步的来获取当前调用栈保存在数组中即地址的数组这一技术被称为调用栈回溯在很多场景均有应用譬如程序时的栈展开注术语指特定于平台时为寄存器指特定于时为寄存器指特定于时为寄存器一种原始的调用栈回溯实现方式是在函数调用约定上保证发生函数调用时寄存器保存的一定是栈基址而不再作为通用寄存器使用由于指令会首先将返回地址入栈我们只要保证接下来入栈的第一条数据是当前的那么所有函数的栈基址就以为头串成了一条地址链表我们只需为每个地址向下偏移一个单元便能拿到的数组了图片来自注图中提到的所有参数均通过栈传递这一结论现在已经过时了从版本开始支持寄存器传参由于将归为了通用寄存器诸如等编译器默认不再使用保存栈基址除非使用特定的选项将其打开然而编译器却保留了这个特性因此在中通过进行栈回溯是可行的但并没有采用这个简单的方案原因是在某些特殊场景下该方案会带来一些问题譬如如果某个函数被掉了那么通过回溯得到的调用栈就是缺失的另外这个方案需要在常规函数调用间插入额外的指令且需要额外占用一个通用寄存器存在一定的性能开销即使我们不需要栈回溯每个的二进制文件都包含一个名为的这是的缩写它维护了到及其返回地址的映射这样我们就无需依赖便能直接通过查表的方式完成链表的串联同时中维护了及其所处函数是否已被内联优化的信息所以我们在栈回溯过程中便不会丢失内联函数帧此外还维护了符号表保存对应的代码信息函数名行数等所以我们最终才能看到人类可读的结果或者结果而不是一大坨地址信息与特定于的不同是一种标准化的调试格式编译器同样为其生成的添加了信息所以一些非生态的外部工具可以依赖它对程序进行调试值得一提的是所包含的信息是的超集回到来当我们通过栈回溯技术前边代码中的函数拿到数组后并不需要着急直接将其符号化符号化的开销是相当可观的我们完全可以先通过指针地址栈进行聚合所谓的聚合就是在中对相同的样本进行累加相同的样本指的是两个数组内容完全一致的样本通过函数以为获取相应的然后将其中统计相关的字段进行累加另外我们注意到有多组统计数据在累加时是通过全局变量作为下标取模来访问某组特定的每经过一轮就会递增这样就记录了三轮间的分配情况只有当一轮结束后才会将上一轮到这一轮之间的内存分配释放情况并入最终展示的统计数据中这个设计是为了避免在执行前拿到给我们看到大量无用的临时内存并且在一轮周期的不同时刻我们也可能会看到不稳定的堆内存状态最终调用将记录到此次分配地址相关的上用于后续时调用来记录相应的释放情况就这样中始终维护着这份集合当我们需要进行时譬如调用时就会访问这份集合转换为输出所需要的格式这也是与的一个区别只在进行的时间窗口内对应用程序存在一定采样开销而的采样是无时无刻不在发生的执行一次仅仅是一下迄今为止的数据快照接下来我们将进入的世界幸运的是由于大部分的实现原理是类似的前文所述的很多知识在后文对应的上最典型的其实就是从移植而来的它们具备相似的实现方式是一套工具包包括等工具之所以在之后紧接着介绍它是因为它与有很深的渊源前文提到的所移植的从内部分化出了两个社区版本一个是即纯粹的实现不包含其它附加功能另一个就是是带能力的实现以及配套的其它工具集其中也是大家最为熟知的工具之一早期是一个脚本后来演化成了编写的强大工具现在已经被集成到了主干平时我们使用的命令内部就是直接使用的包注的主要作者是与结对编程的牛人内部一直在使用的分析程序的堆内存分配它可以做到作为的祖先看起来和提供的能力是相同的是直接在中的内存分配函数硬编入了采集代码与此类似则是在它提供的的实现中植入了采集代码用户需要在项目编译链接阶段执行链接该库以替换默认的实现当然我们也可以依赖的动态链接机制来在运行阶段进行替换当使用指定了后我们程序中所默认链接的就被覆盖了的动态链接器保证了优先执行所指定的版本在运行链接了的可执行文件之前如果我们将环境变量设置为一个文件名那么当程序执行时数据就会被写入该文件在默认情况下每当我们的程序分配了内存时或每当程序的内存使用高水位线增加了时都会进行一次的这些参数可以通过环境变量来修改使用自带的脚本可以分析出来的文件用法与基本相同同样的从左到右依次是类似的在和中增加了一些采样逻辑当根据条件触发采样时会执行以下函数执行流程如下调用获取调用栈以调用栈作为的调用获取相应的累加中的统计数据由于没有了的存在采样流程相比简单了许多从变量命名上来看中的代码的确是从这里移植过去的中详细描述了的采样规则总的来说也和一致即在或中同样需要增加一些逻辑来记录内存释放情况这比拥有的同样要简单不少找到相应的累加相关的字段即可现代程序获取调用栈的过程通常是依赖库进行的进行栈回溯的原理上与类似都没有选择回溯模式都是依赖程序中的某个特定所记录的不同的是所依赖的是自己生态内创建的名为的特定而程序依赖的是或其中为标准定义编译器也会写入这个信息但自己不用只留给第三方工具使用只有开启参数时才会向写入调试信息而则更为现代一些在中定义原理是让编译器在汇编代码的相应位置插入一些伪指令来协助汇编器生成最终包含的以如下代码为例我们使用来生成汇编代码均可注意这里并没有使用参数从生成的汇编代码中可以看到许多以为前缀的伪指令它们便是接下来我们关注这是因为默认使用作为内存分配器能否在上顺利地进行是值得我们关注的要点自带了能力但默认是不开启的需要在编译时指定参数与相同我们可以选择通过将链接到程序或通过用覆盖的实现我们以程序为例展示如何通过进行入口调用进行内存分配栈回溯记录样本链接到实现与一节中提供的类似我们同样在中每秒分配堆内存和各分配由调用直接使用不带任何参数编译该文件然后执行如下命令启动程序用于指定的相关参数其中表示开启表示每分配字节堆内存便一份文件注更多选项可以参考文档等待一段时间后即可看到有一些文件产生提供了一个和的类似的工具叫事实上它就是由脚本而来的我们可以使用来审阅文件同样可以生成与相同的与类似在中增加了采样逻辑在中调用对中相应的调用栈记录进行累加在中注入的逻辑也与类似同时也依赖进行栈回溯这里均不再赘述是一款平台的用编写特点是提供的前端功能比较丰富我们关注的重点在于它是如何实现的以及能否在中使用所以只简单介绍下基本用法我们可以在页面下载的二进制动态库只有平台的支持然后像或一样通过挂载它自己的实现这里我们假设运行的是一节相同的带有内存泄漏的程序接下来在程序的工作目录会产生一个文件这便是的产物注意与其它不同的是这个文件是持续更新的而非每隔特定的时间就生成一个新的文件接下来执行如下命令开启一个端口用于实时分析上述文件最直观的方法是点击右上角的查看火焰图从图中可以轻易看出与的内存热点提供了丰富的功能这是它的一大亮点大家可以参考文档自行探索同样是替换掉了用户默认的实现但本身并没有实现内存分配器而是基于做了包装入口调用进行内存分配栈回溯记录样本链接到实现看起来在每次时都会固定进行栈回溯和记录没有采样逻辑而在中分配记录被发送到了由统一的线程进行异步处理而的实现是简单的本节我们来探寻一下前文所述的各个的性能开销具体测量方法因场景而异所有测试均单独运行在下述物理机环境在中我们的测量方式是使用部署单节点针对参数进行调整然后分别用进行测量相关软件版本及压测参数数据得到的结果数据相较不记录来说无论是还是延迟线采样记录的性能损耗基本都在以内而全量记录带来的性能开销符合会很高的预期但却高的出乎意料缩水了倍延迟增加了倍由于是一项通用功能我们无法准确的给出所有场景下的通用性能损耗只有在特定项目下的测量结论才有价值是一个相对偏计算密集型的应用内存分配频率可能不及一些内存密集型应用因此该结论及后续所有结论仅可用做参考读者可自行测量自身应用场景下的开销我们基于来测量方法是在机器上部署一个进程和一个进程采用进行压测关键参数如下在启动前分别使用注入不同的其中使用默认配置即类似的采样使用默认采样策略且每分配堆内存就一份文件最终得到如下数据与的表现相差无几相较默认内存分配器下降了左右延迟线上升了左右在前边我们已经了解到的实现和的实现基本相同但这里测量出来的数据却不太一致推测原因是与的内存分配特征存在差异这也印证了前文所讲的我们无法准确的给出所有场景下的通用性能损耗只有在特定项目下的测量结论才有价值我们没有将与放在一起的原因是在上实际使用时会在启动阶段遇到死锁问题由于我们推测的性能开销会非常高理论上是无法应用在生产环境的所以我们只需印证这个结论即可注推测性能开销高的原因是在代码中没有找到采样逻辑每次采集到的数据通过发送给后台线程处理而也只是简单使用封装了下我们选择一个简单的项目来测量性能开销由于目标仅仅是确认是否能够满足生产环境使用的要求而不是精确测量数据所以我们只简单统计并对比其即可具体代码片段如下开启对进行读写操作一次读写被认为是一次完整的其中仅仅对次数进行统计没有测量延迟等指标最终使用总次数除以执行时间得到开启前后的不同数据如下从结果来看损失了以上虽然性能开销很低但基于很大程度上只能拿到系统层面的指标通常意义上的需要在内存分配链路上进行统计但内存分配是趋于分层的举个例子如果我们在自己的程序里提前了一大块堆内存作为内存池自己设计了分配算法接下来所有业务逻辑所需的堆内存全都从内存池里自行分配那么现有的就没法用了因为它只告诉你你在启动阶段申请了一大段内存其它时候的内存申请数量为在这种场景下我们就需要侵入到自己设计的内存分配代码中在入口处做该做的事情的问题与此类似我们可以挂个钩子在上当用户态真正需要向内核申请扩容堆内存时对当前的进行记录然而内存分配器是复杂的黑盒最常触发的用户栈不一定就是导致内存泄漏的用户栈这需要做一些实验来验证如果结果真的有一定价值那么将作为低成本的兜底方案长期运行也未尝不可需要额外考虑的权限问题至于只是无侵入的代码植入对于本身还是要在里走相同的逻辑进而带来相同的开销而我们对代码的侵入性并不敏感实现了基于的但真正利用了的模块其实只有在中已经提供了一个工具用来做核心原理是相同的对于暂时没有太大的借鉴意义',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/linux/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>linux</span></a></span></div></div><h1 class="post-title" itemprop="name headline">内存泄露的定位与排查</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2022-11-18T06:44:56.000Z" title="发表于 2022-11-18 14:44:56">2022-11-18</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2022/11/18/linux/%E5%86%85%E5%AD%98/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E6%8E%92%E6%9F%A5%EF%BC%9AHeap%20Profiling%20%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/"><header><a href="/tags/linux/" tabindex="-1" itemprop="url">linux</a><h1 id="CrawlerTitle" itemprop="name headline">内存泄露的定位与排查</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2022-11-18T06:44:56.000Z" title="发表于 2022-11-18 14:44:56">2022-11-18</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><p>系统长时间运行之后，可用内存越来越少，甚至导致了某些服务失败，这就是典型的内存泄漏问题。这类问题通常难以预测，也很难通过静态代码梳理的方式定位。Heap Profiling 就是帮助我们解决此类问题的。</p>
+<p>TiKV 作为分布式系统的一部分，已经初步拥有了 Heap Profiling 的能力。本文将介绍一些<strong>常见的 Heap Profiler 的实现原理及使用方法</strong>，帮助读者更容易地理解 TiKV 中相关实现，或将这类分析手段更好地运用到自己项目中。</p>
+<p><strong>什么是 Heap Profiling</strong></p>
+<p>运行时的内存泄漏问题在很多场景下都相当难以排查，因为这类问题通常难以预测，也很难通过静态代码梳理的方式定位。</p>
+<p>Heap Profiling 就是帮助我们解决此类问题的。</p>
+<p>Heap Profiling 通常指对应用程序的堆分配进行收集或采样，来向我们报告程序的内存使用情况，以便分析内存占用原因或定位内存泄漏根源。</p>
+<p><strong>Heap Profiling 是如何工作的</strong></p>
+<p>作为对比，我们先简单了解下 CPU Profiling 是如何工作的。</p>
+<p>当我们准备进行 CPU Profiling 时，通常需要选定某一<strong>时间窗口</strong>，在该窗口内，CPU Profiler 会向目标程序注册一个定时执行的 hook（有多种手段，譬如 SIGPROF 信号），在这个 hook 内我们每次会获取业务线程此刻的 stack trace。</p>
+<p>我们将 hook 的执行频率控制在特定的数值，譬如 100hz，这样就做到每 10ms 采集一个业务代码的调用栈样本。当时间窗口结束后，我们将采集到的所有样本进行聚合，最终得到每个函数被采集到的次数，相较于总样本数也就得到了每个函数的<strong>相对占比</strong>。</p>
+<p>借助此模型我们可以发现占比较高的函数，进而定位 CPU 热点。</p>
+<p>在数据结构上，Heap Profiling 与 CPU Profiling 十分相似，都是 stack trace + statistics 的模型。如果你使用过 Go 提供的 pprof，会发现二者的展示格式是几乎相同的：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/7ae33ac1db5965b58859a4085b52b233.png"></p>
+<p>Go CPU Profile</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/2c4068f87a00133f49a50b3b1e0d2607.png"></p>
+<p>Go Heap Profile</p>
+<p>与 CPU Profiling 不同的是，Heap Profiling 的数据采集工作并非简单通过定时器开展，而是需要侵入到内存分配路径内，这样才能拿到内存分配的数量。所以 Heap Profiler 通常的做法是<strong>直接将自己集成在内存分配器内</strong>，当应用程序进行内存分配时拿到当前的 stack trace，最终将所有样本聚合在一起，这样我们便能知道<strong>每个函数直接或间接地内存分配数量</strong>了。</p>
+<p><strong>Heap Profile 的 stack trace + statistics 数据模型与 CPU Proflie 是一致的。</strong></p>
+<p>接下来我们将介绍多款 Heap Profiler 的使用和实现原理。</p>
+<p>注：诸如 GNU gprof、Valgrind 等工具的使用场景与我们的目的场景不匹配，因此本文不会展开。原因参考 gprof, Valgrind and gperftools - an evaluation of some tools for application level CPU profiling on Linux - Gernot.Klingler。</p>
+<p><strong>Heap Profiling in Go</strong></p>
+<p>大部分读者应该对 Go 会更加熟悉一些，因此我们以 Go 为起点和基底来进行调研。</p>
+<p>注：如果一个概念我们在靠前的小节讲过了，后边的小节则不再赘述，即使它们不是同一个项目。另外出于完整性目的，每个项目都配有 usage 小节来阐述其用法，对此已经熟悉的同学可以直接跳过。</p>
+<p><strong>Usage</strong></p>
+<p>Go runtime 内置了方便的 profiler，heap 是其中一种类型。我们可以通过如下方式开启一个 debug 端口：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">import _ &quot;net/http/pprof&quot;</span><br><span class="line"></span><br><span class="line">go func() &#123;</span><br><span class="line">   log.Print(http.ListenAndServe(&quot;0.0.0.0:9999&quot;, nil))</span><br><span class="line">&#125;()</span><br></pre></td></tr></table></figure>
+
+<p>然后在程序运行期间使用命令行拿到当前的 Heap Profiling 快照：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">import &quot;runtime/pprof&quot;</span><br><span class="line"></span><br><span class="line">pprof.WriteHeapProfile(writer)</span><br></pre></td></tr></table></figure>
+
+<p>或者也可以在应用程序代码的特定位置直接获取一次 Heap Profiling 快照：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line"> <span class="string">&quot;log&quot;</span></span><br><span class="line"> <span class="string">&quot;net/http&quot;</span></span><br><span class="line"> _ <span class="string">&quot;net/http/pprof&quot;</span></span><br><span class="line"> <span class="string">&quot;time&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"> <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">  log.Fatal(http.ListenAndServe(<span class="string">&quot;:9999&quot;</span>, <span class="literal">nil</span>))</span><br><span class="line"> &#125;()</span><br><span class="line"></span><br><span class="line"> <span class="keyword">var</span> data [][]<span class="type">byte</span></span><br><span class="line"> <span class="keyword">for</span> &#123;</span><br><span class="line">  data = func1(data)</span><br><span class="line">  time.Sleep(<span class="number">1</span> * time.Second)</span><br><span class="line"> &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">func1</span><span class="params">(data [][]<span class="type">byte</span>)</span></span> [][]<span class="type">byte</span> &#123;</span><br><span class="line"> data = func2(data)</span><br><span class="line"> <span class="keyword">return</span> <span class="built_in">append</span>(data, <span class="built_in">make</span>([]<span class="type">byte</span>, <span class="number">1024</span>*<span class="number">1024</span>)) <span class="comment">// alloc 1mb</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">func2</span><span class="params">(data [][]<span class="type">byte</span>)</span></span> [][]<span class="type">byte</span> &#123;</span><br><span class="line"> <span class="keyword">return</span> <span class="built_in">append</span>(data, <span class="built_in">make</span>([]<span class="type">byte</span>, <span class="number">1024</span>*<span class="number">1024</span>)) <span class="comment">// alloc 1mb</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里我们用一个完整的 demo 来串一下 heap pprof 的用法：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">mallocgc</span><span class="params">(size <span class="type">uintptr</span>, typ *_type, needzero <span class="type">bool</span>)</span></span> unsafe.Pointer &#123;</span><br><span class="line"> <span class="comment">// ...</span></span><br><span class="line"> <span class="keyword">if</span> rate := MemProfileRate; rate &gt; <span class="number">0</span> &#123;</span><br><span class="line">  <span class="comment">// Note cache c only valid while m acquired; see #47302</span></span><br><span class="line">  <span class="keyword">if</span> rate != <span class="number">1</span> &amp;&amp; size &lt; c.nextSample &#123;</span><br><span class="line">   c.nextSample -= size</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">   profilealloc(mp, x, size)</span><br><span class="line">  &#125;</span><br><span class="line"> &#125;</span><br><span class="line"> <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">profilealloc</span><span class="params">(mp *m, x unsafe.Pointer, size <span class="type">uintptr</span>)</span></span> &#123;</span><br><span class="line"> c := getMCache()</span><br><span class="line"> <span class="keyword">if</span> c == <span class="literal">nil</span> &#123;</span><br><span class="line">  throw(<span class="string">&quot;profilealloc called without a P or outside bootstrapping&quot;</span>)</span><br><span class="line"> &#125;</span><br><span class="line"> c.nextSample = nextSample()</span><br><span class="line"> mProf_Malloc(x, size)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>‍</p>
+<p>代码持续地在 func1 和 func2 分别进行内存分配，每秒共分配 2mb 堆内存。</p>
+<p>将程序运行一段时间后，执行如下命令拿到 profile 快照并开启一个 web 服务来进行浏览：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// nextSample returns the next sampling point for heap profiling. The goal is</span><br><span class="line">// to sample allocations on average every MemProfileRate bytes, but with a</span><br><span class="line">// completely random distribution over the allocation timeline; this</span><br><span class="line">// corresponds to a Poisson process with parameter MemProfileRate. In Poisson</span><br><span class="line">// processes, the distance between two samples follows the exponential</span><br><span class="line">// distribution (exp(MemProfileRate)), so the best return value is a random</span><br><span class="line">// number taken from an exponential distribution whose mean is MemProfileRate.</span><br><span class="line">func nextSample() uintptr</span><br></pre></td></tr></table></figure>
+
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/dba6f45e2dff2d2bce9b1016fcf28463.png"></p>
+<p>Go Heap Graph</p>
+<p>从图中我们能够很直观的看出哪些函数的内存分配占大头（方框更大），同时也能很直观的看到函数的调用关系（通过连线）。譬如上图中很明显看出是 func1 和 func2 的分配占大头，且 func2 被 func1 调用。</p>
+<p>注意，由于 Heap Profiling 也是<strong>采样</strong>的（默认每分配 512k 采样一次），所以这里展示的内存大小要小于实际分配的内存大小。同 CPU Profiling 一样，这个数值仅仅是用于计算<strong>相对占比</strong>，进而定位内存分配热点。</p>
+<p>注：事实上，Go runtime 对采样到的结果有估算原始大小的逻辑，但这个结论并不一定准确。</p>
+<p>此外，func1 方框中的 48.88% of 90.24% 表示 Flat% of Cum%。</p>
+<p>什么是 Flat% 和 Cum%？我们先换一种浏览方式，在左上角的 View 栏下拉点击 Top：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/b72b98e8994d874cd093572bb08610cc.png"></p>
+<p>Go Heap Top</p>
+<ul>
+<li><p><strong>Name</strong> 列表示相应的函数名</p>
+</li>
+<li><p><strong>Flat</strong> 列表示该函数自身分配了多少内存</p>
+</li>
+<li><p><strong>Flat%</strong> 列表示 Flat 相对总分配大小的占比</p>
+</li>
+<li><p><strong>Cum</strong> 列表示该函数，<strong>及其调用的所有子函****数</strong>一共分配了多少内存</p>
+</li>
+<li><p><strong>Cum%</strong> 列表示 Cum 相对总分配大小的占比</p>
+</li>
+</ul>
+<p>Sum% 列表示自上而下 Flat% 的累加（可以直观的判断出从哪一行往上一共分配的多少内存）</p>
+<p>上述两种方式可以帮助我们定位到具体的函数，Go 提供了更细粒度的代码行数级别的分配源统计，在左上角 View 栏下拉点击 Source：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/1cefed8af0dde9c92708356ad69d7778.png"></p>
+<p>Go Heap Source</p>
+<p>在 CPU Profiling 中我们常用火焰图找宽顶来快速直观地定位热点函数。当然，由于数据模型的同质性，Heap Profiling 数据也可以通过火焰图来展现，在左上角 View 栏下拉点击 Flame Graph：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/233c5f5ee655a0f9fbf5cae669bd4c72.png"></p>
+<p>Go Heap Flamegraph</p>
+<p>通过上述各种方式我们可以很简单地看出内存分配大头在 func1 和 func2。然而现实场景中绝不会这么简单就让我们定位到问题根源，由于我们拿到的是某一刻的快照，对于内存泄漏问题来说这并不够用，我们需要的是一个<strong>增量数据</strong>，来判断哪些内存在<strong>持续地增长</strong>。所以可以在间隔一定时间后再获取一次 Heap Profile，对两次结果做 diff。</p>
+<p><strong>Implementation details</strong></p>
+<p>本节我们重点关注 Go Heap Profiling 的实现原理。</p>
+<p>回顾 “Heap Profiling 是如何工作的” 一节，Heap Profiler 通常的做法是直接将自己集成在内存分配器内，当应用程序进行内存分配时拿到当前的 stack trace，而 Go 正是这么做的。</p>
+<p>Go 的内存分配入口是 src&#x2F;runtime&#x2F;malloc.go 中的 mallocgc() 函数，其中一段关键代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">// Called by malloc to record a profiled block.</span><br><span class="line">func mProf_Malloc(p unsafe.Pointer, size uintptr) &#123;</span><br><span class="line"> var stk [maxStack]uintptr</span><br><span class="line"> nstk := callers(4, stk[:])</span><br><span class="line"> lock(&amp;proflock)</span><br><span class="line"> b := stkbucket(memProfile, size, stk[:nstk], true)</span><br><span class="line"> c := mProf.cycle</span><br><span class="line"> mp := b.mp()</span><br><span class="line"> mpc := &amp;mp.future[(c+2)%uint32(len(mp.future))]</span><br><span class="line"> mpc.allocs++</span><br><span class="line"> mpc.alloc_bytes += size</span><br><span class="line"> unlock(&amp;proflock)</span><br><span class="line"></span><br><span class="line"> // Setprofilebucket locks a bunch of other mutexes, so we call it outside of proflock.</span><br><span class="line"> // This reduces potential contention and chances of deadlocks.</span><br><span class="line"> // Since the object must be alive during call to mProf_Malloc,</span><br><span class="line"> // it&#x27;s fine to do this non-atomically.</span><br><span class="line"> systemstack(func() &#123;</span><br><span class="line">  setprofilebucket(p, b)</span><br><span class="line"> &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func callers(skip int, pcbuf []uintptr) int &#123;</span><br><span class="line"> sp := getcallersp()</span><br><span class="line"> pc := getcallerpc()</span><br><span class="line"> gp := getg()</span><br><span class="line"> var n int</span><br><span class="line"> systemstack(func() &#123;</span><br><span class="line">  n = gentraceback(pc, sp, 0, gp, skip, &amp;pcbuf[0], len(pcbuf), nil, nil, 0)</span><br><span class="line"> &#125;)</span><br><span class="line"> return n</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这也就意味着，每通过 mallocgc() 分配 512k 的堆内存，就调用 profilealloc() 记录一次 stack trace。  </p>
+<p>为什么需要定义一个采样粒度？每次 mallocgc() 都记录下当前的 stack trace 不是更准确吗？</p>
+<p>完全精确地拿到所有函数的内存分配看似更加吸引人，但这样<strong>带来的性能开销是巨大的</strong>。malloc() 作为用户态库函数会被应用程序<strong>非常频繁地调用</strong>，优化内存分配性能是 allocator 的责任。如果每次 malloc() 调用都伴随一次栈回溯，带来的开销几乎是不可接受的，尤其是在服务端长期持续进行 profiling 的场景。选择 “采样” 并非结果上更优，而仅仅是一种妥协。</p>
+<p>当然，我们也可以自行修改 MemProfileRate 变量，将其设置为 1 会导致每次 mallocgc() 必定进行 stack trace 记录，设置为 0 则会完全关闭 Heap Profiling，用户可以根据实际场景来权衡性能与精确度。</p>
+<p>注意，当我们将 MemProfileRate 设置为一个通常的采样粒度时，这个值并不是完全精确的，而是每次都在以 MemProfileRate 为<strong>平均值的指数分布中随机取一个值</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">type memRecord struct &#123;</span><br><span class="line"> active memRecordCycle</span><br><span class="line"> future [3]memRecordCycle</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于很多情况下内存分配是有规律的，如果按照固定的粒度进行采样，最终得到的结果可能会存在很大的误差，可能刚好每次采样都赶上了某个特定类型的内存分配。这就是这里选择随机化的原因。</p>
+<p>不只是 Heap Profiling，基于 sampling 的各类 profiler 总会有一些误差存在（例：SafePoint Bias），在审阅基于 sampling 的 profiling 结果时，需要<strong>时刻提醒自己不要忽视误差存在的可能性。</strong></p>
+<p>位于 src&#x2F;runtime&#x2F;mprof.go 的 mProf_Malloc() 函数负责具体的采样工作：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ pprof --text gfs_master /tmp/profile.0100.heap</span><br><span class="line">   255.6  24.7%  24.7%    255.6  24.7% GFS_MasterChunk::AddServer</span><br><span class="line">   184.6  17.8%  42.5%    298.8  28.8% GFS_MasterChunkTable::Create</span><br><span class="line">   176.2  17.0%  59.5%    729.9  70.5% GFS_MasterChunkTable::UpdateState</span><br><span class="line">   169.8  16.4%  75.9%    169.8  16.4% PendingClone::PendingClone</span><br><span class="line">    76.3   7.4%  83.3%     76.3   7.4% __default_alloc_template::_S_chunk_alloc</span><br><span class="line">    49.5   4.8%  88.0%     49.5   4.8% hashtable::resize</span><br><span class="line">   ...</span><br></pre></td></tr></table></figure>
+
+<p>通过调用 callers() 以及进一步的 gentraceback() 来获取当前调用栈保存在 stk 数组中（即 PC 地址的数组），这一技术被称为<strong>调用栈回溯</strong>，在很多场景均有应用（譬如程序 panic 时的栈展开）。</p>
+<p>注：术语 PC 指 Program Counter，特定于 x86-64 平台时为 RIP 寄存器；FP 指 Frame Pointer，特定于 x86-64 时为 RBP 寄存器；SP 指 Stack Pointer，特定于 x86-64 时为 RSP 寄存器。</p>
+<p>一种原始的调用栈回溯实现方式是在函数调用约定（Calling Convention）上保证发生函数调用时 RBP 寄存器（on x86-64）保存的一定是栈基址，而不再作为通用寄存器使用，由于 call 指令会首先将 RIP （返回地址）入栈，我们只要保证接下来入栈的第一条数据是当前的 RBP，那么所有函数的栈基址就以 RBP 为头，串成了一条地址链表。我们只需为每个 RBP 地址向下偏移一个单元，便能拿到 RIP 的数组了。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/0f6e3aed1928f8a4ef24e9779071b869.png"></p>
+<p>Go FramePointer Backtrace（图片来自 go-profiler-notes）</p>
+<p>注：图中提到 Go 的所有参数均通过栈传递，这一结论现在已经过时了，Go 从 1.17 版本开始支持寄存器传参。</p>
+<p>由于 x86-64 将 RBP 归为了通用寄存器，诸如 GCC 等编译器默认不再使用 RBP 保存栈基址，除非使用特定的选项将其打开。然而 Go 编译器却<strong>保留了这个特性</strong>，因此在 Go 中通过 RBP 进行栈回溯是可行的。</p>
+<p>但 Go 并没有采用这个简单的方案，原因是在某些特殊场景下该方案会带来一些问题，譬如如果某个函数被 inline 掉了，那么通过 RBP 回溯得到的调用栈就是缺失的。另外这个方案需要在常规函数调用间插入额外的指令，且需要额外占用一个通用寄存器，存在一定的性能开销，即使我们不需要栈回溯。</p>
+<p>每个 Go 的二进制文件都包含一个名为 gopclntab 的 section，这是 Go Program Counter Line Table 的缩写，它维护了 PC 到 SP 及其返回地址的映射。这样我们就无需依赖 FP，便能<strong>直****接通过查表的方式完成 PC 链表的串联</strong>。同时 gopclntab 中<strong>维护了 PC 及其所处函数是否已被内联优化的信息</strong>，所以我们在栈回溯过程中便不会丢失内联函数帧。此外 gopclntab 还维护了符号表，保存 PC 对应的代码信息（函数名，行数等），所以我们最终才能看到人类可读的 panic 结果或者 profiling 结果，而不是一大坨地址信息。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/e620274c4e6bd9557d034ccbf230732d.png"></p>
+<p>gopclntab</p>
+<p>与特定于 Go 的 gopclntab 不同，DWARF 是一种标准化的调试格式，Go 编译器同样为其生成的 binary 添加了 DWARF (v4) 信息，所以一些非 Go 生态的外部工具可以依赖它对 Go 程序进行调试。值得一提的是，DWARF 所包含的信息是 gopclntab 的超集。</p>
+<p>回到 Heap Profiling 来，当我们通过栈回溯技术（前边代码中的 gentraceback() 函数）拿到 PC 数组后，并不需要着急直接将其符号化，符号化的开销是相当可观的，我们完全可以先通过指针地址栈进行聚合。所谓的聚合就是在 hashmap 中对相同的样本进行累加，相同的样本指的是两个数组内容完全一致的样本。</p>
+<p>通过 stkbucket() 函数以 stk 为 key 获取相应的 bucket，然后将其中统计相关的字段进行累加。</p>
+<p>另外，我们注意到 memRecord 有多组 memRecordCycle 统计数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">// Record an allocation in the profile.</span><br><span class="line">static void RecordAlloc(const void* ptr, size_t bytes, int skip_count) &#123;</span><br><span class="line">  // Take the stack trace outside the critical section.</span><br><span class="line">void* stack[HeapProfileTable::kMaxStackDepth];</span><br><span class="line">  int depth = HeapProfileTable::GetCallerStackTrace(skip_count + 1, stack);</span><br><span class="line">  SpinLockHolder l(&amp;heap_lock);</span><br><span class="line">  if (is_on) &#123;</span><br><span class="line">    heap_profile-&gt;RecordAlloc(ptr, bytes, depth, stack);</span><br><span class="line">    MaybeDumpProfileLocked();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void HeapProfileTable::RecordAlloc(</span><br><span class="line">    const void* ptr, size_t bytes, int stack_depth,</span><br><span class="line">    const void* const call_stack[]) &#123;</span><br><span class="line">  Bucket* b = GetBucket(stack_depth, call_stack);</span><br><span class="line">  b-&gt;allocs++;</span><br><span class="line">  b-&gt;alloc_size += bytes;</span><br><span class="line">  total_.allocs++;</span><br><span class="line">  total_.alloc_size += bytes;</span><br><span class="line"></span><br><span class="line">  AllocValue v;</span><br><span class="line">  v.set_bucket(b);  // also did set_live(false); set_ignore(false)</span><br><span class="line">  v.bytes = bytes;</span><br><span class="line">  address_map_-&gt;Insert(ptr, v);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在累加时是通过 mProf.cycle 全局变量作为下标取模来访问某组特定的 memRecordCycle。mProf.cycle 每经过一轮 GC 就会递增，这样就记录了三轮 GC 间的分配情况。只有当一轮 GC 结束后，才会将上一轮 GC 到这一轮 GC 之间的内存分配、释放情况并入最终展示的统计数据中。这个设计是为了避免在 GC 执行前拿到 Heap Profile，给我们看到大量无用的临时内存。</p>
+<p>并且，在一轮 GC 周期的不同时刻我们也可能会看到不稳定的堆内存状态。</p>
+<p>最终调用 setprofilebucket() 将 bucket 记录到此次分配地址相关的 mspan 上，用于后续 GC 时调用 mProf_Free() 来记录相应的释放情况。</p>
+<p>就这样，Go runtime 中始终维护着这份 bucket 集合，当我们需要进行 Heap Profiling 时（譬如调用 pprof.WriteHeapProfile() 时），就会访问这份 bucket 集合，转换为 pprof 输出所需要的格式。</p>
+<p>这也是 Heap Profiling 与 CPU Profiling 的一个区别：CPU Profiling 只在进行 profiling 的时间窗口内对应用程序存在一定采样开销，而 Heap Profiling 的采样是无时无刻不在发生的，<strong>执行一次 profiling 仅仅是 dump 一下迄今为止的数据快照。</strong></p>
+<p>接下来我们将进入 C&#x2F;C++&#x2F;Rust 的世界，幸运的是，由于大部分 Heap Profiler 的实现原理是类似的，前文所述的很多知识在后文对应的上。最典型的，Go Heap Profiling 其实就是从 Google tcmalloc 移植而来的，它们具备相似的实现方式。</p>
+<p><strong>Heap Profiling with gperftools</strong></p>
+<p>gperftools（Google Performance Tools）是一套工具包，包括 Heap Profiler、Heap Checker、CPU Profiler 等工具。之所以在 Go 之后紧接着介绍它，是因为它与 Go 有很深的渊源。</p>
+<p>前文提到的 Go runtime 所移植的 Google tcmalloc 从内部分化出了两个社区版本：一个是 tcmalloc，即纯粹的 malloc 实现，不包含其它附加功能；另一个就是 gperftools，是带 Heap Profiling 能力的 malloc 实现，以及配套的其它工具集。</p>
+<p>其中 pprof 也是大家最为熟知的工具之一。pprof 早期是一个 perl 脚本，后来演化成了 Go 编写的强大工具 pprof，现在已经被集成到了 Go 主干，平时我们使用的 go tool pprof 命令内部就是直接使用的 pprof 包。</p>
+<p>注：gperftools 的主要作者是 Sanjay Ghemawat，与 Jeff Dean 结对编程的牛人。</p>
+<p><strong>Usage</strong></p>
+<p>Google 内部一直在使用 gperftools 的 Heap Profiler 分析 C++ 程序的堆内存分配，它可以做到：</p>
+<ul>
+<li><p>Figuring out what is in the program heap at any given time</p>
+</li>
+<li><p>Locating memory leaks</p>
+</li>
+<li><p>Finding places that do a lot of allocation</p>
+</li>
+</ul>
+<p>作为 Go pprof 的祖先，看起来和 Go 提供的 Heap Profiling 能力是相同的。</p>
+<p>Go 是直接在 runtime 中的内存分配函数硬编入了采集代码，与此类似，gperftools 则是在它提供的 libtcmalloc 的 malloc 实现中植入了采集代码。用户需要在项目编译链接阶段执行 -ltcmalloc 链接该库，以替换 libc 默认的 malloc 实现。</p>
+<p>当然，我们也可以依赖 Linux 的动态链接机制来在运行阶段进行替换：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">// Record a deallocation in the profile.</span><br><span class="line">static void RecordFree(const void* ptr) &#123;</span><br><span class="line">  SpinLockHolder l(&amp;heap_lock);</span><br><span class="line">  if (is_on) &#123;</span><br><span class="line">    heap_profile-&gt;RecordFree(ptr);</span><br><span class="line">    MaybeDumpProfileLocked();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void HeapProfileTable::RecordFree(const void* ptr) &#123;</span><br><span class="line">  AllocValue v;</span><br><span class="line">  if (address_map_-&gt;FindAndRemove(ptr, &amp;v)) &#123;</span><br><span class="line">    Bucket* b = v.bucket();</span><br><span class="line">    b-&gt;frees++;</span><br><span class="line">    b-&gt;free_size += v.bytes;</span><br><span class="line">    total_.frees++;</span><br><span class="line">    total_.free_size += v.bytes;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当使用 LD_PRELOAD 指定了 libtcmalloc.so 后，我们程序中所默认链接的 malloc() 就被覆盖了，Linux 的动态链接器保证了优先执行 LD_PRELOAD 所指定的版本。</p>
+<p>在运行链接了 libtcmalloc 的可执行文件之前，如果我们将环境变量 HEAPPROFILE 设置为一个文件名，那么当程序执行时，Heap Profile 数据就会被写入该文件。</p>
+<p>在默认情况下，每当我们的程序分配了 1g 内存时，或每当程序的内存使用高水位线增加了 100mb 时，都会进行一次 Heap Profile 的 dump。这些参数可以通过环境变量来修改。</p>
+<p>使用 gperftools 自带的 pprof 脚本可以分析 dump 出来的 profile 文件，用法与 Go 基本相同。 </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// demo.c</span><br><span class="line"></span><br><span class="line">int add(int a, int b) &#123;</span><br><span class="line">    return a + b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/8050ae1425d67bd464d7799ec844b6ca.png"></p>
+<p>gperftools gv</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">.section __TEXT,__text,regular,pure_instructions</span><br><span class="line"> .build_version macos, 11, 0 sdk_version 11, 3</span><br><span class="line"> .globl _add                            ## -- Begin function add</span><br><span class="line"> .p2align 4, 0x90</span><br><span class="line">_add:                                   ## @add</span><br><span class="line"> .cfi_startproc</span><br><span class="line">## %bb.0:</span><br><span class="line"> pushq %rbp</span><br><span class="line"> .cfi_def_cfa_offset 16</span><br><span class="line"> .cfi_offset %rbp, -16</span><br><span class="line"> movq %rsp, %rbp</span><br><span class="line"> .cfi_def_cfa_register %rbp</span><br><span class="line"> movl %edi, -4(%rbp)</span><br><span class="line"> movl %esi, -8(%rbp)</span><br><span class="line"> movl -4(%rbp), %eax</span><br><span class="line"> addl -8(%rbp), %eax</span><br><span class="line"> popq %rbp</span><br><span class="line"> retq</span><br><span class="line"> .cfi_endproc</span><br><span class="line">                                        ## -- End function</span><br><span class="line">.subsections_via_symbols</span><br></pre></td></tr></table></figure>
+
+<p>同样的，从左到右依次是 Flat(mb)，Flat%，Sum%，Cum(mb)，Cum%，Name。</p>
+<p><strong>Implementation details</strong></p>
+<p>类似的，tcmalloc 在 malloc() 和 operator new 中增加了一些采样逻辑，当根据条件触发采样 hook 时，会执行以下函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">./autogen.sh</span><br><span class="line">./configure --prefix=/usr/local/jemalloc-5.1.0 --enable-prof</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>执行流程如下：</p>
+<ol>
+<li><p>调用 GetCallerStackTrace() 获取调用栈。</p>
+</li>
+<li><p>以调用栈作为 hashmap 的 key 调用 GetBucket() 获取相应的 Bucket。</p>
+</li>
+<li><p>累加 Bucket 中的统计数据。</p>
+</li>
+</ol>
+<p>由于没有了 GC 的存在，采样流程相比 Go 简单了许多。从变量命名上来看，Go runtime 中的 profiling 代码的确是从这里移植过去的。</p>
+<p>sampler.h 中详细描述了 gperftools 的采样规则，总的来说也和 Go 一致，即：512k average sample step。</p>
+<p>在 free() 或 operator delete 中同样需要增加一些逻辑来记录内存释放情况，这比拥有 GC 的 Go 同样要简单不少：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">fn main() &#123;</span><br><span class="line">    let mut data = vec![];</span><br><span class="line">    loop &#123;</span><br><span class="line">        func1(&amp;mut data);</span><br><span class="line">        std::thread::sleep(std::time::Duration::from_secs(1));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fn func1(data: &amp;mut Vec&lt;Box&lt;[u8; 1024*1024]&gt;&gt;) &#123;</span><br><span class="line">    data.push(Box::new([0u8; 1024*1024])); // alloc 1mb</span><br><span class="line">    func2(data);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">fn func2(data: &amp;mut Vec&lt;Box&lt;[u8; 1024*1024]&gt;&gt;) &#123;</span><br><span class="line">    data.push(Box::new([0u8; 1024*1024])); // alloc 1mb</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>找到相应的 Bucket，累加 free 相关的字段即可。</p>
+<p>现代 C&#x2F;C++&#x2F;Rust 程序获取调用栈的过程通常是依赖 libunwind 库进行的，libunwind 进行栈回溯的原理上与 Go 类似，都没有选择 Frame Pointer 回溯模式，都是依赖程序中的某个特定 section 所记录的 unwind table。不同的是，Go 所依赖的是自己生态内创建的名为 gopclntab 的特定 section，而 C&#x2F;C++&#x2F;Rust 程序依赖的是 .debug_frame section 或 .eh_frame section。</p>
+<p>其中 .debug_frame 为 DWARF 标准定义，Go 编译器也会写入这个信息，但自己不用，只留给第三方工具使用。GCC 只有开启 -g 参数时才会向 .debug_frame 写入调试信息。</p>
+<p>而 .eh_frame 则更为现代一些，在 Linux Standard Base 中定义。原理是让编译器在汇编代码的相应位置插入一些伪指令（CFI Directives，Call Frame Information），来协助汇编器生成最终包含 unwind table 的 .eh_frame section。</p>
+<p>以如下代码为例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ export MALLOC_CONF=&quot;prof:true,lg_prof_interval:25&quot;</span><br><span class="line">$ export LD_PRELOAD=/usr/lib/libjemalloc.so</span><br><span class="line">$ ./demo</span><br></pre></td></tr></table></figure>
+
+<p>我们使用 cc -S demo.c 来生成汇编代码（gcc&#x2F;clang 均可），注意这里并没有使用 -g 参数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">JEMALLOC_ALWAYS_INLINE int</span><br><span class="line">imalloc_body(static_opts_t *sopts, dynamic_opts_t *dopts, tsd_t *tsd) &#123;</span><br><span class="line"> // ...</span><br><span class="line"> // If profiling is on, get our profiling context.</span><br><span class="line"> if (config_prof &amp;&amp; opt_prof) &#123;</span><br><span class="line">  bool prof_active = prof_active_get_unlocked();</span><br><span class="line">  bool sample_event = te_prof_sample_event_lookahead(tsd, usize);</span><br><span class="line">  prof_tctx_t *tctx = prof_alloc_prep(tsd, prof_active,</span><br><span class="line">      sample_event);</span><br><span class="line"></span><br><span class="line">  emap_alloc_ctx_t alloc_ctx;</span><br><span class="line">  if (likely((uintptr_t)tctx == (uintptr_t)1U)) &#123;</span><br><span class="line">   alloc_ctx.slab = (usize &lt;= SC_SMALL_MAXCLASS);</span><br><span class="line">   allocation = imalloc_no_sample(</span><br><span class="line">       sopts, dopts, tsd, usize, usize, ind);</span><br><span class="line">  &#125; else if ((uintptr_t)tctx &gt; (uintptr_t)1U) &#123;</span><br><span class="line">   allocation = imalloc_sample(</span><br><span class="line">       sopts, dopts, tsd, usize, ind);</span><br><span class="line">   alloc_ctx.slab = false;</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">   allocation = NULL;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (unlikely(allocation == NULL)) &#123;</span><br><span class="line">   prof_alloc_rollback(tsd, tctx);</span><br><span class="line">   goto label_oom;</span><br><span class="line">  &#125;</span><br><span class="line">  prof_malloc(tsd, allocation, size, usize, &amp;alloc_ctx, tctx);</span><br><span class="line"> &#125; else &#123;</span><br><span class="line">  assert(!opt_prof);</span><br><span class="line">  allocation = imalloc_no_sample(sopts, dopts, tsd, size, usize,</span><br><span class="line">      ind);</span><br><span class="line">  if (unlikely(allocation == NULL)) &#123;</span><br><span class="line">   goto label_oom;</span><br><span class="line">  &#125;</span><br><span class="line"> &#125;</span><br><span class="line"> // ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从生成的汇编代码中可以看到许多以 .cfi_ 为前缀的伪指令，它们便是 CFI Directives。</p>
+<p><strong>Heap Profiling with jemalloc</strong></p>
+<p>接下来我们关注 jemalloc，这是因为 TiKV 默认使用 jemalloc 作为内存分配器，能否在 jemalloc 上顺利地进行 Heap Profiling 是值得我们关注的要点。</p>
+<p><strong>Usage</strong></p>
+<p>jemalloc 自带了 Heap Profiling 能力，但默认是不开启的，需要在编译时指定 –enable-prof 参数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">void</span><br><span class="line">prof_malloc_sample_object(tsd_t *tsd, const void *ptr, size_t size,</span><br><span class="line">    size_t usize, prof_tctx_t *tctx) &#123;</span><br><span class="line"> // ...</span><br><span class="line"> malloc_mutex_lock(tsd_tsdn(tsd), tctx-&gt;tdata-&gt;lock);</span><br><span class="line"> size_t shifted_unbiased_cnt = prof_shifted_unbiased_cnt[szind];</span><br><span class="line"> size_t unbiased_bytes = prof_unbiased_sz[szind];</span><br><span class="line"> tctx-&gt;cnts.curobjs++;</span><br><span class="line"> tctx-&gt;cnts.curobjs_shifted_unbiased += shifted_unbiased_cnt;</span><br><span class="line"> tctx-&gt;cnts.curbytes += usize;</span><br><span class="line"> tctx-&gt;cnts.curbytes_unbiased += unbiased_bytes;</span><br><span class="line"> // ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>与 tcmalloc 相同，我们可以选择通过 -ljemalloc 将 jemalloc 链接到程序，或通过 LD_PRELOAD 用 jemalloc 覆盖 libc 的 malloc() 实现。</p>
+<p>我们以 Rust 程序为例展示如何通过 jemalloc 进行 Heap Profiling。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">// 入口</span><br><span class="line">#[cfg_attr(not(test), no_mangle)]</span><br><span class="line">pub unsafe extern &quot;C&quot; fn malloc( size: size_t ) -&gt; *mut c_void &#123;</span><br><span class="line">    allocate( size, AllocationKind::Malloc )</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">#[inline(always)]</span><br><span class="line">unsafe fn allocate( requested_size: usize, kind: AllocationKind ) -&gt; *mut c_void &#123;</span><br><span class="line">    // ...</span><br><span class="line">    // 调用 jemalloc 进行内存分配</span><br><span class="line">    let pointer = match kind &#123;</span><br><span class="line">        AllocationKind::Malloc =&gt; &#123;</span><br><span class="line">            if opt::get().zero_memory &#123;</span><br><span class="line">                calloc_real( effective_size as size_t, 1 )</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                malloc_real( effective_size as size_t )</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        // ...</span><br><span class="line">    &#125;;</span><br><span class="line">    // ...</span><br><span class="line">    // 栈回溯</span><br><span class="line">    let backtrace = unwind::grab( &amp;mut thread );</span><br><span class="line">    // ...</span><br><span class="line">    // 记录样本</span><br><span class="line">    on_allocation( id, allocation, backtrace, thread );</span><br><span class="line">    pointer</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// xxx_real 链接到 jemalloc 实现</span><br><span class="line">#[cfg(feature = &quot;jemalloc&quot;)]</span><br><span class="line">extern &quot;C&quot; &#123;</span><br><span class="line">    #[link_name = &quot;_rjem_mp_malloc&quot;]</span><br><span class="line">    fn malloc_real( size: size_t ) -&gt; *mut c_void;</span><br><span class="line">    // ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>与 Go 一节中提供的 demo 类似，我们同样在 Rust 中每秒分配 2mb 堆内存，func1 和 func2 各分配 1mb，由 func1 调用 func2。  </p>
+<p>直接使用 rustc 不带任何参数编译该文件，然后执行如下命令启动程序：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">pub fn on_allocation(</span><br><span class="line">    id: InternalAllocationId,</span><br><span class="line">    allocation: InternalAllocation,</span><br><span class="line">    backtrace: Backtrace,</span><br><span class="line">    thread: StrongThreadHandle</span><br><span class="line">) &#123;</span><br><span class="line">    // ...</span><br><span class="line">    crate::event::send_event_throttled( move || &#123;</span><br><span class="line">        InternalEvent::Alloc &#123;</span><br><span class="line">            id,</span><br><span class="line">            timestamp,</span><br><span class="line">            allocation,</span><br><span class="line">            backtrace,</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">#[inline(always)]</span><br><span class="line">pub(crate) fn send_event_throttled&lt; F: FnOnce() -&gt; InternalEvent &gt;( callback: F ) &#123;</span><br><span class="line">    EVENT_CHANNEL.chunked_send_with( 64, callback );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>MALLOC_CONF 用于指定 jemalloc 的相关参数，其中 prof:true 表示开启 profiler，log_prof_interval:25 表示每分配 2^25 字节（32mb）堆内存便 dump 一份 profile 文件。</p>
+<p>注：更多 MALLOC_CONF 选项可以参考文档。</p>
+<p>等待一段时间后，即可看到有一些 profile 文件产生。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/ac5d5cd99cc62637408ec0e8f29e1621.png"></p>
+<p>jemalloc 提供了一个和 tcmalloc 的 pprof 类似的工具，叫 jeprof，事实上它就是由 pprof perl 脚本 fork 而来的，我们可以使用 jeprof 来审阅 profile 文件。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">pub struct Channel&lt; T &gt; &#123;</span><br><span class="line">    queue: Mutex&lt; Vec&lt; T &gt; &gt;,</span><br><span class="line">    condvar: Condvar</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/f22f806ebb405cb2252a7375258abe62.png"></p>
+<p>同样可以生成与 Go&#x2F;gperftools 相同的 graph：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">threadcount=200</span><br><span class="line">recordcount=100000</span><br><span class="line">operationcount=1000000</span><br><span class="line">fieldcount=20</span><br></pre></td></tr></table></figure>
+
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/a22851d96cead0d4b986132749311864.png"></p>
+<p>jeprof svg</p>
+<p><strong>Implementation details</strong></p>
+<p>与 tcmalloc 类似，jemalloc 在 malloc() 中增加了采样逻辑：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">var count int32</span><br><span class="line"></span><br><span class="line">for n := 0; n &lt; 128; n++ &#123;</span><br><span class="line"> go func() &#123;</span><br><span class="line">  for &#123;</span><br><span class="line">   key := uuid.New()</span><br><span class="line">   err := client.Set(key, key, 0).Err()</span><br><span class="line">   if err != nil &#123;</span><br><span class="line">    panic(err)</span><br><span class="line">   &#125;</span><br><span class="line">   err = client.Get(key).Err()</span><br><span class="line">   if err != nil &#123;</span><br><span class="line">    panic(err)</span><br><span class="line">   &#125;</span><br><span class="line">   atomic.AddInt32(&amp;count, 1)</span><br><span class="line">  &#125;</span><br><span class="line"> &#125;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 prof_malloc() 中调用 prof_malloc_sample_object() 对 hashmap 中相应的调用栈记录进行累加：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">void</span><br><span class="line">prof_malloc_sample_object(tsd_t *tsd, const void *ptr, size_t size,</span><br><span class="line">    size_t usize, prof_tctx_t *tctx) &#123;</span><br><span class="line"> // ...</span><br><span class="line"> malloc_mutex_lock(tsd_tsdn(tsd), tctx-&gt;tdata-&gt;lock);</span><br><span class="line"> size_t shifted_unbiased_cnt = prof_shifted_unbiased_cnt[szind];</span><br><span class="line"> size_t unbiased_bytes = prof_unbiased_sz[szind];</span><br><span class="line"> tctx-&gt;cnts.curobjs++;</span><br><span class="line"> tctx-&gt;cnts.curobjs_shifted_unbiased += shifted_unbiased_cnt;</span><br><span class="line"> tctx-&gt;cnts.curbytes += usize;</span><br><span class="line"> tctx-&gt;cnts.curbytes_unbiased += unbiased_bytes;</span><br><span class="line"> // ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>jemalloc 在 free() 中注入的逻辑也与 tcmalloc 类似，同时 jemalloc 也依赖 libunwind 进行栈回溯，这里均不再赘述。</p>
+<p><strong>Heap Profiling with bytehound</strong></p>
+<p>Bytehound 是一款 Linux 平台的 Memory Profiler，用 Rust 编写。特点是提供的前端功能比较丰富，我们关注的重点在于它是如何实现的，以及能否在 TiKV 中使用，所以只简单介绍下基本用法。</p>
+<p><strong>Usage</strong></p>
+<p>我们可以在 Releases 页面下载 bytehound 的二进制动态库，只有 Linux 平台的支持。</p>
+<p>然后，像 tcmalloc 或 jemalloc 一样，通过 LD_PRELOAD 挂载它自己的实现。这里我们假设运行的是 Heap Profiling with jemalloc 一节相同的带有内存泄漏的 Rust 程序：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ LD_PRELOAD=./libbytehound.so ./demo</span><br></pre></td></tr></table></figure>
+
+<p>接下来在程序的工作目录会产生一个 memory-profiling_*.dat 文件，这便是 bytehound 的 Heap Profiling 产物。注意，与其它 Heap Profiler 不同的是，这个文件是持续更新的，而非每隔特定的时间就生成一个新的文件。</p>
+<p>接下来执行如下命令开启一个 web 端口用于实时分析上述文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./bytehound server memory-profiling_*.dat</span><br></pre></td></tr></table></figure>
+
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/07d0a71eae4e58af28d2fb6f519914ba.png"></p>
+<p>Bytehound GUI</p>
+<p>最直观的方法是点击右上角的 Flamegraph 查看火焰图：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/94e4ecbd297e01e18a85799a3685bd22.png"></p>
+<p>Bytehound Flamegraph</p>
+<p>从图中可以轻易看出 demo::func1 与 demo::func2 的内存热点。</p>
+<p>Bytehound 提供了丰富的 GUI 功能，这是它的一大亮点，大家可以参考文档自行探索。</p>
+<p><strong>Implementation details</strong></p>
+<p>Bytehound 同样是替换掉了用户默认的 malloc 实现，但 bytehound 本身并没有实现内存分配器，而是基于 jemalloc 做了包装。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">// 入口</span><br><span class="line">#[cfg_attr(not(test), no_mangle)]</span><br><span class="line">pub unsafe extern &quot;C&quot; fn malloc( size: size_t ) -&gt; *mut c_void &#123;</span><br><span class="line">    allocate( size, AllocationKind::Malloc )</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">#[inline(always)]</span><br><span class="line">unsafe fn allocate( requested_size: usize, kind: AllocationKind ) -&gt; *mut c_void &#123;</span><br><span class="line">    // ...</span><br><span class="line">    // 调用 jemalloc 进行内存分配</span><br><span class="line">    let pointer = match kind &#123;</span><br><span class="line">        AllocationKind::Malloc =&gt; &#123;</span><br><span class="line">            if opt::get().zero_memory &#123;</span><br><span class="line">                calloc_real( effective_size as size_t, 1 )</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                malloc_real( effective_size as size_t )</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        // ...</span><br><span class="line">    &#125;;</span><br><span class="line">    // ...</span><br><span class="line">    // 栈回溯</span><br><span class="line">    let backtrace = unwind::grab( &amp;mut thread );</span><br><span class="line">    // ...</span><br><span class="line">    // 记录样本</span><br><span class="line">    on_allocation( id, allocation, backtrace, thread );</span><br><span class="line">    pointer</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// xxx_real 链接到 jemalloc 实现</span><br><span class="line">#[cfg(feature = &quot;jemalloc&quot;)]</span><br><span class="line">extern &quot;C&quot; &#123;</span><br><span class="line">    #[link_name = &quot;_rjem_mp_malloc&quot;]</span><br><span class="line">    fn malloc_real( size: size_t ) -&gt; *mut c_void;</span><br><span class="line">    // ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看起来在每次 malloc 时都会固定进行栈回溯和记录，没有采样逻辑。而在 on_allocation hook 中，分配记录被发送到了 channel，由统一的 processor 线程进行异步处理。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">pub fn on_allocation(</span><br><span class="line">    id: InternalAllocationId,</span><br><span class="line">    allocation: InternalAllocation,</span><br><span class="line">    backtrace: Backtrace,</span><br><span class="line">    thread: StrongThreadHandle</span><br><span class="line">) &#123;</span><br><span class="line">    // ...</span><br><span class="line">    crate::event::send_event_throttled( move || &#123;</span><br><span class="line">        InternalEvent::Alloc &#123;</span><br><span class="line">            id,</span><br><span class="line">            timestamp,</span><br><span class="line">            allocation,</span><br><span class="line">            backtrace,</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">#[inline(always)]</span><br><span class="line">pub(crate) fn send_event_throttled&lt; F: FnOnce() -&gt; InternalEvent &gt;( callback: F ) &#123;</span><br><span class="line">    EVENT_CHANNEL.chunked_send_with( 64, callback );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而 EVENT_CHANNEL 的实现是简单的 Mutex&lt;Vec<T>&gt;：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">pub struct Channel&lt; T &gt; &#123;</span><br><span class="line">    queue: Mutex&lt; Vec&lt; T &gt; &gt;,</span><br><span class="line">    condvar: Condvar</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Performance overhead</strong></p>
+<p>本节我们来探寻一下前文所述的各个 Heap Profiler 的性能开销，具体测量方法因场景而异。</p>
+<p>所有测试均单独运行在下述物理机环境：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/9f0f7a52fa1eb50ee3baaa9b86b7e053.png"></p>
+<p><strong>Go</strong></p>
+<p>在 Go 中我们的测量方式是使用 TiDB + unistore 部署单节点，针对 runtime.MemProfileRate 参数进行调整然后分别用 sysbench 进行测量。</p>
+<p>相关软件版本及压测参数数据：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/a054808d0c233d8e8940c7bf3f9eb9e1.png"></p>
+<p>得到的结果数据：  </p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/a431584baf5340dcca7eb862aad47670.png"></p>
+<p>相较 “不记录” 来说，无论是 TPS&#x2F;QPS，还是 P95 延迟线，<strong>512k 采样记录的性能损耗基本都在 1% 以内</strong>。而 “全量记录” 带来的性能开销符合 “会很高” 的预期，但却高的出乎意料：<strong>TPS&#x2F;QPS 缩水了 20 倍，P95 延迟增加了 30 倍。</strong></p>
+<p>由于 Heap Profiling 是一项通用功能，我们无法准确的给出所有场景下的通用性能损耗，只有在特定项目下的测量结论才有价值。TiDB 是一个相对偏计算密集型的应用，内存分配频率可能不及一些内存密集型应用，因此该结论（及后续所有结论）仅可用做参考，读者可自行测量自身应用场景下的开销。</p>
+<p><strong>tcmalloc&#x2F;jemalloc</strong></p>
+<p>我们基于 TiKV 来测量 tcmalloc&#x2F;jemalloc，方法是在机器上部署一个 PD 进程和一个 TiKV 进程，采用 go-ycsb 进行压测，关键参数如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">threadcount=200</span><br><span class="line">recordcount=100000</span><br><span class="line">operationcount=1000000</span><br><span class="line">fieldcount=20</span><br></pre></td></tr></table></figure>
+
+<p>在启动 TiKV 前分别使用 LD_PRELOAD 注入不同的 malloc hook。其中 tcmalloc 使用默认配置，即类似 Go 的 512k 采样；jemalloc 使用默认采样策略，且每分配 1G 堆内存就 dump 一份 profile 文件。</p>
+<p>最终得到如下数据：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/1cf686a615aeadc22122e6d1e9b916f1.png"></p>
+<p>tcmalloc 与 jemalloc 的表现相差无几，OPS 相较默认内存分配器下降了 4% 左右，P99 延迟线上升了 10% 左右。</p>
+<p>在前边我们已经了解到 tcmalloc 的实现和 Go heap pprof 的实现基本相同，但这里测量出来的数据却不太一致，推测原因是 TiKV 与 TiDB 的内存分配特征存在差异，这也印证了前文所讲的：“我们无法准确的给出所有场景下的通用性能损耗，只有在特定项目下的测量结论才有价值”。</p>
+<p><strong>bytehound</strong></p>
+<p>我们没有将 bytehound 与 tcmalloc&#x2F;jemalloc 放在一起的原因是在 TiKV 上实际使用 bytehound 时会在启动阶段遇到死锁问题。</p>
+<p>由于我们推测 <strong>bytehound 的性能开销会非常高</strong>，理论上是无法应用在 TiKV 生产环境的，所以我们只需印证这个结论即可。</p>
+<p>注：推测性能开销高的原因是在 bytehound 代码中没有找到采样逻辑，每次采集到的数据通过 channel 发送给后台线程处理，而 channel 也只是简单使用 Mutex + Vec 封装了下。</p>
+<p>我们选择一个简单的 mini-redis 项目来测量 bytehound 性能开销，由于目标仅仅是确认是否能够满足 TiKV 生产环境使用的要求，而不是精确测量数据，所以我们只简单统计并对比其 TPS 即可，具体 driver 代码片段如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">var count int32</span><br><span class="line"></span><br><span class="line">for n := 0; n &lt; 128; n++ &#123;</span><br><span class="line"> go func() &#123;</span><br><span class="line">  for &#123;</span><br><span class="line">   key := uuid.New()</span><br><span class="line">   err := client.Set(key, key, 0).Err()</span><br><span class="line">   if err != nil &#123;</span><br><span class="line">    panic(err)</span><br><span class="line">   &#125;</span><br><span class="line">   err = client.Get(key).Err()</span><br><span class="line">   if err != nil &#123;</span><br><span class="line">    panic(err)</span><br><span class="line">   &#125;</span><br><span class="line">   atomic.AddInt32(&amp;count, 1)</span><br><span class="line">  &#125;</span><br><span class="line"> &#125;()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>开启 128 goroutine 对 server 进行读写操作，一次读 &#x2F; 写被认为是一次完整的 operation，其中仅仅对次数进行统计，没有测量延迟等指标，最终使用总次数除以执行时间，得到开启 bytehound 前后的不同 TPS，数据如下：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/img_convert/c391b26a3496c2e3a6b257e460e27dbb.png"></p>
+<p><strong>从结果来看 TPS 损失了 50% 以上。</strong></p>
+<p><strong>What can BPF bring</strong></p>
+<p>虽然 BPF 性能开销很低，但基于 BPF 很大程度上只能拿到系统层面的指标，通常意义上的 Heap Profiling 需要在内存分配链路上进行统计，<strong>但内存分配是趋于分层****的</strong>。</p>
+<p>举个例子，如果我们在自己的程序里提前 malloc 了一大块堆内存作为内存池，自己设计了分配算法，接下来所有业务逻辑所需的堆内存全都从内存池里自行分配，那么现有的 Heap Profiler 就没法用了。因为它只告诉你你在启动阶段申请了一大段内存，其它时候的内存申请数量为 0。在这种场景下我们就需要侵入到自己设计的内存分配代码中，在入口处做 Heap Profiler 该做的事情。</p>
+<p>BPF 的问题与此类似，我们可以挂个钩子在 brk&#x2F;sbrk 上，当用户态真正需要向内核申请扩容堆内存时，对当前的 stack trace 进行记录。然而内存分配器是复杂的黑盒，最常触发 brk&#x2F;sbrk 的用户栈不一定就是导致内存泄漏的用户栈。这需要做一些实验来验证，如果结果真的有一定价值，那么将 BPF 作为低成本的兜底方案长期运行也未尝不可（需要额外考虑 BPF 的权限问题）。</p>
+<p>至于 uprobe，只是无侵入的代码植入，对于 Heap Profiling 本身还是要在 allocator 里走相同的逻辑，进而带来相同的开销，而我们对代码的侵入性并不敏感。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/parca-dev/parca">https://github.com/parca-dev/parca</a> 实现了基于 BPF 的 Continuous Profiling，但真正利用了 BPF 的模块其实只有 CPU Profiler。在 bcc-tools 中已经提供了一个 Python 工具用来做 CPU Profiling（<a target="_blank" rel="noopener" href="https://github.com/iovisor/bcc/blob/master/tools/profile.py%EF%BC%89%EF%BC%8C%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86%E6%98%AF%E7%9B%B8%E5%90%8C%E7%9A%84%E3%80%82%E5%AF%B9%E4%BA%8E">https://github.com/iovisor/bcc/blob/master/tools/profile.py），核心原理是相同的。对于</a> Heap Profiling 暂时没有太大的借鉴意义。</p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2022/11/18/linux/%E5%86%85%E5%AD%98/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E6%8E%92%E6%9F%A5%EF%BC%9AHeap%20Profiling%20%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2022/11/18/linux/%E5%86%85%E5%AD%98/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E6%8E%92%E6%9F%A5%EF%BC%9AHeap%20Profiling%20%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/')">内存泄露的定位与排查</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2022/11/18/linux/%E5%86%85%E5%AD%98/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E6%8E%92%E6%9F%A5%EF%BC%9AHeap%20Profiling%20%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=内存泄露的定位与排查&amp;url=https://shippomx.github.io/2022/11/18/linux/%E5%86%85%E5%AD%98/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E6%8E%92%E6%9F%A5%EF%BC%9AHeap%20Profiling%20%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/linux/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>linux<span class="tagsPageCount">16</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/10/22/linux/%E5%86%85%E5%AD%98/linux%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">linux中的内存分配</div></div></a></div><div class="next-post pull-right"><a href="/2022/12/08/linux/%E5%AD%98%E5%82%A8/overlay2%20%E6%B5%85%E6%9E%90/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">docker overlay浅析</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/" title="Nginx 配置 HTTPS 服务器"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2017-06-08</div><div class="title">Nginx 配置 HTTPS 服务器</div></div></a></div><div><a href="/2023/02/14/linux%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" title="简易环境配置"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-02-14</div><div class="title">简易环境配置</div></div></a></div><div><a href="/2023/03/11/linux/Linux%20%E8%BF%9B%E7%A8%8B%E7%8A%B6%E6%80%81%E8%A7%A3%E6%9E%90%20/" title="进程状态简述"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-03-11</div><div class="title">进程状态简述</div></div></a></div><div><a href="/2023/10/02/linux/%E5%88%9B%E5%BB%BA%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B%E6%AD%A5%E9%AA%A4%E4%B8%8E%20setsid/" title="守护进程与setsid"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-02</div><div class="title">守护进程与setsid</div></div></a></div><div><a href="/2023/10/01/linux/%E5%BC%80%E6%BA%90%E6%97%A5%E5%BF%97%E5%BA%93log_c%E7%9A%84%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8/" title="开源日志库log_c的简单使用"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-01</div><div class="title">开源日志库log_c的简单使用</div></div></a></div><div><a href="/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/" title="容器安全-理解cgroup中的cpuset"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-06-21</div><div class="title">容器安全-理解cgroup中的cpuset</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

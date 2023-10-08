@@ -1,0 +1,439 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>iptables 规则详解 | 远辰</title><meta name="keywords" content="linux"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="iptables 规则详解"><meta name="application-name" content="iptables 规则详解"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="iptables 规则详解"><meta property="og:url" content="https://shippomx.github.io/2021/09/03/linux/%E7%BD%91%E7%BB%9C/iptables%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%20docker%20%E7%9A%84%20iptables%20%E8%A7%84%E5%88%99/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="iptables 详解及 docker 的 iptables 规则 iptables 处理流程 命令与扩展 系统默认规则 ipset 的使用 SNAT 与 DNAT ftp 规则 firewall-cmd 命令   docker 的 iptables 规则 docker 网络类型 数据包处理流程 f"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="iptables 详解及 docker 的 iptables 规则 iptables 处理流程 命令与扩展 系统默认规则 ipset 的使用 SNAT 与 DNAT ftp 规则 firewall-cmd 命令   docker 的 iptables 规则 docker 网络类型 数据包处理流程 f"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2021/09/03/linux/%E7%BD%91%E7%BB%9C/iptables%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%20docker%20%E7%9A%84%20iptables%20%E8%A7%84%E5%88%99/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: 'iptables 规则详解',
+  postAI: '',
+  pageFillDescription: ' 详解及 docker 的 iptables 规则, iptables, 处理流程, 命令与扩展, 系统默认规则, ipset 的使用, SNAT 与 DNAT, ftp 规则, firewall-cmd 命令,  的 iptables 规则, docker 网络类型, 数据包处理流程, filter 表规则, nat 表规则详解及的规则处理流程命令与扩展系统默认规则的使用与规则命令的规则网络类型数据包处理流程表规则表规则处理流程是中网络钩子有四表五链表即防火墙规则允许阻止或丢弃进出的数据包使用是最多的表网络地址转换内网的数据包收发室有多种类型常见的有是第二常用的表修改数据包的给数据包做不同的标记策略路由等表一般用于跟踪状态调试用的较少优先级五链到达本机前的路由规则进入本机的规则转发的规则本机发出的规则发出后的路由规则命令与扩展清空表上的所有规则默认为表链上操作规则追加前面插入删除替换新建一个自定义链例如在第条规则前插入禁止非访问端口查看某个表的所有链上的规则表常将网卡和已建立连接的规则放在最前面降低系统负担允许允许连续范围端口每个链都有默认规则禁止时可以设置白名单允许时可以设置黑名单链默认禁止连接有很多扩展不同的扩展有不同的功能查看文档常用的多端口扩展扩展每秒最多个连接扩展限制并发连接数扩展字符串匹配禁止规则都是保存在内存中的重启规则会丢失可以使用和保存还可以使用禁用系统默认规则安装后文件中有默认规则第四个是允许登录第五个是禁止其他连接通过并返回错误第六个是禁止的使用可与结合实现动态的白名单并且可以设置过期时间与常用于内部无法上网的机器通过网关上网需要调整安全组和解除网关与绑定网关打开核心转发数据包离开前将源地址改为网关地址动态上网时常用不能上网的机器修改网关常用于将内部机器暴漏给外部用户使用规则分为主动模式和被动模式主动模式数据流是主动连接的随机端口一般客户端都工作在网络中客户端端口须层层路由开放所以这种模式很少使用被动模式告知数据连接端口客户端连接的数据连接端口这个端口一般是随机的需要服务端开放使用的连接追踪功能可以很好的解决这个问题加载专用的追踪模块开启追踪模块后仅需开放端口即可默认默认指明关联的数据端口允许连接命令分为和两者是独立的是的脚本已经整合了和与不同的是使用来管理防火墙可以根据等匹配匹配不上的进入默认的查询默认修改了规则需要重新加载才能生效列出的所有规则开放端口进行复杂的控制需要规则命令比较复杂不推荐使用的规则网络类型顾名思义不使用网络只使用使用主机的网络桥接相当于通过分配一个的地址使用使用指定容器的网络数据包处理流程为便于测试启动两个容器表规则主要是转发规则默认为链处理到的数据包即容器对外的规则例如允许非访问端口为了搞清楚需要创建一个开启一个并安装在中安装可以看到并不通怎么实现的呢规则是源网卡是而目的地不是就进入而中有一条规则即不允许不同的网卡互相访问这对于非常有用设计非常精妙链用于自定义转发规则优先级最高可以限制进入容器的源地址以上规则禁止非的地址访问容器的端口表规则链方便自定义规则规则使得使用宿主机的作为网关便于接收外部返回的数据有如下规则通过链和链将主机的端口流量转发给并通过表的链返回给客户端宿主机通过表的链是可以访问的端口的表的规则使得可以访问外网很奇怪的一条规则使得容器通过自己的也可以访问端口最后网上的一张流程图',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/linux/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>linux</span></a></span></div></div><h1 class="post-title" itemprop="name headline">iptables 规则详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2021-09-03T12:07:24.000Z" title="发表于 2021-09-03 20:07:24">2021-09-03</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2021/09/03/linux/%E7%BD%91%E7%BB%9C/iptables%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%20docker%20%E7%9A%84%20iptables%20%E8%A7%84%E5%88%99/"><header><a href="/tags/linux/" tabindex="-1" itemprop="url">linux</a><h1 id="CrawlerTitle" itemprop="name headline">iptables 规则详解</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2021-09-03T12:07:24.000Z" title="发表于 2021-09-03 20:07:24">2021-09-03</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><h3 id="iptables-详解及-docker-的-iptables-规则"><a href="#iptables-详解及-docker-的-iptables-规则" class="headerlink" title="iptables 详解及 docker 的 iptables 规则"></a><a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=iptables&spm=1001.2101.3001.7020">iptables</a> 详解及 docker 的 iptables 规则</h3><ul>
+<li><a href="#iptables">iptables</a><ul>
+<li><a href="#%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B">处理流程</a></li>
+<li><a href="#%E5%91%BD%E4%BB%A4%E4%B8%8E%E6%89%A9%E5%B1%95">命令与扩展</a></li>
+<li><a href="#%E7%B3%BB%E7%BB%9F%E9%BB%98%E8%AE%A4%E8%A7%84%E5%88%99">系统默认规则</a></li>
+<li><a href="#ipset-%E7%9A%84%E4%BD%BF%E7%94%A8">ipset 的使用</a></li>
+<li><a href="#snat-%E4%B8%8E-dnat">SNAT 与 DNAT</a></li>
+<li><a href="#ftp-%E8%A7%84%E5%88%99">ftp 规则</a></li>
+<li><a href="#firewall-cmd-%E5%91%BD%E4%BB%A4">firewall-cmd 命令</a></li>
+</ul>
+</li>
+<li><a href="#docker-%E7%9A%84-iptables-%E8%A7%84%E5%88%99">docker 的 iptables 规则</a><ul>
+<li><a href="#docker-%E7%BD%91%E7%BB%9C%E7%B1%BB%E5%9E%8B">docker 网络类型</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E5%8C%85%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B">数据包处理流程</a><ul>
+<li><a href="#filter-%E8%A1%A8%E8%A7%84%E5%88%99">filter 表规则</a></li>
+<li><a href="#nat-%E8%A1%A8%E8%A7%84%E5%88%99">nat 表规则</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="iptables"><a href="#iptables" class="headerlink" title="iptables"></a>iptables</h1><h2 id="处理流程"><a href="#处理流程" class="headerlink" title="处理流程"></a>处理流程</h2><p>iptables 是 Linux 中网络钩子，有四表五链。</p>
+<ul>
+<li>filter 表即防火墙规则，允许、阻止或丢弃进出的数据包，使用是最多的</li>
+<li>nat 表，网络地址转换，内网的数据包收发室，有多种类型，常见的有 SNAT，PNAT，DNAT，是第二常用的</li>
+<li>mangle 表，修改数据包的 TTL，给数据包做不同的标记，策略路由等</li>
+<li>raw 表，一般用于跟踪状态，调试，用的较少</li>
+</ul>
+<p>优先级：raw，mangle，nat，filter</p>
+<p>五链：</p>
+<ul>
+<li>PREROUTING，到达本机前的路由规则</li>
+<li>INPUT，进入本机的规则</li>
+<li>FORWARD，转发的规则</li>
+<li>OUTPUT，本机发出的规则</li>
+<li>POSTROUTING，发出后的路由规则</li>
+</ul>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20201025225944432.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L20wXzQ5OTQ2OTE2,size_16,color_FFFFFF,t_70#pic_center"></p>
+<h2 id="命令与扩展"><a href="#命令与扩展" class="headerlink" title="命令与扩展"></a>命令与扩展</h2><p>清空表上的所有规则，默认为 filter 表：<br><code>iptables -F</code></p>
+<p>链上操作规则，A 追加，I 前面插入，D 删除，R 替换，N 新建一个自定义链，例如：<br>在第 5 条规则前插入禁止非<code>192.168.1.0/24</code>访问 80 端口<br><code>iptables -I INPUT 5 -p tcp --dport 80 ! -s 192.168.1.0/24 -j DROP</code></p>
+<p>查看某个表的所有链上的规则：<br><code>iptables -t nat -L -n -v --line-numbers</code></p>
+<p>filter 表，常将 lo 网卡和已建立连接的规则放在最前面，降低系统负担：<br><code>iptables -A INPUT -i lo -j ACCEPT</code><br><code>iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT</code></p>
+<p>允许 ping：<br><code>iptables -A INPUT -p icmp --icmp-type 8 -j ACCEPT</code></p>
+<p>允许连续范围端口：<br><code>iptables -A INPUT -p udp --sport 1000:2000 -j ACCEPT</code></p>
+<p>每个链都有默认规则，禁止时可以设置白名单，允许时可以设置黑名单<br>INPUT 链默认禁止连接：<br><code>iptables -P INPUT DROP</code></p>
+<p>iptables 有很多扩展，不同的扩展有不同的功能，查看文档，<code>man iptables-extensions</code>常用的：</p>
+<ul>
+<li>多端口扩展，<code>-m multiport --dports 80,443</code></li>
+<li>recent 扩展，每 30 秒最多 10 个连接：<br><code>iptables -I INPUT -p tcp --dport 80 -m state --state NEW -m recent --set</code><br><code>iptables -I INPUT -p tcp --dport 80 -m state --state NEW -m recent --update --seconds 30 --hitcount 10 -j DROP</code></li>
+<li>connlimit 扩展，限制并发连接数：<br><code>iptables -I INPUT -p tcp --syn --dport 80 -m connlimit --connlimit-above 100 -j REJECT</code></li>
+<li>string 扩展，字符串匹配禁止：<br><code>iptables -I INPUT -p tcp --sport 443 -m string --string &quot;xunlei&quot; --algo kmp -j DROP</code></li>
+</ul>
+<p>iptables 规则都是保存在内存中的，重启规则会丢失，可以使用<code>iptables-save</code>和<code>iptables-restore</code>保存，还可以使用<code>iptables-services</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 禁用firewalld</span><br><span class="line">#systemctl stop firewalld</span><br><span class="line">#systemctl disable firewalld</span><br><span class="line">yum -y install iptables-services</span><br><span class="line">service iptables save</span><br><span class="line">service iptables reload</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="系统默认规则"><a href="#系统默认规则" class="headerlink" title="系统默认规则"></a>系统默认规则</h2><p>安装 iptables-services 后，<code>/etc/sysconfig/iptables</code>文件中有默认规则：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT</span><br><span class="line">iptables -A INPUT -p icmp -j ACCEPT</span><br><span class="line">iptables -A INPUT -i lo -j ACCEPT</span><br><span class="line">iptables -A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT</span><br><span class="line">iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited</span><br><span class="line">iptables -A FORWARD -j REJECT --reject-with icmp-host-prohibited</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>第四个是允许 ssh 登录<br>第五个是禁止其他连接通过 INPUT，并返回 icmp-host-prohibited 错误<br>第六个是禁止 FORWARD</p>
+<h2 id="ipset-的使用"><a href="#ipset-的使用" class="headerlink" title="ipset 的使用"></a>ipset 的使用</h2><p>可与 iptables 结合，实现动态的白名单，并且可以设置过期时间<br><code>ipset create ssh-allow hash:ip timeout 0</code><br><code>ipset add ssh-allow 192.168.47.1 timeout 86400</code><br><code>ipset list ssh-allow</code><br><code>iptables -A INPUT -p tcp --dport 22 -m set --match-set ssh-allow src -j ACCEPT</code></p>
+<h2 id="SNAT-与-DNAT"><a href="#SNAT-与-DNAT" class="headerlink" title="SNAT 与 DNAT"></a>SNAT 与 DNAT</h2><p>SNAT 常用于内部无法上网的机器通过网关上网，需要调整安全组和解除网关 MAC 与 IP 绑定。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"># 网关打开核心转发</span><br><span class="line">echo &quot;net.ipv4.ip_forward=1&quot; &gt;&gt; /etc/sysctl.conf</span><br><span class="line">sysctl -p</span><br><span class="line"></span><br><span class="line"># 数据包离开前将源地址改为网关地址，动态上网时，常用-j MASQUERADE</span><br><span class="line">iptables -t nat -A POSTROUTING -o eth0 -s 192.168.1.0/24 -j SNAT --to 172.16.8.1</span><br><span class="line"></span><br><span class="line"># 不能上网的机器，修改网关</span><br><span class="line">route add default gw 192.168.1.1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>DNAT 常用于将内部机器暴漏给外部用户使用。<br><code>iptables -t nat -A PREROUTING -d 172.16.8.1 -p tcp --dport 80 -j DNAT --to-destination 192.168.1.20:8080</code></p>
+<h2 id="ftp-规则"><a href="#ftp-规则" class="headerlink" title="ftp 规则"></a>ftp 规则</h2><p>ftp 分为主动模式和被动模式。</p>
+<p>主动模式数据流是 server 主动连接 client 的随机端口，一般客户端都工作在 NAT 网络中，客户端端口须层层路由开放，所以这种模式很少使用。</p>
+<p>被动模式，server 告知 client 数据连接端口，客户端连接 server 的数据连接端口，这个端口一般是随机的，需要服务端开放，使用 iptables 的连接追踪功能，可以很好的解决这个问题</p>
+<p>加载 ftp 专用的追踪模块，<code>modprobe nf_conntrack_ftp</code></p>
+<p>开启 ftp 追踪模块后，仅需开放 21 端口即可（INPUT 默认 DROP，OUTPUT 默认 ACCEPT）<br><code>iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT</code><br>RELATED 指明 ftp 关联的数据端口允许连接</p>
+<h2 id="firewall-cmd-命令"><a href="#firewall-cmd-命令" class="headerlink" title="firewall-cmd 命令"></a>firewall-cmd 命令</h2><p>iptables 分为 ipv4 和 ipv6，两者是独立的，firewalld 是 iptables 的 python 脚本，已经整合了 ipv4 和 ipv6</p>
+<p>与 iptables 不同的是，firewalld 使用 zone 来管理防火墙<br>zone 可以根据 source，mac，ipset，interface 等匹配，匹配不上的进入默认的 public</p>
+<p>查询默认 zone：<br><code>firewall-cmd --get-default-zone</code><br>修改了规则需要重新加载才能生效：<br><code>firewall-cmd --reload</code><br>列出 zone 的所有规则：<br><code>firewall-cmd --list-all --zone=public</code><br>开放 80 端口：<br><code>firewall-cmd --zone=public --add-port=80/tcp --permanent</code></p>
+<p>进行复杂的控制，需要 rich 规则，命令比较复杂，不推荐使用</p>
+<h1 id="docker-的-iptables-规则"><a href="#docker-的-iptables-规则" class="headerlink" title="docker 的 iptables 规则"></a><a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=docker&spm=1001.2101.3001.7020">docker</a> 的 iptables 规则</h1><h2 id="docker-网络类型"><a href="#docker-网络类型" class="headerlink" title="docker 网络类型"></a>docker 网络类型</h2><ul>
+<li>none：顾名思义，不使用网络，只使用 lo</li>
+<li>host：使用主机的网络</li>
+<li>bridge：桥接，相当于 nat，通过 docker0 分配一个<code>172.17.0.x</code>的地址使用</li>
+<li>container：使用指定容器的网络</li>
+</ul>
+<h2 id="数据包处理流程"><a href="#数据包处理流程" class="headerlink" title="数据包处理流程"></a>数据包处理流程</h2><p>为便于测试，启动两个容器：<br><code>docker run -d --rm --name nginx -p 80:80 nginx:1.16.1</code><br><code>docker run -it --name busybox --rm busybox sh</code></p>
+<h3 id="filter-表规则"><a href="#filter-表规则" class="headerlink" title="filter 表规则"></a>filter 表规则</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">iptables -N DOCKER</span><br><span class="line">iptables -N DOCKER-ISOLATION-STAGE-1</span><br><span class="line">iptables -N DOCKER-ISOLATION-STAGE-2</span><br><span class="line">iptables -N DOCKER-USER</span><br><span class="line">iptables -A FORWARD -j DOCKER-USER</span><br><span class="line">iptables -A FORWARD -j DOCKER-ISOLATION-STAGE-1</span><br><span class="line">iptables -A FORWARD -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT</span><br><span class="line">iptables -A FORWARD -o docker0 -j DOCKER</span><br><span class="line">iptables -A FORWARD -i docker0 ! -o docker0 -j ACCEPT</span><br><span class="line">iptables -A FORWARD -i docker0 -o docker0 -j ACCEPT</span><br><span class="line">iptables -A DOCKER-ISOLATION-STAGE-1 -i docker0 ! -o docker0 -j DOCKER-ISOLATION-STAGE-2</span><br><span class="line">iptables -A DOCKER-ISOLATION-STAGE-1 -j RETURN</span><br><span class="line">iptables -A DOCKER-ISOLATION-STAGE-2 -o docker0 -j DROP</span><br><span class="line">iptables -A DOCKER-ISOLATION-STAGE-2 -j RETURN</span><br><span class="line">iptables -A DOCKER-USER -j RETURN</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>主要是转发规则，默认 FORWARD 为 DROP，DOCKER 链处理到 docker0 的 IP 数据包，即容器对外的规则，例如：</p>
+<p><code>iptables -A DOCKER -d 172.17.0.2/32 ! -i docker0 -o docker0 -p tcp -m tcp --dport 80 -j ACCEPT</code><br>允许非 docker0 访问 80 端口</p>
+<p>为了搞清楚 DOCKER-ISOLATION-STAGE-2，需要创建一个 bridge，开启一个 nginx，并安装 telnet</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker network create docker1</span><br><span class="line">docker run -d --rm --name nginx1 -p 8080:80 --net docker1 nginx:1.16.1</span><br><span class="line">docker exec -it nginx /bin/bash</span><br><span class="line"># 在nginx中安装telnet</span><br><span class="line">#apt update</span><br><span class="line">#apt install telnet</span><br><span class="line">#telnet 172.18.0.2 80</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>可以看到<code>telnet 172.18.0.2 80</code>并不通，怎么实现的呢？<br>DOCKER-ISOLATION-STAGE-1 规则是源网卡是 docker0，而目的地不是 docker0 就进入 DOCKER-ISOLATION-STAGE-2</p>
+<p>而 DOCKER-ISOLATION-STAGE-2 中，有一条规则，<code>iptables -A DOCKER-ISOLATION-STAGE-2 -o br-afba712bfb32 -j DROP</code>，即不允许不同的网卡互相访问，这对于 docker-compose 非常有用，设计非常精妙</p>
+<p>DOCKER-USER 链用于自定义转发规则，优先级最高，可以限制进入容器的源 IP 地址：<br><code>iptables -I DOCKER-USER ! -s 192.168.47.1 -p tcp --dport 80 -j DROP</code><br>以上规则禁止非 192.168.47.1 的 IP 地址访问容器的 80 端口</p>
+<h3 id="nat-表规则"><a href="#nat-表规则" class="headerlink" title="nat 表规则"></a>nat 表规则</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">iptables -t nat -N DOCKER</span><br><span class="line">iptables -t nat -A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER</span><br><span class="line">iptables -t nat -A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER</span><br><span class="line">iptables -t nat -A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE</span><br><span class="line">iptables -t nat -A DOCKER -i docker0 -j RETURN</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>DOCKER 链方便 container 自定义规则<br>POSTROUTING 规则，使得 container 使用宿主机 docker0 的 IP 作为网关，便于接收外部返回的数据</p>
+<p>有如下规则：<br><code>iptables -t nat -A DOCKER ! -i docker0 -p tcp -m tcp --dport 80 -j DNAT --to-destination 172.17.0.2:80</code><br>通过 PREROUTING 链和 DOCKER 链将主机的 80 端口流量转发给 172.17.0.2，并通过 filter 表的 FORWARD 链返回给客户端</p>
+<p>宿主机通过 nat 表的 OUTPUT 链是可以访问 container 的 80 端口的</p>
+<p>nat 表的 POSTROUTING 规则使得 container 可以访问外网</p>
+<p>很奇怪的一条规则：<br><code>iptables -t nat -A POSTROUTING -s 172.17.0.2/32 -d 172.17.0.2/32 -p tcp -m tcp --dport 80 -j MASQUERADE</code><br>使得容器通过自己的 IP172.17.0.2 也可以访问 80 端口</p>
+<p>最后网上的一张流程图：<br><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20201031165431445.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L20wXzQ5OTQ2OTE2,size_16,color_FFFFFF,t_70#pic_center"></p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2021/09/03/linux/%E7%BD%91%E7%BB%9C/iptables%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%20docker%20%E7%9A%84%20iptables%20%E8%A7%84%E5%88%99/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2021/09/03/linux/%E7%BD%91%E7%BB%9C/iptables%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%20docker%20%E7%9A%84%20iptables%20%E8%A7%84%E5%88%99/')">iptables 规则详解</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2021/09/03/linux/%E7%BD%91%E7%BB%9C/iptables%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%20docker%20%E7%9A%84%20iptables%20%E8%A7%84%E5%88%99/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=iptables 规则详解&amp;url=https://shippomx.github.io/2021/09/03/linux/%E7%BD%91%E7%BB%9C/iptables%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%20docker%20%E7%9A%84%20iptables%20%E8%A7%84%E5%88%99/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/linux/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>linux<span class="tagsPageCount">16</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/09/03/linux/%E7%BD%91%E7%BB%9C/%E7%94%A8%E4%B8%80%E4%B8%AA%E5%AE%9E%E4%BE%8B%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20iptables%20%E7%9A%84%20SNAT_DNAT/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">用一个例子深入理解iptables中的SNAT和DNAT</div></div></a></div><div class="next-post pull-right"><a href="/2021/09/09/rust/Rust%20%E6%80%A7%E8%83%BD%E8%AF%84%E4%BC%B0%E4%B8%8E%E8%B0%83%E4%BC%98%E5%AE%9E%E8%B7%B5/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Rust 性能优化</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/" title="Nginx 配置 HTTPS 服务器"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2017-06-08</div><div class="title">Nginx 配置 HTTPS 服务器</div></div></a></div><div><a href="/2023/02/14/linux%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" title="简易环境配置"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-02-14</div><div class="title">简易环境配置</div></div></a></div><div><a href="/2023/03/11/linux/Linux%20%E8%BF%9B%E7%A8%8B%E7%8A%B6%E6%80%81%E8%A7%A3%E6%9E%90%20/" title="进程状态简述"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-03-11</div><div class="title">进程状态简述</div></div></a></div><div><a href="/2023/10/02/linux/%E5%88%9B%E5%BB%BA%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B%E6%AD%A5%E9%AA%A4%E4%B8%8E%20setsid/" title="守护进程与setsid"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-02</div><div class="title">守护进程与setsid</div></div></a></div><div><a href="/2023/10/01/linux/%E5%BC%80%E6%BA%90%E6%97%A5%E5%BF%97%E5%BA%93log_c%E7%9A%84%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8/" title="开源日志库log_c的简单使用"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-01</div><div class="title">开源日志库log_c的简单使用</div></div></a></div><div><a href="/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/" title="容器安全-理解cgroup中的cpuset"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-06-21</div><div class="title">容器安全-理解cgroup中的cpuset</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#iptables-%E8%AF%A6%E8%A7%A3%E5%8F%8A-docker-%E7%9A%84-iptables-%E8%A7%84%E5%88%99"><span class="toc-number">1.</span> <span class="toc-text">iptables 详解及 docker 的 iptables 规则</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#iptables"><span class="toc-number"></span> <span class="toc-text">iptables</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B"><span class="toc-number"></span> <span class="toc-text">处理流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E4%B8%8E%E6%89%A9%E5%B1%95"><span class="toc-number"></span> <span class="toc-text">命令与扩展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E9%BB%98%E8%AE%A4%E8%A7%84%E5%88%99"><span class="toc-number"></span> <span class="toc-text">系统默认规则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ipset-%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-number"></span> <span class="toc-text">ipset 的使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SNAT-%E4%B8%8E-DNAT"><span class="toc-number"></span> <span class="toc-text">SNAT 与 DNAT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ftp-%E8%A7%84%E5%88%99"><span class="toc-number"></span> <span class="toc-text">ftp 规则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#firewall-cmd-%E5%91%BD%E4%BB%A4"><span class="toc-number"></span> <span class="toc-text">firewall-cmd 命令</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#docker-%E7%9A%84-iptables-%E8%A7%84%E5%88%99"><span class="toc-number"></span> <span class="toc-text">docker 的 iptables 规则</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#docker-%E7%BD%91%E7%BB%9C%E7%B1%BB%E5%9E%8B"><span class="toc-number"></span> <span class="toc-text">docker 网络类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%8C%85%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B"><span class="toc-number"></span> <span class="toc-text">数据包处理流程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#filter-%E8%A1%A8%E8%A7%84%E5%88%99"><span class="toc-number">1.</span> <span class="toc-text">filter 表规则</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#nat-%E8%A1%A8%E8%A7%84%E5%88%99"><span class="toc-number">2.</span> <span class="toc-text">nat 表规则</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

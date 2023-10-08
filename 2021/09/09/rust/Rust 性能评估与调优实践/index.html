@@ -1,0 +1,685 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>Rust 性能优化 | 远辰</title><meta name="keywords" content="rust"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="Rust 性能优化"><meta name="application-name" content="Rust 性能优化"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="Rust 性能优化"><meta property="og:url" content="https://shippomx.github.io/2021/09/09/rust/Rust%20%E6%80%A7%E8%83%BD%E8%AF%84%E4%BC%B0%E4%B8%8E%E8%B0%83%E4%BC%98%E5%AE%9E%E8%B7%B5/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="内容介绍 Rust 性能优化总则 Rust 性能优化准备工作 Rust 性能剖析工具介绍 日常 Rust 开发性能优化的技巧总结 Rust 编译大小和编译时间优化技巧  本次分享将围绕 Rust 性能评估和调优主题，比较系统地介绍 Rust 代码的性能优化经验。先从大的总原则出发，介绍在编写 Rus"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="内容介绍 Rust 性能优化总则 Rust 性能优化准备工作 Rust 性能剖析工具介绍 日常 Rust 开发性能优化的技巧总结 Rust 编译大小和编译时间优化技巧  本次分享将围绕 Rust 性能评估和调优主题，比较系统地介绍 Rust 代码的性能优化经验。先从大的总原则出发，介绍在编写 Rus"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2021/09/09/rust/Rust%20%E6%80%A7%E8%83%BD%E8%AF%84%E4%BC%B0%E4%B8%8E%E8%B0%83%E4%BC%98%E5%AE%9E%E8%B7%B5/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: 'Rust 性能优化',
+  postAI: '',
+  pageFillDescription: '内容介绍, 引子, Rust 性能优化总则, 原则一： 不要过早优化性能, 原则二： 不要过度优化性能, 原则三： Rust 代码的性能、安全、编译速度和编译大小之间需要权衡, Rust 优化准备工作, 基准测试, 压力 x2F 负载测试, 明白高性能系统的标准, Rust 性能剖析工具介绍, On-CPU 性能剖析, 使用 Perf 寻找 热点, 火焰图工具, perf 适合测试 Rust 异步代码, 检查内存泄露和不必要的内存分配, 其他性能剖析 x2F 监控工具, Off-CPU 性能剖析, 其他适合 Rust 性能剖析的工具介绍, 日常 Rust 开发性能优化技巧总结, 1. 对于只被调用一次的函数可能并不需要进行优化。, 2. 优先改进你的算法, 3. 要充分理解 Rust 中数据结构的内存布局, 4. 避免 BoxltTraitgt 动态分发, 5. 使用基于栈的可变长度数据类型, 6. 合理使用断言避免数组越界检查, 7. 使用链接时优化（LTO）, 8. 不要使用 [inline(always)], 9. 避免显式 Clone, 10. 使用 Unsafe 方法消除一些不必要的安全检查, 11. 并发 x2F 并行化你的程序, 12. 并发程序中合理使用锁或替换无锁数据结构, 13. 使用 Clippy, 编译大小和编译时间的优化总结, 1. 优化编译大小, 2. 优化编译时间的一些技巧, 参考资料内容介绍性能优化总则性能优化准备工作性能剖析工具介绍日常开发性能优化的技巧总结编译大小和编译时间优化技巧本次分享将围绕性能评估和调优主题比较系统地介绍代码的性能优化经验先从大的总原则出发介绍在编写过程中应该遵循哪些原则对后续优化有帮助接下来会分享一些代码优化的方法和技巧然后介绍可以用于代码性能评估的工具也会包括专用的一些异步并发测试工具介绍引子语言天生为并发和安全而设计并且借鉴了面向过程面向对象函数式等语言的特点的目标在性能方面对标语言但在安全和生产力方面则比更胜一筹虽说语言性能对标语言但开发者写出的代码如果不经任何优化也有可能比更慢导致代码性能慢的因素有很多种本文就是尝试来梳理这些情况并且给出一套方法论和一些工具集来帮助开发者编写高性能的代码性能优化总则原则一不要过早优化性能过早优化在的论文中他写道程序员浪费了大量的时间去考虑或担心程序中非关键部分的速度而当考虑到调试和维护时这些对效率的尝试实际上会产生强烈的负面影响我们应该忘记这种微小的效率比如说因为过早优化而浪费的大约的时间然而我们不应该放弃那关键的的机会想把代码优化到最佳需要花很多精力不应该在开发的时候去想着优化的事情不需要一步到位先完成再完美但是并非所有优化过早在编写代码的过程中优化代码的可读性是你持续要做的是一门讲究显式语义的语言在命名上体现出类型的语义对于提升可读性非常重要原则二不要过度优化性能一个演讲就举了一个过度优化例子某个用户只是想写一些比程序性能更好的代码第一版实现的代码已经达到了这个要求比代码快倍但是他们花了九牛二虎之力写的第二个版本和第一个版本差距并不大性能够用就好否则就容易浪费不必要的时间原则三代码的性能安全编译速度和编译大小之间需要权衡是同时注重安全和性能的语言但是在优化性能的同时是有可能损失安全性的比如使用来提升性能而忽略安全检查在某些调用环境比较安全的地方是允许的但是并非通用的做法所以在优化性能之前要考虑是否要牺牲安全性另外优化性能的同时可能会导致编译速度变慢和编译文件大小膨胀这也是需要权衡的地方优化准备工作在性能优化之前你还需要做一些准备工作用于测量你的优化是否有效基准测试第一步是建立一套一致的基准可以用来确定性能的基线水平并衡量任何渐进的改进参考的案例中标准化的驱动微基准集在这方面发挥了很好的作用特别是因为它允许在用其他编程语言编写的驱动之间进行比较由于这些是微基准它们还可以很容易地测量单个组件的变化例如读与写这在专注于在特定领域进行改进时是非常有用的一旦选择了基准就应该建立一个稳定的环境可以用来进行所有的定时测量确保环境不发生变化并且在分析时不做其他工作如浏览猫的图片这对减少基准测量中的噪音很重要推荐工具使用和来进行基准测试因为自带的基准测试只能用于所以需要使用这个第三方库在下进行基准测试会将每次运行的时间记录分析到一个报告中在报告的底部有两个最近的运行之间的比较较早的运行基线为红色最近的运行优化的为蓝色这些报告是非常有用的工具用于可视化由于性能调整而发生的变化并且它们对于向其他人展示结果特别有用它们还可以作为过去性能数据的记录无需手动记录结果如果有性能回归的情况也会得到及时的反映压力负载测试基准测试是开发过程中对程序性能的一种预判而项目最终发布之后还需要在实际环境对其进行真正的负载测试来判断系统的延时和吞吐量常用的负载测试工具基本都可以使用比如之类这里介绍一个基金会成员公司的一个用实现的开源分布式负载测试工具每核产生的流量至少是的倍对于更复杂的负载测试例如使用第三方库抓取表单内容的负载测试收益甚至更大虽然要求您管理分布式负载测试只是为了在单个服务器上使用多个内核但使用单个进程利用所有可用的内核从而大大简化了运行更大负载测试的过程对代码库的持续改进继续带来新功能和更快的性能的扩展性远远优于可以有效地利用可用资源来实现其目标它还支持异步流程使更多的同步流程能够轻松且一致地从单个服务器上增加数千名用户拥有许多其他负载测试工具所没有的独特调试和日志记录机制简化了负载测试的编写和结果的分析还通过对数据的多个简单视图提供了更全面的指标并且可以轻松地确认负载测试在您按比例放大或缩小时按照您的预期执行它公开了用于分配任务和任务集的算法对操作的顺序和一致性进行更精细的控制这对于易于重复的测试很重要明白高性能系统的标准在进行性能剖析之前还应该明白高性能系统的一个标准性能产出资源消耗产出事务次数比如和吞吐的数据量消耗资源时间片磁盘网络次数流量等而高性能的系统是要求在固定资源消耗之下来提高产出对于高性能系统的设计一般遵循两个标准最大化地利用资源使用流水线技术减少程序中任务总耗时比如编译器优化编译时间也使用了流水线技术来对进行并行编译常见瓶颈类型占用过高那么就需要减少计算的开销负载过高那么就需要查看是否线程过多以及多个线程的切换太过频繁多线程交互是否有必要磁盘达到了上限那么需要减少读写次数提高命中率带宽上限那么就需要减少磁盘的读写流量比如使用更紧凑的数据存储格式更小的读写放大本来只需要读取字节结果触发了好多个的读写产生了放大的效果并发达到上限那么就需要考虑使用异步锁计时器分页交换等被阻塞性能剖析工具介绍在做好准备工作之后就可以开启我们的性能剖析工作了性能剖析就是要发现程序中真正存在的性能瓶颈而不是你自以为的想象中的性能瓶颈如果不遵守这点就会导致过早优化或过度优化因为常见的性能瓶颈一般都是两类和所以工具也基本面向这两类性能剖析使用寻找热点做性能剖析有很多常用的命令行工具比如命令行工具它功能强大它可以检测性能计数器跟踪点和动态跟踪你可以使用工具对进行采样分析以一个指定的频率对进行采样进而拿到正在上运行的指令乃至整个函数调用栈的快照最后对采样的数据分析比如说在次采样中有次在运行指令或者函数那么就会认为函数的使用率为可以在中加入然后执行就可以看到报告了火焰图工具但我们程序中要通过来生成火焰图它可以与一起工作非常方便因为火焰图有助于阅读源码它以可视化的图案非常明确地展示调用栈之间的关系火焰图可以让开发者从整体上看出各个线程的开销比例和子函数占有的比例指引我们从整体上找到优化的优先级火焰图中在被测量的执行过程中调用的每个函数会被表示为一个矩形每个调用栈被表示为一个矩形栈一个给定的矩形的宽度与在该函数中花费的时间成正比更宽的矩形意味着更多的时间火焰图对于识别程序中的慢速部分非常有用因为它们可以让你快速识别代码库中哪些部分花费的时间不成比例用调优的示例来说火焰图中的栈从底部开始随着调用栈的加深而向上移动左右无所谓通常这是开始阅读它们的最佳方式看一下上面火焰图的底部最宽的矩形是但这并不是因为的超级慢而是因为每个都涉及轮询考虑到这一点我们可以跳过任何轮询矩形直到我们在中看到我们关心的信息的函数蓝色方块包含了调用所花费的时间它显示几乎所有的时间都花在了上各个紫色矩形对应的是将使用的二进制格式解析到中所花费的时间绿色矩形对应的是的实现中所花费的时间最后黑色虚线矩形对应的是释放内存的时间黑色实线对应的是将命令序列化为的时间所以从火焰图中反映出性能瓶颈在于过多序列化耗费更多时间修复完这些性能瓶颈之后再使用基准测试测试一次如果可能的话再使用这样的压测工具进行一次负载测试更好适合测试异步代码对于异步程序而言火焰图的效果可能并不是很好因为异步调度器和执行器几乎会出现在火焰图中每一块地方看不出瓶颈所在这个时候使用工具会更加清晰检查内存泄露和不必要的内存分配可以使用工具来检查程序是否存在内存泄露或者在关键的调用路径上存在不必要的内存分配不仅仅要考察堆分配也需要考虑栈上的分配特别是异步操作时有一个非常有用的编译标志仅在中可用来验证数据结构有多大及其缓存对齐除了通常的输出之外包括异步在内的每个数据结构都以相应的大小和缓存对齐方式打印出来比如异步编程非常依赖栈空间异步运行时和库需要把所有东西放到栈上来保证执行的正确性如果你的异步程序占用了过多的栈空间可以考虑将其进行优化为平衡的同步和异步代码组合把特定的异步代码隔离出来也是一种优化手段其他性能剖析监控工具如果允许可以使用英特尔出品的工具进行性能剖析或者使用在线的性能监控平台比如支持程序可以监控应用程序的性能报告客户端负载客户端内存使用等指标也可以使用开源的链路追踪工具来监控你自己的项目使用标准也支持是一款数据收集中间件我们可以使用它来生成收集和导出监测数据这些数据可供支持的中间件存储查询和显示用以实现数据观测性能分析系统监控服务告警等能力也开源了一款高性能的库性能剖析是指在锁计时器分页交换等被阻塞的同时等待的时间的性能剖析通常可以在程序运行过程中进行采用链路跟踪来进行分析还有就是使用火焰图进行可视化观察这里推荐的工具是的前端工具包中的工具这个工具的原理是在每一次内核调用函数完成任务切换的时候记录上一个进程被调度离开的时间戳和当前进程被调度到的时间戳那么一个进程离开到下一次进入的时间差即为的时间比如这里一段代码程序中一共有两种会导致进程被调度出的任务一个是函数中的一个是在函数中的读文件操作这里需要使用编译因为依赖于来进行栈展开所以我们需要开启的编译选项以便打印出用户态的函数栈我们使用如下的命令获取的分析数据然后使用火焰图工具将其生成火焰图得到下面火焰图与的火焰图相同纵轴代表了函数调用栈横轴代表了时间的比例跨度越大代表的时间越长其他适合性能剖析的工具介绍除了和火焰图工具下面还有一些程序适用的工具和是查看记录的数据的好工具和给出了全局的每个函数的每个源线的指令数以及模拟的缓存和分支预测数据可以很好的找到代码中哪些部分会造成大量的分配并对峰值内存使用情况进行深入了解是另一个堆分析工具支持即席剖析它将语句的使用与基于频率的后处理结合起来这对于了解代码中特定领域的部分内容很有帮助执行因果分析以衡量优化潜力它通过支持因果分析技术可以找到程序的瓶颈并显示对其进行优化的效果日常开发性能优化技巧总结虽然我们需要通过完善的性能测试方法来剖析系统中存在的瓶颈保证不会过早优化和过度优化但是在日常编码过程中社区内也总结出来一些优化技巧来供参考对于只被调用一次的函数可能并不需要进行优化比如读取配置文件这种多慢都没有关系不要只优化程序中最慢的函数要优化占用大部分运行时间的函数在一个被调用次的函数上得到毫秒的改进那比在一个被调用一次的函数上获得秒的改进要好优先改进你的算法很多时候性能不佳很可能是由于算法不佳而不是实现不佳请检查你的代码中循环的使用只需尝试尽可能少的循环记住每次使用必须至少会迭代整个集合一次所以最好只一次警惕你使用的标准库方法和第三方库方法内部实现中隐藏的循环要充分理解中数据结构的内存布局要学会区分中数据类型的内存布局它们在栈上和堆上如何分配的比如和所有分配都在堆上在栈上分配的数据移动的时候只能是按位复制的方式所以即便内存是在栈上分配也要考虑这个的成本堆上的数据要尽可能地避免深拷贝显式并且要尽可能地缓存数据而避免频繁的内存分配发生比如可以使用诸如之类的第三方库可以合理复用内存避免动态分发创建对象的规范方法是但大多数代码都可以使用它也具有动态分派但节省了分配如果您绝对需要所有权请使用但大多数用例都可以使用或有些场景也可以使用来代替对象参见使用基于栈的可变长度数据类型定长度的数据类型可以简单地存储在堆栈上但对于动态大小的数据它并不是那么简单但是和都是可变长度数据类型允许在栈上存储少量元素像这样的库非常适合缓存局部性可以减少分配合理使用断言避免数组越界检查会被编译器自动塞入数组越界检查比如下面代码可以通过编译输出看到编译器会给数组索引访问插入断言检查有几个数组索引访问就会被插入几次上面的代码会被插入次这极大影响性能所以我们可以手工插入一次断言检查就可以消除编译器的自动插入这一条也是可以举一反三的比如也会为普通的加法操作添加防止计算溢出的断言但是你如何手工使用了之类的方法那就可以避免编译器自动插入这类断言使用链接时优化链接时优化允许编译器跨进行内联但是这样做的代价是减慢编译时间但我认为编译时间如何能换取性能提升那么这个时间值得牺牲不要使用编译器自身的优化可以计算出何时需要内联一些函数不需要你手工明确指定除非这个函数调用十分频繁因为这种显式的指定会导致编译大小的膨胀如果你的硬件资源不受限可能不太重要但是对于资源受限的环境比如嵌入式则需要进行权衡对于一些小的函数如果没有使用但是需要跨内联的话也可以显式指定避免显式尽可能地使用引用避免过多的因为可能伴随内存分配使用方法消除一些不必要的安全检查在标准库中你可以看到很多后缀的方法比如和是一对和的方法一般情况下应该使用将序列转换为合法的字符串这个方法对序列进行了合法编码的检查但是这个检查也会有一定开销如果开发者能确保调用环境的序列来源是完全合法的编码那么这个安全检查就完全可以忽略此时就可以使用来替换用来提升性能并发并行化你的程序用写多线程和异步并发程序是非常便利的推荐的库有很多并行迭代器多线程无锁并发结构高性能异步运行时提供的并发代码测试工具支持内存模型提供的异步诊断和调试工具可以将其视为异步代码的通过监控应用程序中任务的运行时操作可以检测可能暗示错误或性能问题的行为模式并突出显示它们以供用户分析跨平台并行化你的计算并发程序中合理使用锁或替换无锁数据结构在某些场景中可能读并发访问要比写并发更频繁那么可以用读写锁来替换互斥锁另外使用第三方库中定义的并发锁来代替标准库中的锁或者合理选择无锁数据结构来替换用锁来同步的数据结构并不是说无锁一定比锁同步性能更好也是需要看场景和选择高质量的第三方实现使用使用工具对代码进行静态分析它可以针对性能改进提供一些建议关于性能改进可以在这里找到同样可以遵循编码规范中的一些规范也会包括的一些建议如果你有什么性能优化的小技巧欢迎提交贡献编译大小和编译时间的优化总结优化编译大小设置叫做代码生成单元编译器会把生成的进行分割默认分割为个单元每个单元就叫如果分割的太多就不利于编译器使用内联优化一些函数调用分割单元越大才越容易判断需要内联的地方但是这也有可能增大编译文件大小需要大小和性能间寻找平衡设置可以缩减编译文件的大小设置编译优化等级为意为最小二进制体积编译器的优化级别对应的是函数内联的阈值对应的是而级别则对应评估代码中泛型和宏的使用是否可以精简其他参考优化编译时间的一些技巧使用代替使用最新工具链使用而不是删除未使用的依赖项替换依赖过多的第三方库使用将项目拆分为多个方便并行编译将针对模块的测试单独拆分为一个测试文件将所有集成测试组合在一个文件中禁止依赖未使用功能使用或虚拟内存盘进行编译使用缓存依赖项切换到更快的链接器可以使用以下命令检查链接所花时间针对用户也提升了增量编译性能在中进行以下配置调整更多选项编译器标志这是完整的选项列表为了获得灵感这里是的用于更快编译的配置剖析文件编译时间使用生成的跟踪文件可以使用火焰图或分析器进行可视化还有一个功能可以提供有关每个编译步骤需要多长时间的一些信息并随着时间的推移跟踪并发信息避免过程宏主要是因为使用了过程宏是开发的热点它们会消耗周期因此请谨慎使用库中包含了过程宏它在很多地方都用到所以需要注意是否一定需要进行序列化和反序列化避免过多的泛型过多的泛型单态化也会导致编译时间增加提升你的硬件或者在云端比如可免费使用核的主机使用更好的硬件环境进行编译下载所有的依赖编译过程中有很大一部分时间用于下载提前下载好是有帮助的参考使用进行编译可用于充分利用层缓存从而大大加快项目的构建超频谨慎优化构建速度参考你自己开发的时候尽量保持精简利人利己参考资料驱动微基准集调试和日志记录机制全面的指标更精细的控制编码规范完整的选项列表的用于更快编译的配置',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/rust/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>rust</span></a></span></div></div><h1 class="post-title" itemprop="name headline">Rust 性能优化</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2021-09-09T12:07:24.000Z" title="发表于 2021-09-09 20:07:24">2021-09-09</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2021/09/09/rust/Rust%20%E6%80%A7%E8%83%BD%E8%AF%84%E4%BC%B0%E4%B8%8E%E8%B0%83%E4%BC%98%E5%AE%9E%E8%B7%B5/"><header><a href="/tags/rust/" tabindex="-1" itemprop="url">rust</a><h1 id="CrawlerTitle" itemprop="name headline">Rust 性能优化</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2021-09-09T12:07:24.000Z" title="发表于 2021-09-09 20:07:24">2021-09-09</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><h2 id="内容介绍"><a href="#内容介绍" class="headerlink" title="内容介绍"></a><strong>内容介绍</strong></h2><ul>
+<li>Rust 性能优化总则</li>
+<li>Rust 性能优化准备工作</li>
+<li>Rust 性能剖析工具介绍</li>
+<li>日常 Rust 开发性能优化的技巧总结</li>
+<li>Rust 编译大小和编译时间优化技巧</li>
+</ul>
+<p>本次分享将围绕 Rust 性能评估和调优主题，比较系统地介绍 Rust 代码的性能优化经验。先从大的总原则出发，介绍在编写 Rust 过程中应该遵循哪些原则对后续优化有帮助。接下来会分享一些代码优化的方法和技巧，然后介绍可以用于 Rust 代码性能评估的工具，也会包括 Rust 专用的一些异步并发测试工具介绍。</p>
+<h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a><strong>引子</strong></h2><p>Rust 语言天生为并发和安全而设计，并且借鉴了面向过程 &#x2F; 面向对象 &#x2F; 函数式等语言的特点。Rust 的目标在性能方面对标 C 语言，但在安全和生产力方面则比 C 更胜一筹。</p>
+<p>虽说 Rust 语言性能对标 C 语言，但开发者写出的 Rust 代码如果不经任何优化，也有可能比 Python 更慢。导致 Rust 代码性能慢的因素有很多种，本文就是尝试来梳理这些情况，并且给出一套方法论和一些工具集，来帮助开发者编写高性能的 Rust 代码。</p>
+<h2 id="Rust-性能优化总则"><a href="#Rust-性能优化总则" class="headerlink" title="Rust 性能优化总则"></a><strong>Rust 性能优化总则</strong></h2><h3 id="原则一：-不要过早优化性能"><a href="#原则一：-不要过早优化性能" class="headerlink" title="原则一： 不要过早优化性能"></a><strong>原则一： 不要过早优化性能</strong></h3><blockquote>
+<p>“ 过早优化（Premature Optimization）<br>Premature optimization is the root of all evil. – DonaldKnuth<br>在 DonaldKnuth 的论文 《 Structured Programming With GoTo Statements 》中，他写道：”程序员浪费了大量的时间去考虑或担心程序中非关键部分的速度，而当考虑到调试和维护时，这些对效率的尝试实际上会产生强烈的负面影响。我们应该忘记这种微小的效率，比如说因为过早优化而浪费的大约 97% 的时间。然而，我们不应该放弃那关键的 3% 的机会”。</p>
+</blockquote>
+<p>想把代码优化到最佳，需要花很多精力。不应该在开发的时候去想着优化的事情，不需要一步到位。先完成再完美。</p>
+<p>但是并非所有优化过早。在编写代码的过程中，优化代码的可读性是你持续要做的。Rust 是一门讲究显式语义的语言，在命名上体现出类型的语义，对于提升可读性非常重要。</p>
+<h3 id="原则二：-不要过度优化性能"><a href="#原则二：-不要过度优化性能" class="headerlink" title="原则二： 不要过度优化性能"></a><strong>原则二： 不要过度优化性能</strong></h3><p>RustConf 2021 一个演讲就举了一个过度优化例子：</p>
+<p>某个用户只是想写一些比 Python 程序性能更好的代码。第一版 Rust 实现的代码已经达到了这个要求，比 Python 代码快 20 倍。但是他们花了九牛二虎之力写的第二个 Rust 版本，和第一个版本差距并不大。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://pic1.zhimg.com/v2-ca5f69441eda3ee1c8aaecfd64798524_r.jpg"></p>
+<p>性能够用就好，否则就容易浪费不必要的时间。</p>
+<h3 id="原则三：-Rust-代码的性能、安全、编译速度和编译大小之间需要权衡"><a href="#原则三：-Rust-代码的性能、安全、编译速度和编译大小之间需要权衡" class="headerlink" title="原则三： Rust 代码的性能、安全、编译速度和编译大小之间需要权衡"></a><strong>原则三： Rust 代码的性能、安全、编译速度和编译大小之间需要权衡</strong></h3><p>Rust 是同时注重安全和性能的语言。但是在优化性能的同时，是有可能损失安全性的。比如使用 Unsafe Rust 来提升性能，而忽略安全检查在某些调用环境比较安全的地方是允许的，但是并非通用的做法。所以在优化性能之前，要考虑是否要牺牲安全性。</p>
+<p>另外 Rust 优化性能的同时，可能会导致编译速度变慢 和 编译文件大小膨胀。这也是需要权衡的地方。</p>
+<h2 id="Rust-优化准备工作"><a href="#Rust-优化准备工作" class="headerlink" title="Rust 优化准备工作"></a><strong>Rust 优化准备工作</strong></h2><p>在性能优化之前，你还需要做一些准备工作，用于测量你的优化是否有效。</p>
+<h3 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a><strong>基准测试</strong></h3><p>第一步是建立一套一致的基准，可以用来确定性能的基线水平，并衡量任何渐进的改进。</p>
+<blockquote>
+<p>“ 参考：<br><code>mongodb</code> 的案例中，标准化的 <strong><code>MongoDB</code> 驱动微基准集 [1]</strong> 在这方面发挥了很好的作用，特别是因为它允许在用其他编程语言编写的<code>MongoDB</code>驱动之间进行比较。由于这些是 “微” 基准，它们还可以很容易地测量单个组件的变化（例如，读与写），这在专注于在特定领域进行改进时是非常有用的。</p>
+</blockquote>
+<p>一旦选择了基准，就应该建立一个稳定的环境，可以用来进行所有的定时测量。确保环境不发生变化，并且在分析时不做其他 “工作”（如浏览猫的图片），这对减少基准测量中的噪音很重要。</p>
+<p>推荐工具：</p>
+<p>使用 cargo bench 和 <strong><code>criterion</code>[2]</strong> 来进行基准测试</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[dev-dependencies]</span><br><span class="line">criterion = &#123; version = &quot;0.3.5&quot;, features = [&quot;async_tokio&quot;, &quot;html_reports&quot;] &#125;</span><br><span class="line"></span><br><span class="line">[[bench]]</span><br><span class="line">name = &quot;find&quot;</span><br><span class="line">harness = false</span><br></pre></td></tr></table></figure>
+
+<p>因为 Rust 自带的基准测试只能用于 Nightly Rust ，所以需要使用这个第三方库 criterion 在 Stable Rust 下进行基准测试。</p>
+<p>Criterion 会将每次运行的时间记录、分析到一个 HTML 报告中。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://pic2.zhimg.com/v2-916b92ce438a72cc44bef7a5f2495ab9_r.jpg"></p>
+<p>在报告的底部，有两个最近的运行之间的比较，较早的运行（基线）为红色，最近的运行（优化的）为蓝色。这些报告是非常有用的工具，用于可视化由于性能调整而发生的变化，并且它们对于向其他人展示结果特别有用。</p>
+<p>它们还可以作为过去性能数据的记录，无需手动记录结果。如果有性能回归的情况，也会得到及时的反映。</p>
+<h3 id="压力-x2F-负载测试"><a href="#压力-x2F-负载测试" class="headerlink" title="压力 &#x2F; 负载测试"></a><strong>压力 &#x2F; 负载测试</strong></h3><p>基准测试是开发过程中对程序性能的一种预判。而项目最终发布之后，还需要在实际环境对其进行真正的负载测试，来判断系统的延时和吞吐量。</p>
+<p>常用的负载测试工具基本都可以使用，比如 locust，wrk 之类。这里介绍一个 Rust 基金会成员公司的一个用 Rust 实现的开源分布式负载测试工具 ：**goose[3]**。</p>
+<p>Goose 每 CPU 核产生的流量至少是 Locust 的 11 倍，对于更复杂的负载测试（例如使用第三方库抓取表单内容的负载测试），收益甚至更大。虽然 Locust 要求您管理分布式负载测试，只是为了在单个服务器上使用多个 CPU 内核，但 Goose 使用单个进程利用所有可用的 CPU 内核，从而大大简化了运行更大负载测试的过程。对代码库的持续改进继续带来新功能和更快的性能。Goose 的扩展性远远优于 Locust，可以有效地利用可用资源来实现其目标。它还支持异步流程，使更多的同步流程能够轻松且一致地从单个服务器上增加数千名用户。</p>
+<p>Goose 拥有许多其他负载测试工具所没有的独特**调试和日志记录机制 [4]<strong>，简化了负载测试的编写和结果的分析。Goose 还通过对数据的多个简单视图提供了更</strong>全面的指标 [5]<strong>，并且可以轻松地确认负载测试在您按比例放大或缩小时按照您的预期执行。它公开了用于分配任务和任务集的算法，对操作的顺序和一致性进行</strong>更精细的控制 [6]**，这对于易于重复的测试很重要。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://pic1.zhimg.com/v2-d3327a12f6744a3bc00ce60d3db2194c_r.jpg"></p>
+<h3 id="明白高性能系统的标准"><a href="#明白高性能系统的标准" class="headerlink" title="明白高性能系统的标准"></a><strong>明白高性能系统的标准</strong></h3><p>在进行性能剖析之前，还应该明白高性能系统的一个标准。</p>
+<p>性能 &#x3D; 产出 &#x2F; 资源消耗</p>
+<p>产出 &#x3D; 事务次数（比如，qps）和 吞吐的数据量</p>
+<p>消耗资源 &#x3D; cpu 时间片，磁盘 &#x2F; 网络 I&#x2F;O 次数、流量 等</p>
+<p>而高性能的系统是要求在固定资源消耗之下来提高产出。</p>
+<p>对于高性能系统的设计一般遵循两个标准：</p>
+<ol>
+<li>最大化地利用资源。</li>
+<li>使用流水线技术减少程序中任务总耗时。比如 Rust 编译器优化编译时间，也使用了流水线技术来对 crate 进行并行编译。</li>
+</ol>
+<p>常见瓶颈类型：</p>
+<ol>
+<li><p>CPU :</p>
+</li>
+<li><p>CPU 占用过高，那么就需要减少计算的开销。</p>
+</li>
+<li><p>CPU 负载过高，那么就需要查看是否线程过多，以及多个线程的切换太过频繁，多线程交互是否有必要。</p>
+</li>
+<li><p>I&#x2F;O:</p>
+</li>
+<li><p>磁盘 IOPS(Input&#x2F;Output Operations Per Second) 达到了上限。那么需要减少读写次数，提高 cache 命中率。</p>
+</li>
+<li><p>IO 带宽（bandwidth） 上限。那么就需要减少磁盘的读写流量，比如使用更紧凑的数据存储格式，更小的读写放大（本来只需要读取 100 字节，结果触发了好多个 page 的读写，产生了放大的效果）。</p>
+</li>
+<li><p>I&#x2F;O 并发达到上限。那么就需要考虑使用 异步 I&#x2F;O。</p>
+</li>
+<li><p>锁、计时器、分页 &#x2F; 交换等被阻塞。</p>
+</li>
+</ol>
+<h2 id="Rust-性能剖析工具介绍"><a href="#Rust-性能剖析工具介绍" class="headerlink" title="Rust 性能剖析工具介绍"></a><strong>Rust 性能剖析工具介绍</strong></h2><p>在做好准备工作之后，就可以开启我们的性能剖析工作了。</p>
+<p>性能剖析，就是要发现程序中真正存在的性能瓶颈。而不是你自以为的想象中的性能瓶颈。如果不遵守这点，就会导致过早优化或过度优化。</p>
+<p>因为常见的性能瓶颈一般都是两类，CPU 和 I&#x2F;O 。所以工具也基本面向这两类。</p>
+<h3 id="On-CPU-性能剖析"><a href="#On-CPU-性能剖析" class="headerlink" title="On-CPU 性能剖析"></a><strong>On-CPU 性能剖析</strong></h3><h3 id="使用-Perf-寻找-“热点”"><a href="#使用-Perf-寻找-“热点”" class="headerlink" title="使用 Perf 寻找 “热点”"></a><strong>使用 Perf 寻找 “热点”</strong></h3><p>做 cpu 性能剖析有很多常用的 Linux 命令行工具，比如 linux 命令行工具 perf。它功能强大：它可以检测 CPU 性能计数器、跟踪点、kprobes 和 uprobes（动态跟踪）。</p>
+<p>你可以使用 perf 工具对 CPU 进行采样分析。以一个指定的频率对 CPU 进行采样，进而拿到正在 CPU 上运行的指令乃至整个函数调用栈的快照，最后对采样的数据分析。比如说在 100 次采样中有 20 次在运行 A 指令或者 A 函数，那么<code>perf</code>就会认为 A 函数的 CPU 使用率为 20%。</p>
+<p>可以在 Cargo.toml 中加入：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[profile.release]</span><br><span class="line">debug = true</span><br></pre></td></tr></table></figure>
+
+<p>然后执行:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ cargo build --release</span><br><span class="line">$ perf record -g target/release/perf-test</span><br><span class="line">$ perf report</span><br></pre></td></tr></table></figure>
+
+<p>就可以看到报告了。</p>
+<h3 id="火焰图工具"><a href="#火焰图工具" class="headerlink" title="火焰图工具"></a><strong>火焰图工具</strong></h3><p>但我们 Rust 程序中要通过 **<code>flamegraph</code> [7]**crate，来生成 火焰图（flamegraph），它可以与<code>cargo</code>一起工作，非常方便。</p>
+<p>因为火焰图有助于阅读源码，它以可视化的图案非常明确地展示调用栈之间的关系。火焰图可以让开发者从整体上看出各个线程的开销比例和子函数占有的比例，指引我们从整体上找到优化的优先级。</p>
+<p>火焰图中，在被测量的执行过程中调用的每个函数会被表示为一个矩形，每个调用栈被表示为一个矩形栈。一个给定的矩形的宽度与在该函数中花费的时间成正比，更宽的矩形意味着更多的时间。火焰图对于识别程序中的慢速部分非常有用，因为它们可以让你快速识别代码库中哪些部分花费的时间不成比例。</p>
+<p>用 Mongodb 调优的示例来说：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://pic4.zhimg.com/v2-e6570b89e9ecc5134a067fdc012c6a17_r.jpg"></p>
+<p>火焰图中的栈从底部开始，随着调用栈的加深而向上移动（左右无所谓），通常这是开始阅读它们的最佳方式。看一下上面火焰图的底部，最宽的矩形是<code>Future::poll</code>，但这并不是因为 Rust 的 <code>Future</code> 超级慢，而是因为每个<code>.await</code>都涉及轮询（poll）<code>Future</code>。考虑到这一点，我们可以跳过任何轮询矩形，直到我们在<code>mongodb</code>中看到我们关心的信息的函数。</p>
+<p>蓝色方块包含了调用<code>CommandResponse::body</code>所花费的时间，它显示几乎所有的时间都花在了<code>clone()</code>上。各个紫色矩形对应的是将<code>BSON</code>（MongoDB 使用的二进制格式）解析到<code>Document</code>中所花费的时间，绿色矩形对应的是<code>Document</code>的<code>serde::Deserialize</code>实现中所花费的时间。最后，黑色虚线矩形对应的是释放内存的时间，黑色实线对应的是将命令序列化为<code>BSON</code>的时间。</p>
+<p>所以从火焰图中反映出性能瓶颈在于：</p>
+<ol>
+<li>Clone 过多。</li>
+<li>序列化 bson 耗费更多时间</li>
+</ol>
+<p>修复完这些性能瓶颈之后，再使用基准测试测试一次。</p>
+<p>如果可能的话，再使用 goose 这样的压测工具进行一次负载测试更好。</p>
+<h3 id="perf-适合测试-Rust-异步代码"><a href="#perf-适合测试-Rust-异步代码" class="headerlink" title="perf 适合测试 Rust 异步代码"></a><strong>perf 适合测试 Rust 异步代码</strong></h3><p>对于异步 Rust 程序而言，火焰图的效果可能并不是很好，因为异步调度器和执行器几乎会出现在火焰图中每一块地方，看不出瓶颈所在。这个时候使用 perf 工具会更加清晰。</p>
+<h3 id="检查内存泄露和不必要的内存分配"><a href="#检查内存泄露和不必要的内存分配" class="headerlink" title="检查内存泄露和不必要的内存分配"></a><strong>检查内存泄露和不必要的内存分配</strong></h3><p>可以使用 <strong>Valgrind[8]</strong> 工具来检查程序是否存在内存泄露，或者在关键的调用路径上存在不必要的内存分配。</p>
+<p>不仅仅要考察堆分配，也需要考虑栈上的分配，特别是异步操作时。</p>
+<p>有一个非常有用的 Rust 编译标志（仅在 Rust nightly 中可用）来验证数据结构有多大及其缓存对齐。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ RUSTFLAGS=-Zprint-type-sizes cargo build --release</span><br></pre></td></tr></table></figure>
+
+<p>除了通常的 Cargo 输出之外，包括异步 Future 在内的每个数据结构都以相应的大小和缓存对齐方式打印出来。比如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">print-type-size type: `net::protocol::proto::msg::Data`: 304 bytes, alignment: 8 bytes</span><br><span class="line">print-type-size     field `.key`: 40 bytes</span><br><span class="line">print-type-size     field `.data_info`: 168 bytes</span><br><span class="line">print-type-size     field `.payload`: 96 bytes</span><br></pre></td></tr></table></figure>
+
+<p>Rust 异步编程非常依赖栈空间，异步运行时和库需要把所有东西放到栈上来保证执行的正确性。如果你的异步程序占用了过多的栈空间，可以考虑将其进行优化为 平衡的同步和异步代码组合，把特定的异步代码隔离出来也是一种优化手段。</p>
+<h3 id="其他性能剖析-x2F-监控工具"><a href="#其他性能剖析-x2F-监控工具" class="headerlink" title="其他性能剖析 &#x2F; 监控工具"></a><strong>其他性能剖析 &#x2F; 监控工具</strong></h3><p>如果允许，可以使用 英特尔出品的 <strong>VTune [9]</strong> 工具进行 CPU 性能剖析。</p>
+<p>或者使用在线的性能监控平台，比如 **Logrocket[10]**，支持 Rust 程序，可以监控应用程序的性能，报告客户端 CPU 负载、客户端内存使用等指标。</p>
+<p>也可以使用开源的链路追踪工具来监控你自己的 Rust 项目：使用 OpenTelemetry 标准。OpenTelemetry 也支持 Rust 。</p>
+<p>opentelemetry 是一款数据收集中间件。我们可以使用它来生成，收集和导出监测数据（Metrics,Logs and traces），这些数据可供支持 OpenTelemetry 的中间件存储，查询和显示，用以实现数据观测，性能分析，系统监控，服务告警等能力。</p>
+<p>PingCAP 也开源了一款高性能的 tracing 库 : <strong>minitrace-rust[11]</strong></p>
+<h3 id="Off-CPU-性能剖析"><a href="#Off-CPU-性能剖析" class="headerlink" title="Off-CPU 性能剖析"></a><strong>Off-CPU 性能剖析</strong></h3><p>Off-CPU 是指在 I&#x2F;O、锁、计时器、分页 &#x2F; 交换等被阻塞的同时等待的时间。</p>
+<p>Off-CPU 的性能剖析通常可以在程序运行过程中进行采用链路跟踪来进行分析。</p>
+<p>还有就是使用 offcpu 火焰图进行可视化观察。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://pic3.zhimg.com/v2-8bf343792cb9b43b979bb9551c190a8a_r.jpg"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://pic3.zhimg.com/v2-8bf343792cb9b43b979bb9551c190a8a_r.jpg"></p>
+<p>这里推荐的工具是 <code>eBPF</code>的前端工具包 <strong>bcc[12]</strong> 中的<code>offcputime-bpfcc</code>工具。</p>
+<p>这个工具的原理是在每一次内核调用<code>finish_task_switch()</code>函数完成任务切换的时候记录上一个进程被调度离开<code>CPU</code>的时间戳和当前进程被调度到<code>CPU</code>的时间戳，那么一个进程离开<code>CPU</code>到下一次进入<code>CPU</code>的时间差即为<code>Off-CPU</code>的时间。</p>
+<p>比如这里一段代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">use std::io::Read;</span><br><span class="line">fn test1() &#123;</span><br><span class="line">    std::thread::sleep(std::time::Duration::from_nanos(200));</span><br><span class="line">&#125;</span><br><span class="line">fn test2() &#123;</span><br><span class="line">    let mut f = std::fs::File::open(&quot;./1.txt&quot;).unwrap();</span><br><span class="line">    let mut buffer = Vec::new();</span><br><span class="line">    f.read_to_end(&amp;mut buffer).unwrap();</span><br><span class="line">&#125;</span><br><span class="line">fn main() &#123;</span><br><span class="line">    loop &#123;</span><br><span class="line">        test1();</span><br><span class="line">        test2();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>程序中一共有两种会导致进程被调度出<code>CPU</code>的任务，一个是<code>test1()</code>函数中的<code>sleep()</code>，一个是在<code>test2()</code>函数中的读文件操作。</p>
+<p>这里需要使用 debug 编译，因为<code>offcputime-bpfcc</code>依赖于<code>frame pointer</code>来进行栈展开，所以我们需要开启<code>RUSTFLAGS=&quot;-C force-frame-pointers=yes&quot;</code>的编译选项以便打印出用户态的函数栈。我们使用如下的命令获取<code>Off-CPU</code>的分析数据。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ./target/debug/mytest &amp; sudo offcputime-bpfcc -p `pgrep -nx mytest` 5</span><br></pre></td></tr></table></figure>
+
+<p>然后使用 火焰图工具将其生成 off-cpu 火焰图：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git clone https://github.com/brendangregg/FlameGraph</span><br><span class="line">$ cd FlameGraph</span><br><span class="line">$ sudo offcputime-bpfcc -df -p `pgrep -nx mytest` 3 &gt; out.stacks</span><br><span class="line">$ ./flamegraph.pl --color=io --title=&quot;Off-CPU Time Flame Graph&quot; --countname=us &lt; out.stacks &gt; out.svg</span><br></pre></td></tr></table></figure>
+
+<p>得到下面火焰图：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://pic2.zhimg.com/v2-8140d767b620cde082da8d319da68a89_r.jpg"></p>
+<p>与<code>On-CPU</code>的火焰图相同，纵轴代表了函数调用栈，横轴代表了<code>Off-CPU</code>时间的比例，跨度越大代表<code>Off-CPU</code>的时间越长。</p>
+<h3 id="其他适合-Rust-性能剖析的工具介绍"><a href="#其他适合-Rust-性能剖析的工具介绍" class="headerlink" title="其他适合 Rust 性能剖析的工具介绍"></a><strong>其他适合 Rust 性能剖析的工具介绍</strong></h3><p>除了 perf 和 火焰图 工具，下面还有一些 Rust 程序适用的工具。</p>
+<ul>
+<li><strong>Hotspot[13]</strong> 和 <strong>Firefox Profiler[14]</strong> 是查看 perf 记录的数据的好工具。</li>
+<li><strong>Cachegrind[15]</strong> 和 <strong>Callgrind[16]</strong> 给出了全局的、每个函数的、每个源线的指令数以及模拟的缓存和分支预测数据。</li>
+<li><strong>DHAT[17]</strong> 可以很好的找到代码中哪些部分会造成大量的分配，并对峰值内存使用情况进行深入了解。</li>
+<li><strong>heaptrack[18]</strong> 是另一个堆分析工具。</li>
+<li><strong><code>counts</code>[19]</strong> 支持即席（_Ad Hoc_）剖析，它将<code>eprintln！</code>语句的使用与基于频率的后处理结合起来，这对于了解代码中特定领域的部分内容很有帮助。</li>
+<li><strong>Coz[20]</strong> 执行_因果分析_以衡量优化潜力。它通过 <strong>coz-rs[21]</strong> 支持 Rust。因果分析技术可以找到程序的瓶颈并显示对其进行优化的效果。</li>
+</ul>
+<h2 id="日常-Rust-开发性能优化技巧总结"><a href="#日常-Rust-开发性能优化技巧总结" class="headerlink" title="日常 Rust 开发性能优化技巧总结"></a><strong>日常 Rust 开发性能优化技巧总结</strong></h2><p>虽然我们需要通过完善的性能测试方法来剖析系统中存在的瓶颈，保证不会过早优化和过度优化。但是在日常编码过程中，Rust 社区内也总结出来一些优化技巧来供参考：</p>
+<h3 id="1-对于只被调用一次的函数可能并不需要进行优化。"><a href="#1-对于只被调用一次的函数可能并不需要进行优化。" class="headerlink" title="1. 对于只被调用一次的函数可能并不需要进行优化。"></a><strong>1. 对于只被调用一次的函数可能并不需要进行优化。</strong></h3><p>比如读取配置文件，这种多慢都没有关系。</p>
+<p>不要只优化程序中最慢的函数，要优化占用大部分运行时间的函数。</p>
+<p>在一个被调用 1000 次的函数上得到 2 毫秒的改进，那比在一个被调用一次的函数上获得 1 秒的改进要好。</p>
+<h3 id="2-优先改进你的算法"><a href="#2-优先改进你的算法" class="headerlink" title="2. 优先改进你的算法"></a><strong>2. 优先改进你的算法</strong></h3><p>很多时候性能不佳，很可能是由于算法不佳而不是实现不佳。请检查你的代码中循环的使用，只需尝试尽可能少的循环。</p>
+<ol>
+<li>记住每次使用<code>collect</code>必须至少会迭代整个集合一次，所以最好只 collect 一次。</li>
+<li>警惕你使用的标准库方法和第三方库方法内部实现中隐藏的循环。</li>
+</ol>
+<h3 id="3-要充分理解-Rust-中数据结构的内存布局"><a href="#3-要充分理解-Rust-中数据结构的内存布局" class="headerlink" title="3. 要充分理解 Rust 中数据结构的内存布局"></a><strong>3. 要充分理解 Rust 中数据结构的内存布局</strong></h3><p>要学会区分 Rust 中数据类型的内存布局，它们在栈上和堆上如何分配的。</p>
+<p>比如 <code>String</code>，<code>Vec</code>，<code>HashMap</code>和<code>Box&lt;Trait&gt;</code>&#x2F;<code>Box&lt;[T]&gt;</code>所有分配都在堆上。</p>
+<p>在栈上分配的数据，移动的时候只能是 按位复制的方式。所以即便内存是在栈上分配，也要考虑这个 Copy 的成本。</p>
+<p>堆上的数据，要尽可能地避免深拷贝（显式 Clone） 。</p>
+<p>并且要尽可能地缓存数据，而避免频繁的内存分配发生。比如可以使用诸如 slab 之类的第三方库，可以合理复用内存。</p>
+<h3 id="4-避免-Box-lt-Trait-gt-动态分发"><a href="#4-避免-Box-lt-Trait-gt-动态分发" class="headerlink" title="4. 避免 Box&lt;Trait&gt; 动态分发"></a><strong>4. 避免 <code>Box&lt;Trait&gt;</code> 动态分发</strong></h3><p>创建 trait 对象的规范方法是<code>Box&lt;Trait&gt;</code>，但大多数代码都可以使用<code>&amp;mut Trait</code>，它也具有动态分派但节省了分配。如果您绝对需要所有权，请使用<code>Box</code>，但大多数用例都可以使用<code>&amp;Trait</code>或<code>&amp;mut Trait</code>。</p>
+<p>有些场景也可以使用 Enum 来代替 trait 对象。参见 **<code>enum_dispatch</code>[22]**。</p>
+<h3 id="5-使用基于栈的可变长度数据类型"><a href="#5-使用基于栈的可变长度数据类型" class="headerlink" title="5. 使用基于栈的可变长度数据类型"></a><strong>5. 使用基于栈的可变长度数据类型</strong></h3><p>定长度的数据类型可以简单地存储在堆栈上，但对于动态大小的数据，它并不是那么简单。但是，**<code>smallvec</code>[23]**, <strong><code>smallstring</code>[24]</strong> 和 <strong><code>tendril</code>[25]</strong> 都是可变长度数据类型，允许在栈上存储少量元素。像<code>smallvec</code>这样的库非常适合缓存局部性，可以减少分配。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// This is a gross oversimplification of how this type is implemented in the</span><br><span class="line">// crate, but it&#x27;s enough to explain how it works.</span><br><span class="line">enum SmallVec&lt;T&gt; &#123;</span><br><span class="line">    Small([T; 4]),</span><br><span class="line">    Big(Vec&lt;T&gt;),</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">type Matrix&lt;T&gt; = SmallVec&lt;SmallVec&lt;T&gt;&gt;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-合理使用断言避免数组越界检查"><a href="#6-合理使用断言避免数组越界检查" class="headerlink" title="6. 合理使用断言避免数组越界检查"></a><strong>6. 合理使用断言避免数组越界检查</strong></h3><p>Safe Rust 会被编译器自动塞入数组越界检查，比如下面代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fn do_something_with_array(array: &amp;[u8]) -&gt; u8 &#123;</span><br><span class="line">    array[0] + array[1] + array[2] + array[3] + array[4] + array[5]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以通过编译输出 MIR 看到，编译器会给数组索引访问插入断言检查：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">assert(move _9, &quot;index out of bounds: the length is &#123;&#125; but the index is &#123;&#125;&quot;, move _8, _7)</span><br></pre></td></tr></table></figure>
+
+<p>有几个数组索引访问就会被插入几次，上面的代码会被插入 6 次，这极大影响性能。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://pic2.zhimg.com/v2-5213f4728e90d14cef7d0c36fc3a0509_r.jpg"></p>
+<p>所以我们可以手工插入一次断言检查，就可以消除编译器的自动插入。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">fn do_something_with_array(array: &amp;[u8]) -&gt; u8 &#123;</span><br><span class="line">    assert!(array.len &gt;= 5);</span><br><span class="line">    array[0] + array[1] + array[2] + array[3] + array[4] + array[5]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这一条也是可以举一反三的，比如 Rust 也会为普通的加法操作添加防止计算溢出的断言，但是你如何手工使用了 wrapped_add 之类的方法，那就可以避免编译器自动插入这类断言。</p>
+<h3 id="7-使用链接时优化（LTO）"><a href="#7-使用链接时优化（LTO）" class="headerlink" title="7. 使用链接时优化（LTO）"></a><strong>7. 使用链接时优化（LTO）</strong></h3><p>链接时优化允许编译器跨 crate 进行内联，但是这样做的代价是减慢编译时间。但我认为，编译时间如何能换取性能提升，那么这个时间值得牺牲。</p>
+<h3 id="8-不要使用-inline-always"><a href="#8-不要使用-inline-always" class="headerlink" title="8. 不要使用 #[inline(always)]"></a><strong>8. 不要使用 <code>#[inline(always)]</code></strong></h3><p>Rust 编译器自身的优化可以计算出何时需要内联一些函数，不需要你手工明确指定。除非这个函数调用十分频繁。</p>
+<p>因为这种显式的指定会导致编译大小的膨胀，如果你的硬件资源不受限可能不太重要。但是对于资源受限的环境，比如嵌入式，则需要进行权衡。</p>
+<p>对于一些小的函数，如果没有使用 LTO，但是需要跨 crate 内联的话，也可以显式指定 <code>#[inline]</code>。</p>
+<h3 id="9-避免显式-Clone"><a href="#9-避免显式-Clone" class="headerlink" title="9. 避免显式 Clone"></a><strong>9. 避免显式 Clone</strong></h3><p>尽可能地使用引用，避免过多的 Clone 。因为 Clone 可能伴随内存分配。</p>
+<h3 id="10-使用-Unsafe-方法消除一些不必要的安全检查"><a href="#10-使用-Unsafe-方法消除一些不必要的安全检查" class="headerlink" title="10. 使用 Unsafe 方法消除一些不必要的安全检查"></a><strong>10. 使用 Unsafe 方法消除一些不必要的安全检查</strong></h3><p>在 Rust 标准库中，你可以看到很多 <code>_unchecked</code>后缀的方法。</p>
+<p>比如 <code>String::from_utf8</code> 和 <code>String::from_utf8_unchecked</code>，是一对 Safe 和 Unsafe 的方法。</p>
+<p>一般情况下，应该使用 <code>String::from_utf8</code> 将 <code>u8</code>序列转换为合法的字符串，这个方法对 <code>u8</code>序列进行了合法 utf8 编码的检查。但是这个检查也会有一定开销。</p>
+<p>如果开发者能确保调用环境的 <code>u8</code>序列来源是完全合法的 utf8 编码，那么这个安全检查就完全可以忽略。此时就可以使用 <code>String::from_utf8_unchecked</code> 来替换 <code>String::from_utf8</code> 用来提升性能。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">pub fn from_utf8(vec: Vec&lt;u8&gt;) -&gt; Result&lt;String, FromUtf8Error&gt; &#123;</span><br><span class="line">    match str::from_utf8(&amp;vec) &#123;</span><br><span class="line">        Ok(..) =&gt; Ok(String &#123; vec &#125;),</span><br><span class="line">        Err(e) =&gt; Err(FromUtf8Error &#123; bytes: vec, error: e &#125;),</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">pub unsafe fn from_utf8_unchecked(bytes: Vec&lt;u8&gt;) -&gt; String &#123;</span><br><span class="line">    String &#123; vec: bytes &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="11-并发-x2F-并行化你的程序"><a href="#11-并发-x2F-并行化你的程序" class="headerlink" title="11. 并发 &#x2F; 并行化你的程序"></a><strong>11. 并发 &#x2F; 并行化你的程序</strong></h3><p>用 Rust 写多线程和异步并发程序是非常便利的。</p>
+<p>推荐的库有很多：</p>
+<ul>
+<li><p>**rayon[26]**，并行迭代器</p>
+</li>
+<li><p><strong>crossbeam[27]</strong> &#x2F; **flume[28]**，多线程 channel&#x2F; 无锁并发结构</p>
+</li>
+<li><p><strong>Tokio[29]</strong> ，高性能异步运行时</p>
+</li>
+<li><p>**loom[30]**， Tokio 提供的并发代码测试工具，支持 C11 内存模型。</p>
+</li>
+<li><p>**console[31]**，Tokio 提供的 Rust 异步诊断和调试工具，可以将其视为异步代码的 Clippy。通过监控应用程序中任务的运行时操作，可以检测_可能_暗示错误或性能问题的行为模式，并突出显示它们以供用户分析。</p>
+</li>
+<li><p>跨平台 SIMD，并行化你的计算。</p>
+</li>
+</ul>
+<h3 id="12-并发程序中，合理使用锁，或替换无锁数据结构"><a href="#12-并发程序中，合理使用锁，或替换无锁数据结构" class="headerlink" title="12. 并发程序中，合理使用锁，或替换无锁数据结构"></a><strong>12. 并发程序中，合理使用锁，或替换无锁数据结构</strong></h3><p>在某些场景中，可能读并发访问要比写并发更频繁，那么可以用 读写锁来替换互斥锁。另外，使用第三方库 parking_lot 中定义的并发锁来代替标准库中的锁。</p>
+<p>或者合理选择无锁数据结构来替换用锁来同步的数据结构，并不是说无锁一定比锁同步性能更好，也是需要看场景和选择高质量的第三方实现。</p>
+<h3 id="13-使用-Clippy"><a href="#13-使用-Clippy" class="headerlink" title="13. 使用 Clippy"></a><strong>13. 使用 Clippy</strong></h3><p>使用 Clippy 工具对代码进行静态分析，它可以针对性能改进提供一些建议。</p>
+<p>关于 Clippy 性能改进 lint 可以在这里找到：**<a href="https://link.zhihu.com/?target=https://rust-lang.github.io/rust-clippy/master/index.html">https://rust-lang.github.io/rust-clippy/master/index.html</a>[32]**</p>
+<p>同样可以遵循 <strong>Rust 编码规范 [33]</strong> 中的一些规范，也会包括 Clippy 的一些建议。如果你有什么性能优化的小技巧，欢迎提交贡献。</p>
+<h2 id="编译大小和编译时间的优化总结"><a href="#编译大小和编译时间的优化总结" class="headerlink" title="编译大小和编译时间的优化总结"></a><strong>编译大小和编译时间的优化总结</strong></h2><h3 id="1-优化编译大小"><a href="#1-优化编译大小" class="headerlink" title="1. 优化编译大小"></a><strong>1. 优化编译大小</strong></h3><ul>
+<li>设置 codegen-units&#x3D;1 ，codegen-units 叫做代码生成单元，Rust 编译器会把 crate 生成的 LLVMIR 进行分割，默认分割为 16 个单元，每个单元就叫 codegen-units，如果分割的太多，就不利于 Rust 编译器使用内联优化一些函数调用，分割单元越大，才越容易判断需要内联的地方。但是这也有可能增大编译文件大小，需要大小和性能间寻找平衡。</li>
+<li>设置 panic&#x3D;abort。可以缩减编译文件的大小。</li>
+<li>设置编译优化等级为 <code>z</code>，意为最小二进制体积。编译器的优化级别对应的是<code>LLVM</code>函数内联的阈值，<code>z</code> 对应的是 25，而 级别 <code>3</code>则对应 275 。</li>
+<li>评估代码中泛型和宏的使用，是否可以精简</li>
+<li>其他参考：<a href="https://link.zhihu.com/?target=https://github.com/johnthagen/min-sized-rust">https://github.com/johnthagen/min-sized-rust</a></li>
+</ul>
+<h3 id="2-优化编译时间的一些技巧"><a href="#2-优化编译时间的一些技巧" class="headerlink" title="2. 优化编译时间的一些技巧"></a><strong>2. 优化编译时间的一些技巧</strong></h3><ul>
+<li><p>使用 cargo check 代替 cargo build</p>
+</li>
+<li><p>使用最新 Rust 工具链</p>
+</li>
+<li><p>使用 Rust Analyzer 而不是 Rust Language Server (RLS)</p>
+</li>
+<li><p>删除未使用的依赖项</p>
+</li>
+<li><p>替换依赖过多的第三方库</p>
+</li>
+<li><p>使用 workspace，将项目拆分为多个 crate，方便并行编译</p>
+</li>
+<li><p>将针对模块的测试单独拆分为一个测试文件</p>
+</li>
+<li><p>将所有集成测试组合在一个文件中</p>
+</li>
+<li><p>禁止 crate 依赖未使用功能</p>
+</li>
+<li><p>使用 ssd 或 Ramdisk（虚拟内存盘） 进行编译</p>
+</li>
+<li><p>使用 <strong>sccache[34]</strong> 缓存依赖项</p>
+</li>
+<li><p>切换到更快的链接器：<strong>mold[35]</strong> （Linux）&#x2F; <strong>zld[36]</strong> (MacOS) &#x2F; (Windows)，可以使用以下命令检查链接所花时间：<br>cargo clean<br>cargo +nightly rustc –bin <your_binary_name> – -Z time-passes  </p>
+</li>
+<li><p>Rust 针对 MacOS 用户也提升了增量编译性能，在 Cargo.toml 中进行以下配置：</p>
+</li>
+<li><p>[profile.dev]<br>split-debuginfo &#x3D; “unpacked”  </p>
+</li>
+<li><p>调整更多 Codegen 选项 &#x2F; 编译器标志。这是<strong>完整的 codegen 选项列表 [37]</strong> 。为了获得灵感，这里是 **bevy 的用于更快编译的配置 [38]**。</p>
+</li>
+<li><p>剖析文件编译时间。使用 <strong><code>cargo rustc -- -Zself-profile</code>[39]</strong> 生成的跟踪文件可以使用火焰图或 Chromium 分析器进行可视化。还有一个 <strong><code>cargo -Z timings</code>[40]</strong> 功能可以提供有关每个编译步骤需要多长时间的一些信息，并随着时间的推移跟踪并发信息。</p>
+</li>
+<li><p>避免过程宏 Crates，主要是因为使用了 syn 。过程宏是 Rust 开发的热点：它们会消耗 CPU 周期，因此请谨慎使用。serde 库中包含了过程宏，它在很多地方都用到，所以需要注意是否一定需要 serde 进行序列化和反序列化。</p>
+</li>
+<li><p>避免过多的泛型。过多的泛型单态化也会导致编译时间增加。</p>
+</li>
+<li><p>提升你的硬件，或者在云端（比如 **<a href="https://link.zhihu.com/?target=http://Gitpod.io">http://Gitpod.io</a>[41]**，可免费使用 16 核 Intel Xeon 2.80GHz，60GB RAM 的主机）使用更好的硬件环境进行编译。</p>
+</li>
+<li><p>下载所有的依赖 crate。编译过程中有很大一部分时间用于下载，提前下载好 crate 是有帮助的。参考 <a href="https://link.zhihu.com/?target=https://github.com/the-lean-crate/criner">https://github.com/the-lean-crate/criner</a></p>
+</li>
+<li><p>使用 docker 进行编译。**<code>cargo-chef</code>[42]** 可用于充分利用 Docker 层缓存，从而大大加快 Rust 项目的 Docker 构建。</p>
+</li>
+<li><p>超频 cpu ？谨慎。</p>
+</li>
+<li><p>优化 CI 构建速度。参考 <a href="https://link.zhihu.com/?target=https://matklad.github.io/2021/09/04/fast-rust-builds.html">https://matklad.github.io/2021/09/04/fast-rust-builds.html</a>。</p>
+</li>
+<li><p>你自己开发 crate 的时候尽量保持精简，利人利己。</p>
+</li>
+</ul>
+<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a><strong>参考资料</strong></h3><p>[1]</p>
+<p><code>MongoDB</code> 驱动微基准集: <em><a href="https://link.zhihu.com/?target=https://github.com/mongodb/specifications/blob/master/source/benchmarking/benchmarking.rst">https://github.com/mongodb/specifications/blob/master/source/benchmarking/benchmarking.rst</a></em></p>
+<p>[2]</p>
+<p><code>criterion</code>: <em><a href="https://link.zhihu.com/?target=https://crates.io/crates/criterion">https://crates.io/crates/criterion</a></em></p>
+<p>[3]</p>
+<p>goose: <em><a href="https://link.zhihu.com/?target=https://github.com/tag1consulting/goose">https://github.com/tag1consulting/goose</a></em></p>
+<p>[4]</p>
+<p>调试和日志记录机制: <em><a href="https://link.zhihu.com/?target=https://book.goose.rs/logging/overview.html">https://book.goose.rs/logging/overview.html</a></em></p>
+<p>[5]</p>
+<p>全面的指标: <em><a href="https://link.zhihu.com/?target=https://book.goose.rs/getting-started/metrics.html">https://book.goose.rs/getting-started/metrics.html</a></em></p>
+<p>[6]</p>
+<p>更精细的控制: <em><a href="https://link.zhihu.com/?target=https://book.goose.rs/config/scheduler.html">https://book.goose.rs/config/scheduler.html</a></em></p>
+<p>[7]</p>
+<p><code>flamegraph</code> : <em><a href="https://link.zhihu.com/?target=https://crates.io/crates/flamegraph">https://crates.io/crates/flamegraph</a></em></p>
+<p>[8]</p>
+<p>Valgrind: <em><a href="https://link.zhihu.com/?target=https://www.valgrind.org/">https://www.valgrind.org/</a></em></p>
+<p>[9]</p>
+<p>VTune : <em><a href="https://link.zhihu.com/?target=https://www.intel.com/content/www/us/en/develop/documentation/vtune-help/top.html">https://www.intel.com/content/www/us/en/develop/documentation/vtune-help/top.html</a></em></p>
+<p>[10]</p>
+<p>Logrocket: <em><a href="https://link.zhihu.com/?target=https://logrocket.com/">https://logrocket.com/</a></em></p>
+<p>[11]</p>
+<p>minitrace-rust: <em><a href="https://link.zhihu.com/?target=https://github.com/tikv/minitrace-rust">https://github.com/tikv/minitrace-rust</a></em></p>
+<p>[12]</p>
+<p>bcc: <em><a href="https://link.zhihu.com/?target=https://github.com/iovisor/bcc">https://github.com/iovisor/bcc</a></em></p>
+<p>[13]</p>
+<p>Hotspot: <em><a href="https://link.zhihu.com/?target=https://github.com/KDAB/hotspot">https://github.com/KDAB/hotspot</a></em></p>
+<p>[14]</p>
+<p>Firefox Profiler: <em><a href="https://link.zhihu.com/?target=https://profiler.firefox.com/">https://profiler.firefox.com/</a></em></p>
+<p>[15]</p>
+<p>Cachegrind: <em><a href="https://link.zhihu.com/?target=https://www.valgrind.org/docs/manual/cg-manual.html">https://www.valgrind.org/docs/manual/cg-manual.html</a></em></p>
+<p>[16]</p>
+<p>Callgrind: <em><a href="https://link.zhihu.com/?target=https://www.valgrind.org/docs/manual/cl-manual.html">https://www.valgrind.org/docs/manual/cl-manual.html</a></em></p>
+<p>[17]</p>
+<p>DHAT: <em><a href="https://link.zhihu.com/?target=https://www.valgrind.org/docs/manual/dh-manual.html">https://www.valgrind.org/docs/manual/dh-manual.html</a></em></p>
+<p>[18]</p>
+<p>heaptrack: <em><a href="https://link.zhihu.com/?target=https://github.com/KDE/heaptrack">https://github.com/KDE/heaptrack</a></em></p>
+<p>[19]</p>
+<p><code>counts</code>: <em><a href="https://link.zhihu.com/?target=https://github.com/nnethercote/counts/">https://github.com/nnethercote/counts/</a></em></p>
+<p>[20]</p>
+<p>Coz: <em><a href="https://link.zhihu.com/?target=https://github.com/plasma-umass/coz">https://github.com/plasma-umass/coz</a></em></p>
+<p>[21]</p>
+<p>coz-rs: <em><a href="https://link.zhihu.com/?target=https://github.com/plasma-umass/coz/tree/master/rust">https://github.com/plasma-umass/coz/tree/master/rust</a></em></p>
+<p>[22]</p>
+<p><code>enum_dispatch</code>: <em><a href="https://link.zhihu.com/?target=https://docs.rs/enum_dispatch/latest/enum_dispatch/">https://docs.rs/enum_dispatch&#x2F;latest&#x2F;enum_dispatch&#x2F;</a></em></p>
+<p>[23]</p>
+<p><code>smallvec</code>: <em><a href="https://link.zhihu.com/?target=https://github.com/servo/rust-smallvec">https://github.com/servo/rust-smallvec</a></em></p>
+<p>[24]</p>
+<p><code>smallstring</code>: <em><a href="https://link.zhihu.com/?target=https://github.com/jFransham/smallstring">https://github.com/jFransham/smallstring</a></em></p>
+<p>[25]</p>
+<p><code>tendril</code>: <em><a href="https://link.zhihu.com/?target=https://github.com/servo/tendril">https://github.com/servo/tendril</a></em></p>
+<p>[26]</p>
+<p>rayon: <em><a href="https://link.zhihu.com/?target=https://github.com/rayon-rs/rayon">https://github.com/rayon-rs/rayon</a></em></p>
+<p>[27]</p>
+<p>crossbeam: <em><a href="https://link.zhihu.com/?target=https://docs.rs/crossbeam/latest/crossbeam/">https://docs.rs/crossbeam/latest/crossbeam/</a></em></p>
+<p>[28]</p>
+<p>flume: <em><a href="https://link.zhihu.com/?target=https://github.com/zesterer/flume">https://github.com/zesterer/flume</a></em></p>
+<p>[29]</p>
+<p>Tokio: <em><a href="https://link.zhihu.com/?target=https://github.com/tokio-rs/tokio">https://github.com/tokio-rs/tokio</a></em></p>
+<p>[30]</p>
+<p>loom: <em><a href="https://link.zhihu.com/?target=https://github.com/tokio-rs/loom">https://github.com/tokio-rs/loom</a></em></p>
+<p>[31]</p>
+<p>console: <em><a href="https://link.zhihu.com/?target=https://github.com/tokio-rs/console">https://github.com/tokio-rs/console</a></em></p>
+<p>[32]</p>
+<p><a href="https://link.zhihu.com/?target=https://rust-lang.github.io/rust-clippy/master/index.html:">https://rust-lang.github.io/rust-clippy/master/index.html:</a> <em><a href="https://link.zhihu.com/?target=https://rust-lang.github.io/rust-clippy/master/index.html">https://rust-lang.github.io/rust-clippy/master/index.html</a></em></p>
+<p>[33]</p>
+<p>Rust 编码规范 : <em><a href="https://link.zhihu.com/?target=https://rust-coding-guidelines.github.io/rust-coding-guidelines-zh/">https://rust-coding-guidelines.github.io/rust-coding-guidelines-zh/</a></em></p>
+<p>[34]</p>
+<p>sccache: <em><a href="https://link.zhihu.com/?target=https://github.com/mozilla/sccache">https://github.com/mozilla/sccache</a></em></p>
+<p>[35]</p>
+<p>mold: <em><a href="https://link.zhihu.com/?target=https://github.com/rui314/mold">https://github.com/rui314/mold</a></em></p>
+<p>[36]</p>
+<p>zld: <em><a href="https://link.zhihu.com/?target=https://github.com/michaeleisel/zld">https://github.com/michaeleisel/zld</a></em></p>
+<p>[37]</p>
+<p>完整的 codegen 选项列表: <em><a href="https://link.zhihu.com/?target=https://doc.rust-lang.org/rustc/codegen-options">https://doc.rust-lang.org/rustc/codegen-options</a></em></p>
+<p>[38]</p>
+<p>bevy 的用于更快编译的配置: <em><a href="https://link.zhihu.com/?target=https://github.com/bevyengine/bevy/blob/3a2a68852c0a1298c0678a47adc59adebe259a6f/.cargo/config_fast_builds">https://github.com/bevyengine/bevy/blob/3a2a68852c0a1298c0678a47adc59adebe259a6f/.cargo/config_fast_builds</a></em></p>
+<p>[39]</p>
+<p><code>cargo rustc -- -Zself-profile</code>: <em><a href="https://link.zhihu.com/?target=https://blog.rust-lang.org/inside-rust/2020/02/25/intro-rustc-self-profile.html%23profiling-the-compiler">https://blog.rust-lang.org/inside-rust/2020/02/25/intro-rustc-self-profile.html#profiling-the-compiler</a></em></p>
+<p>[40]</p>
+<p><code>cargo -Z timings</code>: <em><a href="https://link.zhihu.com/?target=https://doc.rust-lang.org/nightly/cargo/reference/unstable.html%23timings">https://doc.rust-lang.org/nightly/cargo/reference/unstable.html#timings</a></em></p>
+<p>[41]</p>
+<p>Gitpod.io: <em><a href="https://link.zhihu.com/?target=https://gitpod.io/">https://gitpod.io/</a></em></p>
+<p>[42]</p>
+<p><code>cargo-chef</code>: _<a href="https://link.zhihu.com/?target=https://www.lpalmieri.com/posts/fast-rust-docker-builds/">https://www.lpalmieri.com/posts/fas</a>_simpread-</p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2021/09/09/rust/Rust%20%E6%80%A7%E8%83%BD%E8%AF%84%E4%BC%B0%E4%B8%8E%E8%B0%83%E4%BC%98%E5%AE%9E%E8%B7%B5/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2021/09/09/rust/Rust%20%E6%80%A7%E8%83%BD%E8%AF%84%E4%BC%B0%E4%B8%8E%E8%B0%83%E4%BC%98%E5%AE%9E%E8%B7%B5/')">Rust 性能优化</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2021/09/09/rust/Rust%20%E6%80%A7%E8%83%BD%E8%AF%84%E4%BC%B0%E4%B8%8E%E8%B0%83%E4%BC%98%E5%AE%9E%E8%B7%B5/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=Rust 性能优化&amp;url=https://shippomx.github.io/2021/09/09/rust/Rust%20%E6%80%A7%E8%83%BD%E8%AF%84%E4%BC%B0%E4%B8%8E%E8%B0%83%E4%BC%98%E5%AE%9E%E8%B7%B5/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/rust/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>rust<span class="tagsPageCount">6</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2021/09/03/linux/%E7%BD%91%E7%BB%9C/iptables%20%E8%AF%A6%E8%A7%A3%E5%8F%8A%20docker%20%E7%9A%84%20iptables%20%E8%A7%84%E5%88%99/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">iptables 规则详解</div></div></a></div><div class="next-post pull-right"><a href="/2021/09/11/kidgets/jq%20%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">jq命令详解</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2021/09/01/rust/Rust%E6%A8%A1%E5%BC%8F%E5%8C%B9%E9%85%8D%E7%AE%80%E4%BB%8B/" title="rust模式匹配"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-09-01</div><div class="title">rust模式匹配</div></div></a></div><div><a href="/2020/06/18/rust/Rust%E7%9A%84%E4%B8%80%E4%BA%9B%E6%9D%82%E8%AE%B0/" title="Rust的一些简略总结"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-06-18</div><div class="title">Rust的一些简略总结</div></div></a></div><div><a href="/2020/06/06/rust/%E7%90%86%E8%A7%A3Rust%E7%9A%84Task/" title="理解Rust的Task"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-06-06</div><div class="title">理解Rust的Task</div></div></a></div><div><a href="/2021/09/01/rust/%E6%9C%89%E5%93%AA%E4%BA%9B%E5%80%BC%E5%BE%97%E6%8E%A8%E8%8D%90%E7%9A%84%20Rust%20%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7_/" title="一些rust编写的工具"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-09-01</div><div class="title">一些rust编写的工具</div></div></a></div><div><a href="/2020/06/07/rust/%E7%90%86%E8%A7%A3Rust%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/" title="理解Rust的生命周期"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-06-07</div><div class="title">理解Rust的生命周期</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AE%B9%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">内容介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E5%AD%90"><span class="toc-number">2.</span> <span class="toc-text">引子</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rust-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E6%80%BB%E5%88%99"><span class="toc-number">3.</span> <span class="toc-text">Rust 性能优化总则</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E5%88%99%E4%B8%80%EF%BC%9A-%E4%B8%8D%E8%A6%81%E8%BF%87%E6%97%A9%E4%BC%98%E5%8C%96%E6%80%A7%E8%83%BD"><span class="toc-number">3.1.</span> <span class="toc-text">原则一： 不要过早优化性能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E5%88%99%E4%BA%8C%EF%BC%9A-%E4%B8%8D%E8%A6%81%E8%BF%87%E5%BA%A6%E4%BC%98%E5%8C%96%E6%80%A7%E8%83%BD"><span class="toc-number">3.2.</span> <span class="toc-text">原则二： 不要过度优化性能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E5%88%99%E4%B8%89%EF%BC%9A-Rust-%E4%BB%A3%E7%A0%81%E7%9A%84%E6%80%A7%E8%83%BD%E3%80%81%E5%AE%89%E5%85%A8%E3%80%81%E7%BC%96%E8%AF%91%E9%80%9F%E5%BA%A6%E5%92%8C%E7%BC%96%E8%AF%91%E5%A4%A7%E5%B0%8F%E4%B9%8B%E9%97%B4%E9%9C%80%E8%A6%81%E6%9D%83%E8%A1%A1"><span class="toc-number">3.3.</span> <span class="toc-text">原则三： Rust 代码的性能、安全、编译速度和编译大小之间需要权衡</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rust-%E4%BC%98%E5%8C%96%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-number">4.</span> <span class="toc-text">Rust 优化准备工作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95"><span class="toc-number">4.1.</span> <span class="toc-text">基准测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%8B%E5%8A%9B-x2F-%E8%B4%9F%E8%BD%BD%E6%B5%8B%E8%AF%95"><span class="toc-number">4.2.</span> <span class="toc-text">压力 &#x2F; 负载测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%98%8E%E7%99%BD%E9%AB%98%E6%80%A7%E8%83%BD%E7%B3%BB%E7%BB%9F%E7%9A%84%E6%A0%87%E5%87%86"><span class="toc-number">4.3.</span> <span class="toc-text">明白高性能系统的标准</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rust-%E6%80%A7%E8%83%BD%E5%89%96%E6%9E%90%E5%B7%A5%E5%85%B7%E4%BB%8B%E7%BB%8D"><span class="toc-number">5.</span> <span class="toc-text">Rust 性能剖析工具介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#On-CPU-%E6%80%A7%E8%83%BD%E5%89%96%E6%9E%90"><span class="toc-number">5.1.</span> <span class="toc-text">On-CPU 性能剖析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-Perf-%E5%AF%BB%E6%89%BE-%E2%80%9C%E7%83%AD%E7%82%B9%E2%80%9D"><span class="toc-number">5.2.</span> <span class="toc-text">使用 Perf 寻找 “热点”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%81%AB%E7%84%B0%E5%9B%BE%E5%B7%A5%E5%85%B7"><span class="toc-number">5.3.</span> <span class="toc-text">火焰图工具</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#perf-%E9%80%82%E5%90%88%E6%B5%8B%E8%AF%95-Rust-%E5%BC%82%E6%AD%A5%E4%BB%A3%E7%A0%81"><span class="toc-number">5.4.</span> <span class="toc-text">perf 适合测试 Rust 异步代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A3%80%E6%9F%A5%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E5%92%8C%E4%B8%8D%E5%BF%85%E8%A6%81%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D"><span class="toc-number">5.5.</span> <span class="toc-text">检查内存泄露和不必要的内存分配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E6%80%A7%E8%83%BD%E5%89%96%E6%9E%90-x2F-%E7%9B%91%E6%8E%A7%E5%B7%A5%E5%85%B7"><span class="toc-number">5.6.</span> <span class="toc-text">其他性能剖析 &#x2F; 监控工具</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Off-CPU-%E6%80%A7%E8%83%BD%E5%89%96%E6%9E%90"><span class="toc-number">5.7.</span> <span class="toc-text">Off-CPU 性能剖析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E9%80%82%E5%90%88-Rust-%E6%80%A7%E8%83%BD%E5%89%96%E6%9E%90%E7%9A%84%E5%B7%A5%E5%85%B7%E4%BB%8B%E7%BB%8D"><span class="toc-number">5.8.</span> <span class="toc-text">其他适合 Rust 性能剖析的工具介绍</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A5%E5%B8%B8-Rust-%E5%BC%80%E5%8F%91%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E6%8A%80%E5%B7%A7%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">日常 Rust 开发性能优化技巧总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%AF%B9%E4%BA%8E%E5%8F%AA%E8%A2%AB%E8%B0%83%E7%94%A8%E4%B8%80%E6%AC%A1%E7%9A%84%E5%87%BD%E6%95%B0%E5%8F%AF%E8%83%BD%E5%B9%B6%E4%B8%8D%E9%9C%80%E8%A6%81%E8%BF%9B%E8%A1%8C%E4%BC%98%E5%8C%96%E3%80%82"><span class="toc-number">6.1.</span> <span class="toc-text">1. 对于只被调用一次的函数可能并不需要进行优化。</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%BC%98%E5%85%88%E6%94%B9%E8%BF%9B%E4%BD%A0%E7%9A%84%E7%AE%97%E6%B3%95"><span class="toc-number">6.2.</span> <span class="toc-text">2. 优先改进你的算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%A6%81%E5%85%85%E5%88%86%E7%90%86%E8%A7%A3-Rust-%E4%B8%AD%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80"><span class="toc-number">6.3.</span> <span class="toc-text">3. 要充分理解 Rust 中数据结构的内存布局</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E9%81%BF%E5%85%8D-Box-lt-Trait-gt-%E5%8A%A8%E6%80%81%E5%88%86%E5%8F%91"><span class="toc-number">6.4.</span> <span class="toc-text">4. 避免 Box&lt;Trait&gt; 动态分发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E4%BD%BF%E7%94%A8%E5%9F%BA%E4%BA%8E%E6%A0%88%E7%9A%84%E5%8F%AF%E5%8F%98%E9%95%BF%E5%BA%A6%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-number">6.5.</span> <span class="toc-text">5. 使用基于栈的可变长度数据类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E5%90%88%E7%90%86%E4%BD%BF%E7%94%A8%E6%96%AD%E8%A8%80%E9%81%BF%E5%85%8D%E6%95%B0%E7%BB%84%E8%B6%8A%E7%95%8C%E6%A3%80%E6%9F%A5"><span class="toc-number">6.6.</span> <span class="toc-text">6. 合理使用断言避免数组越界检查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E4%BD%BF%E7%94%A8%E9%93%BE%E6%8E%A5%E6%97%B6%E4%BC%98%E5%8C%96%EF%BC%88LTO%EF%BC%89"><span class="toc-number">6.7.</span> <span class="toc-text">7. 使用链接时优化（LTO）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-%E4%B8%8D%E8%A6%81%E4%BD%BF%E7%94%A8-inline-always"><span class="toc-number">6.8.</span> <span class="toc-text">8. 不要使用 #[inline(always)]</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-%E9%81%BF%E5%85%8D%E6%98%BE%E5%BC%8F-Clone"><span class="toc-number">6.9.</span> <span class="toc-text">9. 避免显式 Clone</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-%E4%BD%BF%E7%94%A8-Unsafe-%E6%96%B9%E6%B3%95%E6%B6%88%E9%99%A4%E4%B8%80%E4%BA%9B%E4%B8%8D%E5%BF%85%E8%A6%81%E7%9A%84%E5%AE%89%E5%85%A8%E6%A3%80%E6%9F%A5"><span class="toc-number">6.10.</span> <span class="toc-text">10. 使用 Unsafe 方法消除一些不必要的安全检查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#11-%E5%B9%B6%E5%8F%91-x2F-%E5%B9%B6%E8%A1%8C%E5%8C%96%E4%BD%A0%E7%9A%84%E7%A8%8B%E5%BA%8F"><span class="toc-number">6.11.</span> <span class="toc-text">11. 并发 &#x2F; 并行化你的程序</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#12-%E5%B9%B6%E5%8F%91%E7%A8%8B%E5%BA%8F%E4%B8%AD%EF%BC%8C%E5%90%88%E7%90%86%E4%BD%BF%E7%94%A8%E9%94%81%EF%BC%8C%E6%88%96%E6%9B%BF%E6%8D%A2%E6%97%A0%E9%94%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-number">6.12.</span> <span class="toc-text">12. 并发程序中，合理使用锁，或替换无锁数据结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#13-%E4%BD%BF%E7%94%A8-Clippy"><span class="toc-number">6.13.</span> <span class="toc-text">13. 使用 Clippy</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%96%E8%AF%91%E5%A4%A7%E5%B0%8F%E5%92%8C%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4%E7%9A%84%E4%BC%98%E5%8C%96%E6%80%BB%E7%BB%93"><span class="toc-number">7.</span> <span class="toc-text">编译大小和编译时间的优化总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BC%98%E5%8C%96%E7%BC%96%E8%AF%91%E5%A4%A7%E5%B0%8F"><span class="toc-number">7.1.</span> <span class="toc-text">1. 优化编译大小</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%BC%98%E5%8C%96%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4%E7%9A%84%E4%B8%80%E4%BA%9B%E6%8A%80%E5%B7%A7"><span class="toc-number">7.2.</span> <span class="toc-text">2. 优化编译时间的一些技巧</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-number">7.3.</span> <span class="toc-text">参考资料</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

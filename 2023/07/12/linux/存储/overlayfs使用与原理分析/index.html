@@ -1,0 +1,477 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>linux-深入理解overlayfs | 远辰</title><meta name="keywords" content="container"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="linux-深入理解overlayfs"><meta name="application-name" content="linux-深入理解overlayfs"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="linux-深入理解overlayfs"><meta property="og:url" content="https://shippomx.github.io/2023/07/12/linux/%E5%AD%98%E5%82%A8/overlayfs%E4%BD%BF%E7%94%A8%E4%B8%8E%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="在初步了解 overlayfs 用途之后，本文将介绍如何使用 overlayfs 以及理解该文件系统所特有的一些功能特性。由于目前主线内核对 overlayfs 正在不断的开发和完善中，因此不同的内核版本改动可能较大，本文尽量与最新的内核版本保持一致，但可能仍会存在细微的出入。 内核版本：Linux"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="在初步了解 overlayfs 用途之后，本文将介绍如何使用 overlayfs 以及理解该文件系统所特有的一些功能特性。由于目前主线内核对 overlayfs 正在不断的开发和完善中，因此不同的内核版本改动可能较大，本文尽量与最新的内核版本保持一致，但可能仍会存在细微的出入。 内核版本：Linux"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2023/07/12/linux/%E5%AD%98%E5%82%A8/overlayfs%E4%BD%BF%E7%94%A8%E4%B8%8E%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: 'linux-深入理解overlayfs',
+  postAI: '',
+  pageFillDescription: '挂载文件系统, 删除文件和目录, 创建文件和目录, 写时复制（copy-up）特性, Rename 文件和目录, 原子性保证（Workdir）, Origin 扩展属性和 Impure 扩展属性, Index 特性, 约束与限制, 小结, 参考文献在初步了解用途之后本文将介绍如何使用以及理解该文件系统所特有的一些功能特性由于目前主线内核对正在不断的开发和完善中因此不同的内核版本改动可能较大本文尽量与最新的内核版本保持一致但可能仍会存在细微的出入内核版本示例环境挂载文件系统挂载文件系统的基本命令如下其中表示不同的层目录不同的目录使用分隔层次关系依次为注多层功能支持在合入版本只能指定一个然后和目录分别表示层目录和文件系统挂载后用于存放临时和间接文件的工作基目录最后的目录就是最终的挂载点目录若一切顺利在执行以上命令后就成功挂载到目录下了挂载选项支持即参数指定用户需要挂载的层目录支持多最大支持层指定用户需要挂载的层目录指定文件系统的工作基础目录挂载后内容会被清空且在使用过程中其内容用户不可见功能未使用开启或关闭特性开启后可支持目录和纯层目录的系统调用开启或关闭特性开启后可避免问题其中和为基本的挂载选项和涉及为功能支持选项除非内核编译时默认启动否则默认情况下这两个选项不启用这里先按照默认情况进行演示分析后面这两个选项单独说明示例现在以文件系统作为基础文件系统挂载首先创建文件系统的基础目录个然后分别在两个目录和目录下创建不同文件和最后在这个目录下分别创建同名目录并同时在目录下创建同名文件和在挂载文件系统之后在目录下能够看到和这就是的上下层合并在目录下看到来自的文件和来自层的文件位于最底层中的文件被中的同名文件覆盖位于中的文件被中的同名文件覆盖这就是的上下层同名目录合并与同名文件覆盖特性对应的组织结构如下图所示图基本挂载示例上下层同名文件覆盖和上下层同名目录合并的原理用户在的目录中查看文件时会调用内核的系统调用一般情况下该系统调用会调用文件系统接口它仅会遍历当前目录中的所有目录项并返回给用户所以用户能够看到这个目录下的所有文件或子目录但在中如果目录不是仅来自单独的一层当前时多层合并的或者其中可能存在曾经发生过合并的迹象它会逐级遍历扫描所有层的同名目录然后把各层目录中的内容返回给用户因此用户就会感觉到上下层同名目录合并与此同时如果在遍历扫描的过程中发现了同名的文件它会判断该文件来自那一层从而忽略来自层的文件而只显示来自层的文件因此用户会感觉到上下层同名文件覆盖挂载文件系统的特性与限制条件用户可以不指定和但同时必须保证层此时的文件系统为只读挂载这也是只读挂载的唯一方法如果用户指定则必须保证所在的文件系统是可读写的同时还需指定并且不能和是父子目录关系常见的文件系统中所在的文件系统不能是和另一个等文件系统而所在的文件系统可以是这样的远程文件系统也可以是另一个因为是可以写入的所以需要避免一些特性上的不兼容例如是大小写不敏感的文件系统而是只读文件系统相对要求会低一些用户应该尽量避免多个使用同一个或尽管默认情况下是可以挂载成功的但是内核还是会输出告警日志来提示用户用户指定的最多可以支持层虽然如此但是由于的挂载选项最多支持个的输入默认大小为所以如果指定的数量较多且长度较长会有溢出而导致挂载失败的风险目前内核的挂载选项不支持超过个内存页即大小指定的和所在的基础文件系统的接口需要支持返回参数否则将会导致本应该隐藏的文件后文介绍暴露当然目前和等主流的文件系统都是支持的如果不支持那内核会给出警告提示但不会直接拒绝挂载指定的和所在的基础文件系统需要支持扩展属性否则在功能方面会受到限制例如后面的目录将无法生成并且特性和特性也无法使用如果和各是来自同一个基础文件系统那在文件触发前后用户在层通过命令或命令看到的和值保持不变否则会发生改变删除文件和目录删除文件和目录看似一个简单的动作对于实现却需要考虑很多的场景且分很多步骤来进行下面来分以下几个场景开分别讨论要删除的文件或目录来自层且层中没有同名的文件或目录这种场景比较简单由于层的文件系统是可写的所有在中的操作都可以直接体现在层所对应的文件系统中因此直接删除层中对应的文件或目录即可示例这里在目录下创建了文件和目录然后在挂载后从目录下删除它们可见在目录下也同时被直接删除要删除的文件或目录来自层层不存在覆盖文件由于层中的内容对于来说是只读的所以并不能像之前那样直接删除层中的文件或目录因此需要进行特殊的处理让用户在删除之后即不能正真的执行删除动作又要让用户以为删除已经成功了针对这种场景设计了一套障眼法文件文件在用户删除文件时创建用于屏蔽底层的同名文件同时该文件在层是不可见的所以用户就看不到被删除的文件或目录了文件并非普通文件而是主次设备号都为的字符设备可以通过命令手动创建当用户在层通过命令将通过系统调用检查父目录的目录项时会自动过过滤掉和文件自身以及和它同名的层文件和目录达到了隐藏文件的目的让用户以为文件已经被删除了示例这里再层中创建文件和目录然后在挂载文件系统之后从层删除它们然后检查层中的文件依然存在并没有被删除于此同时在层中创建了两个同名文件它们的文件类型为即表示为字符设备同时主次设备号为要删除的文件是层覆盖层的文件要删除的目录是上下层合并的目录该场景就理论上来讲其实是前两个场景的合并即需要删除层对应文件系统中的文件或目录也需要在对应位置创建同名文件让层的文件被删除后不至于层的文件被暴露出来示例这里在目录和目录中都创建了文件和目录在挂载后从目录删除它们然后检查层中的文件依然不变同时层中的原有文件已经被替换成两个同名的文件了创建文件和目录创建文件和目录同删除类似也需要针对不同的场景进行不同的处理下面分以下几个场景进行讨论全新的创建一个文件或目录这个场景最为简单如果在层中和层中都不存在对应的文件或目录那直接在层中对应的目录下新创建文件或目录即可示例这里在一个全为空的中挂载后通过目录中创建文件和目录它们直接被创建到了层对应的文件系统中而层不受任何影响创建一个在层已经存在且在层有文件的同名文件该场景对应前文中的场景或场景在层中之前已经存在同名的文件或目录了同时层也有文件将其隐藏显然是通过层删除它了所以用户在层看不到它们可以新建一个同名的文件这种场景下需要删除层中的用新建的文件替换原有的文件这样在层中看到的文件就是来自层的新文件了示例这里先在目录中创建文件然后在目录中创建同名的文件用于隐藏层中的文件注意此处仅是为了演示正常使用中用户应避免自己创建文件挂载文件系统后通过目录新建文件新建文件后在目录中的原有文件不变目录中的文件已经被替换成了新创建的文件用户在中看见的也即是这个新创建的文件创建一个在层已经存在且在层有文件的同名目录该场景和场景的唯一不同是将文件转换成目录即原层中存在一个目录层中存在一个同名文件用于隐藏它同样的它是之前被用户通过层删除了的然后用户在层中又重新创建一个同名目录依照同名目录上下层合并的理念如果此处不做任何特殊的处理而仅仅是在层中新建一个目录那原有层该目录中的内容会暴露给用户因此针对这种情况引入了一种属性属性它是通过在层对应的目录上设置扩展属性值为来实现所以这也就需要层所在的文件系统支持扩展属性在读取上下层存在同名目录的目录项时如果层的目录被设置了属性它将忽略这个目录下层的所有同名目录中的目录项以保证新建的目录是一个空的目录如下图所示实际示例演示这里首先在目录中创建一个目录并在其中创建一个文件然后在层创建文件用于隐藏目录中的目录挂载文件系统后通过目录新建目录观察该新建的目录为空层中的文件并没有暴露出来然后查看层中的原有文件已经被替换层新建目录同时它被设置了的属性此时如果我们删除这个属性注意需要离线删除不能在挂载时操作所有基础文件系统目录底层目录中的文件就会暴露出来写时复制特性用户在写文件时如果文件来自层那直接写入即可但是如果文件来自层由于层文件无法修改因此需要先复制到层然后再往其中写入内容这就是的写时复制特性示例这里首先在目录中新建文件并往其中写入内容挂载文件系统后通过目录写入新的内容观察目录下文件的内容包含来原有的和新写入的同时观察目录中也同样存在一个新的从目录复制上来的文件内容同目录中看到的一致当然的特性并不仅仅在往一个来自层的文件写入新内容时触发还有很多的场景会触发简单总结如下用户以写方式打开来自层的文件时对该文件执行即系统调用时带有或等标识修改来自层文件或目录属性或者扩展属性时对该文件或目录触发例如或设置属性等来自层文件时对该文件执行对来自层的文件创建硬链接时对链接原文件执行在来自层的目录里创建文件目录链接等内容时对其父目录执行对来自层某个文件或目录进行删除或其它会触发的动作时其对应的父目录会至下而上递归执行文件和目录用户在使用命令移动或文件时工具首先会尝试调用系统调用直接由内核完成文件的操作但对于个别文件系统内核如果不支持系统调用那由工具代劳它会首先复制一个一模一样的文件到目标位置然后删除原来的文件从而模拟达到类似的效果但是这有一个很大的缺点就是无法保证整个过程的原子性对于来说文件的系统调用是支持的但是目录的系统调用支持需要分情况讨论前文中看到在挂载文件系统时内核提供了一个挂载选项默认的启用情况由内核的配置选项决定在未启用情况下针对单纯来自层的目录是支持系统调用的而对于来自层的目录或是上下层合并的目录则不支持系统调用会返回由工具负责处理在启用的情况下无论目录来自那一层是否合并都将支持系统调用但是该特性非向前兼容目前内核中默认是关闭的用户可手动开启下面针对目录的几种场景来分别进行演示和说明关闭特性在关闭特性的情况下分别对来自和合并的目录进行操作查看如何进行处理这里在目录下创建单纯来自层的目录在目录下创建单纯来自层的目录在目录和目录目录下分别创建目录表示上下层合并的目录各个目录下都创建了子目录和文件和在挂载文件系统后在层通过命令各个目录完成后观察和层中的内容不变但层中分别创建了两个文件和用于屏蔽目录中的目录然后查看和中的内容来自目录下的子目录和文件都被了通过跟踪其流程省略了文件属性和其他保护性的操作可以看出工具首先调用系统调用尝试对目录进行但是失败并返回于是它就创建了目录然后依次对子目录和文件进行处理子目录的处理方式同类似文件可以直接成功最后删除原始的目录和即可这一系列的模拟动作后在层最后呈现给用户的结果是预期的但由于是多个系统调用下发整个过程非原子如果操作执行过程中发生了系统奔溃那在系统恢复后用户就可能会发现和同时存在的情况这类似与跨文件系统打开特性打开之后将支持单纯来自层和合并目录的系统调用由于目录里可能会包含很多子目录或文件需要保证系统调用的原子性因此它不能像命令那样将目录里的各个子目录和文件都挨个到层中所以设计了一种扩展属性其内容是层原始目录的相对路径相对层挂载根目录或当前目录的父目录设置在层中的目标目录上并不会原始目录中的子目录或文件用户通过目录扫描目录项时在扫描层目录时会检查它的扩展属性并找到原始层目录同时将原始目录下的目录项也返回给用户如下图所示如图用户在层执行和之后原始层中的文件和文件并不会到目标层中的和中取而代之的时在和中的扩展属性用户在层看到的目录和目录来自与层但是其中的内容却部分来自与层其实就本质上来看其实只是一种特殊类型的只不过所的层目录不在是同名目录而是从中保存的名字而已实际示例如下同前面一样这里创建了和及其子目录和文件然后在启用特性的目录下执行操作完成后查看目录中的内容可以看到用于屏蔽层原始目录的两个文件同样被创建但是不同的是目录中并没有的文件和目录目录也同样没有的目录和文件只有原来就存在的目录和文件最后查看目录的扩展属性和目录的扩展属性分别指向了相对同级父目录的目录和目录原子性保证前文中介绍了文件目录的创建删除和等操作以及写时复制特性描述了处理这些操作的细节但是有一点还没有提到那就是是如何保证这些操作的原子性的例如当用户在删除上下层都存在的文件时需要删除层的文件然后创建文件来屏蔽层的文件想要创建同名文件必然需要先删除原有的文件这删除和创建分为两个步骤如何做到原子性以保证文件系统的一致性我们当然不希望见到文件删除了但是文件却没有创建的情况又例如用户在触发的时候文件并不可能在一瞬间就完整的拷贝到层中如果系统崩溃那在恢复后用户看到的就是一个被损坏的文件也同样需要保证原子性对于这个问题我们来关注前面挂载文件系统指定的目录在挂载文件系统后该目录下会创建一个为空的目录这个目录就是原子性保证的关键所在下面针对不同的场景来分析是如何使用这个目录的删除层文件目录并创建的过程如上图所示以文件为例若用户删除删除文件首先在目录下创建用于覆盖层中文件的文件然后将该文件与中的文件进行对于目录则为这样两个文件就原子的被替换了原子性由基础文件系统保证即使此时系统崩溃或异常掉电磁盘上的基础文件系统中也只会是在目录中多出了一个未被及时删除的文件而已实际命名并不是而是一个以开始的带有序号的文件此处依然称之为是为了为了便于说明并不影响用户看到的目录当再次挂载时会在挂载阶段被清除最后将目录中的文件删除这样整个层中的文件就被原子的删除了在上创建同名文件目录的过程该过程与删除类似只是现在在层中的是文件而在目录中是新创建的文件的使用流程基本一致不再赘述删除上下层合并目录的过程由于上下层合并的目录中可能存在文件因此在删除之前需要保证要删除的层目录是空的不能有文件如图所示在用户删除空目录时其实在层中目录下存在一个的文件因此不能直接立即通过场景的方式进行删除首先在目录下创建一个目录然后将该目录和层的同名目录进行这样层中的目录就变成了一个目录了它将屏蔽底层的同名目录最后将下的目录里的文件全部清空后再删除目录本身这样就确保了目录中不存在文件了随后的步骤就同场景一一样了需要注意的是这一些列的流程其实对于层来说包含了原始目录目录文件的这个状态该过程并不是原子的但在用户看来只有两种状态一是删除成功此时层已经变成状态还有一种是未删除对应层是状态或状态所以中间的目录状态并不会影响文件系统对用户的输出依然能够保证文件系统的一致性文件目录的过程在件的过程中由于文件没有办法在一个原子操作中完成的拷贝到层中的对应目录下不仅仅是数据拷贝耗时还包含文件属性和扩展属性的拷贝动作所以这里同样用到了目录作为中转站这里以文件为例首先根据基础文件系统时候支持功能将使用来提升并发的效率若支持则在目录下创建一个临时否则则创建一个真实文件然后从层中的文件中拷贝数据属性和扩展属性到这个文件中接下来若支持则将该文件链接到目录下形成正真的文件否则在目录下创建一个空的并通过将目录下的文件转移到目录下原子性由基础层文件系统保证最后释放这个临时至此由于非原子部分全部在目录下完成所以文件系统的一致性得到保证另外这里还需要说明的一点是如果基础层的文件系统支持则此处的步骤中的数据拷贝将使用功能不用再大量复制数据块的时间可以大幅缩短扩展属性和扩展属性一共有中扩展属性前文中已经看到了和这两种扩展属性这里介绍和扩展属性这两种扩展属性最初是为了解决文件的和值在前后发生变化问题而设计出来的其中扩展属性全称为保存的值为层原文件经过内核封装后的数据结构进行二进制值转换为码而成设置在层的之后的文件上现在只需要知道可以通过它获取到该文件是从哪个层文件上来的即可另一个扩展属性的全程为它仅作用于目录设置在层中的目录上用于标记该目录中的文件曾经是从底层上来的而不是一个纯粹来自层的目录下面以一个简单的示例展示它们是如何保证的一致性的这里首先在目录下创建一个文件并在目录下创建目录在挂载文件系统之后使用命令在目录中将文件到目录下这样就触发了文件的此后用户看到的文件将来自目录但它的值在前后并没有发生任何变化这就得归功于上的属性和目录上的扩展属性了它为下图中的两个场景做了区分上图中左边的场景目录下的目录和文件在挂载之前就已存在它们没有和扩展属性在用户查询目录项时将直接返回目录下文件的值而上图中右边的场景就是示例中构造的场景文件从目录中上来此时为了保证的一致性所以值还必须给用户显示目录中文件的因此文件上的扩展属性使得可以通过它找到并返回它的值而文件上的扩展属性也会使得即使目录并不是上下层合并的也会强制其在扫描目录项时去获取可能存在的值最后总结一下哪些场景会设置和使用和扩展属性在触发文件或目录时会设置属性注意文件不能为多硬链接文件启动特性除外下一节细述因为这样会导致多个不同的层文件的属性指向同一个层原始从而导致重复的问题在启动属性之后在挂载文件系统时会检查并设置层根目录的扩展属性指向顶层根目录同时检查并设置目录的扩展属性指向层根目录在查找文件时会获取扩展属性找到层中的原始并和当前进行绑定以便后续保证一致性时使用在层目录下有文件或子目录发生或链接一个的文件将对该目录设置扩展属性在遍历目录项时如果检测到目录带有扩展属性在扫描其中每一个文件时都需要检测扩展属性并尝试获取和更新层文件的值特性前文中看到还提供了一个挂载选项可以通过勾选内核选项默认开启该选项和选项一样也不是向前兼容的该选项在正式合入内核目前该选项的功能还在不断开发中目前用于解决层硬链接后断链问题后续还会用于支持提供和的功能我们首先来分析属性是如何修复硬链接断链的问题然后再看一下开启属性之后会哪些变化问题设想以下场景在层中有一个文件有个硬链接分别为和它们共享同一个如下图所示此时若其中一个发生了则将成为一个单独的文件展现给用户而和还将是硬链接的关系具体示例如下首先在目录下创建然后依次为它创建硬链接和在挂载之后在层中可以看到它们的号都为且链接数为在执行命令触发了文件的之后在目录中的文件将源自目录它的和目录中的一致且链接数为同时和的链接数依然为更进一步如果此时删除或是在触发之前就删除那结果会是如何显然不会得到一个满足一致性的结果这里就不详细演示了这个问题很明显是不满足标准的下面来看启动属性之后硬链接文件的过程与结果会有哪些变化在开启属性后在挂载文件系统时会在用户指定的目录下创建一个名为的目录用于存放链接文件同目录平级这些链接文件的名字和扩展属性一样是以内核数据结构按照二进制码转换形成并不是文件的原始名字当前场景中当用户触发后首先的一点区别就是复制的位置不再是层的目录而是目录先按照标准的流程将文件到目录下文件名为一串二进制数据可暂时不用关心随后对该文件进行链接链接文件到正确的目的位置最后为文件设置扩展属性值为这是种扩展属性中的最后一种其含义就是在层向用户展现链接数时使用层对应的链接数值并当然也会出现其他数值和的情况而此时在层中的文件的链接数为因此最终展现给用户的链接数为与之前保持一致实际示例如下对照之前没有启用属性的示例此时在前后目录中的内容完全一致同时观察目录创建了一个名字古怪的文件它和目录中的文件为硬链接关系链接数为最后查看目录中的文件的扩展属性值为属性开启后对发生的变化文件系统挂载时的变化明确一个或无法同时被多个所使用若被复用不再仅仅是内核输出告警日志而是会拒绝挂载因为潜在的并发操作会影响属性对的一致性从而导致不可预期的结果要求所有的文件系统都必须支持接口若所在的文件系统不支持会给出告警暂时没有使用该功能所以不强制而各所在的文件系统若不支持则直接拒绝挂载如果一套和已经配套挂载过一次那之后的挂载也必须和之前的配套否则拒绝挂载原因是属性的开启很可能之前一次挂载时设置的扩展属性已经固化若后续挂载不配套则会导致变得无效而出现不可预期的结果通过根目录和目录的扩展属性进行验证硬链接文件的变化硬链接文件在时首先到目录然后再到目标目录同时会在后的文件中设置扩展属性用于计算文件的硬链接数硬链接文件在时被可以被设置属性因为此时由于已经解决了硬链接文件断链问题不存在多个层文件属性指向同一个层原始的问题了在创建硬链接和删除硬链接文件时会触发重新计算和设置值约束与限制由于依赖与底层的基础文件系统它的工作方式也也和普通的磁盘文件系统存在着很大的不同同时在挂载之后基础层的目录对用户也是可见的为了避免文件系统的不一致强烈建议用户在挂载文件系统之后还同步操作基础层的目录及其中的内容与此同时在在被的时候也应该尽量避免手动调整其中的文件或扩展属性否则当文件系统再次挂载后其状态和一致性很可能会和预期的不同甚至出现报错小结本文介绍了目前的常用使用方法和背后的原理与实现原理包括文件系统的挂载增删文件和目录等操作详细描述了文件系统的上下层同名目录合并同名文件覆盖和文件写时复制大基本功能和种扩展属性以及和这两项附加特性下一篇博文将对其中比较关键的点更进一步细化从源码的角度分析其中的实现细节参考文献',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/container/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>container</span></a></span></div></div><h1 class="post-title" itemprop="name headline">linux-深入理解overlayfs</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2023-07-12T09:55:00.000Z" title="发表于 2023-07-12 17:55:00">2023-07-12</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2023/07/12/linux/%E5%AD%98%E5%82%A8/overlayfs%E4%BD%BF%E7%94%A8%E4%B8%8E%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/"><header><a href="/tags/container/" tabindex="-1" itemprop="url">container</a><h1 id="CrawlerTitle" itemprop="name headline">linux-深入理解overlayfs</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2023-07-12T09:55:00.000Z" title="发表于 2023-07-12 17:55:00">2023-07-12</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><p>在初步了解 overlayfs 用途之后，本文将介绍如何使用 overlayfs 以及理解该文件系统所特有的一些功能特性。由于目前主线内核对 overlayfs 正在不断的开发和完善中，因此不同的内核版本改动可能较大，本文尽量与最新的内核版本保持一致，但可能仍会存在细微的出入。</p>
+<p>内核版本：Linux-4.14</p>
+<p>示例环境：pi3</p>
+<h1 id="挂载文件系统"><a href="#挂载文件系统" class="headerlink" title="挂载文件系统"></a>挂载文件系统</h1><p>挂载文件系统的基本命令如下：</p>
+<p>mount -t overlay overlay -o lowerdir&#x3D;lower1:lower2:lower3,upperdir&#x3D;upper,workdir&#x3D;work merged  </p>
+<p>其中 “lower1:lower2:lower3” 表示不同的 lower 层目录，不同的目录使用 “:” 分隔，层次关系依次为 lower1 &gt; lower2 &gt; lower3（注：多 lower 层功能支持在 Linux-4.0 合入，Linux-3.18 版本只能指定一个 lower dir）；然后 upper 和 work 目录分别表示 upper 层目录和文件系统挂载后用于存放临时和间接文件的工作基目录（work base dir），最后的 merged 目录就是最终的挂载点目录。若一切顺利，在执行以上命令后，overlayfs 就成功挂载到 merged 目录下了。</p>
+<p>挂载选项支持（即 “-o” 参数）：<br>1）lowerdir&#x3D;xxx：指定用户需要挂载的 lower 层目录（支持多 lower，最大支持 500 层）；<br>2）upperdir&#x3D;xxx：指定用户需要挂载的 upper 层目录；<br>3）workdir&#x3D;xxx：指定文件系统的工作基础目录，挂载后内容会被清空，且在使用过程中其内容用户不可见；<br>4）default_permissions：功能未使用；<br>5）redirect_dir&#x3D;on&#x2F;off：开启或关闭 redirect directory 特性，开启后可支持 merged 目录和纯 lower 层目录的 rename&#x2F;renameat 系统调用；<br>6）index&#x3D;on&#x2F;off：开启或关闭 index 特性，开启后可避免 hardlink copyup broken 问题。  </p>
+<p>其中 lowerdir、upperdir 和 workdir 为基本的挂载选项，redirect_dir 和 index 涉及 overlayfs 为功能支持选项，除非内核编译时默认启动，否则默认情况下这两个选项不启用，这里先按照默认情况进行演示分析，后面这两个选项单独说明。</p>
+<p>示例：现在以 ext4 文件系统作为基础文件系统挂载 overlayfs<img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171029113935459?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>首先创建 overlayfs 文件系统的基础目录 5 个，然后分别在两个 lower 目录和 upper 目录下创建不同文件 foo1、foo2 和 foo3，最后在这 3 个目录下分别创建同名目录 dir 并同时在 dir 目录下创建同名文件 aa 和 bb。在挂载 overlayfs 文件系统之后，在 merge 目录下能够看到 foo1、foo2 和 foo3，这就是 overlayfs 的上下层合并；在 merge&#x2F;dir 目录下看到来自 lower1 的文件和 aa 来自 upper 层的文件 bb，位于最底层 lower2 中的文件 aa 被 lower1 中的同名文件覆盖，位于 lower1 中的文件 bb 被 upper 中的同名文件覆盖，这就是 overlayfs 的 “上下层同名目录合并与同名文件覆盖” 特性，对应的组织结构如下图所示：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171029124743310?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>图 1 overlayfs 基本挂载示例</p>
+<p>上下层同名文件覆盖和上下层同名目录合并的原理：</p>
+<p>用户在 overlayfs 的 merge 目录中查看文件时，会调用内核的 getdents 系统调用。一般情况下该系统调用会调用文件系统接口，它仅会遍历当前目录中的所有目录项并返回给用户，所以用户能够看到这个目录下的所有文件或子目录。但在 overlayfs 中，如果目录不是仅来自单独的一层（当前时多层合并的或者其中可能存在曾经发生过合并的迹象），它会逐级遍历扫描所有层的同名目录，然后把各层目录中的内容返回给用户，因此用户就会感觉到上下层同名目录合并；与此同时，如果在遍历扫描的过程中发现了同名的文件，它会判断该文件来自那一层，从而忽略来自 lower 层的文件而只显示来自 upper 层的文件，因此用户会感觉到上下层同名文件覆盖。</p>
+<p>挂载文件系统的特性与限制条件：</p>
+<p>1、用户可以不指定 upperdir 和 workdir，但同时必须保证 lowerdir &gt;&#x3D; 2 层，此时的文件系统为只读挂载（这也是只读挂载 overlayfs 的唯一方法）；如果用户指定 upperdir，则必须保证 upperdir 所在的文件系统是可读写的，同时还需指定 workdir，并且 workdir 不能和 upperdir 是父子目录关系。</p>
+<p>2、常见的文件系统中，upperdir 所在的文件系统不能是 nfs、cifs、gfs2、vfat、ocfs2、fuse、isofs、jfs 和另一个 overlayfs 等文件系统，而 lowerdir 所在的文件系统可以是 nfs、cifs 这样的远程文件系统，也可以是另一个 overlayfs。因为 upperdir 是可以写入的，所以需要避免一些特性上的不兼容（例如 vfat 是大小写不敏感的文件系统），而 lowerdir 是只读文件系统，相对要求会低一些。</p>
+<p>3、用户应该尽量避免多个 overlayfs 使用同一个 upperdir 或 workdir，尽管默认情况下是可以挂载成功的，但是内核还是会输出告警日志来提示用户。</p>
+<p>4、用户指定的 lowerdir 最多可以支持 500 层。虽然如此，但是由于 mount 的挂载选项最多支持 1 个 page 的输入（默认大小为 4KB），所以如果指定的 lowerdir 数量较多且长度较长，会有溢出而导致挂载失败的风险（目前内核的 - o 挂载选项不支持超过 1 个内存页，即 4KB 大小）。</p>
+<p>5、指定的 upperdir 和 workdir 所在的基础文件系统的 readdir 接口需要支持 dtype 返回参数，否则将会导致本应该隐藏的 whiteout 文件（后文介绍）暴露，当然目前 ext4 和 xfs 等主流的文件系统都是支持的，如果不支持那内核会给出警告提示但不会直接拒绝挂载。</p>
+<p>6、指定的 upperdir 和 workdir 所在的基础文件系统需要支持 xattr 扩展属性，否则在功能方面会受到限制，例如后面的 opaque 目录将无法生成，并且 redirect dir 特性和 index 特性也无法使用。</p>
+<p>7、如果 upperdir 和各 lowerdir 是来自同一个基础文件系统，那在文件触发 copyup 前后，用户在 merge 层通过 ls 命令或 stat 命令看到的 Device 和 inode 值保持不变，否则会发生改变。</p>
+<h1 id="删除文件和目录"><a href="#删除文件和目录" class="headerlink" title="删除文件和目录"></a>删除文件和目录</h1><p>删除文件和目录，看似一个简单的动作，对于 overlayfs 实现却需要考虑很多的场景且分很多步骤来进行。下面来分以下几个场景开分别讨论：</p>
+<p>（1）要删除的文件或目录来自 upper 层，且 lower 层中没有同名的文件或目录</p>
+<p>这种场景比较简单，由于 upper 层的文件系统是可写的，所有在 overlayfs 中的操作都可以直接体现在 upper 层所对应的文件系统中，因此直接删除 upper 层中对应的文件或目录即可。</p>
+<p>示例：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171126140636970?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里在 upper 目录下创建了文件 file 和目录 dir，然后在挂载 overlayfs 后从 merge 目录下删除它们，可见在 upper 目录下也同时被直接删除。</p>
+<p>（2）要删除的文件或目录来自 lower 层，upper 层不存在覆盖文件</p>
+<p>由于 lower 层中的内容对于 overlayfs 来说是只读的，所以并不能像之前那样直接删除 lower 层中的文件或目录，因此需要进行特殊的处理，让用户在删除之后即不能正真的执行删除动作又要让用户以为删除已经成功了。</p>
+<p>Overlayfs 针对这种场景设计了一套 “障眼法”——Whiteout 文件。Whiteout 文件在用户删除文件时创建，用于屏蔽底层的同名文件，同时该文件在 merge 层是不可见的，所以用户就看不到被删除的文件或目录了。whiteout 文件并非普通文件，而是主次设备号都为 0 的字符设备（可以通过 “mknod <name> c 0 0” 命令手动创建），当用户在 merge 层通过 ls 命令（将通过 readddir 系统调用）检查父目录的目录项时，overlayfs 会自动过过滤掉和 whiteout 文件自身以及和它同名的 lower 层文件和目录，达到了隐藏文件的目的，让用户以为文件已经被删除了。</p>
+<p>示例：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171126142047105?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里再 lower 层中创建文件 file 和目录 dir，然后在挂载文件系统之后从 merge 层删除它们，然后检查 lower 层中的文件依然存在并没有被删除，于此同时在 upper 层中创建了两个同名 whiteout 文件，它们的文件类型为 c，即表示为字符设备，同时主次设备号为 0，0。</p>
+<p>3）要删除的文件是 upper 层覆盖 lower 层的文件，要删除的目录是上下层合并的目录</p>
+<p>该场景就理论上来讲其实是前两个场景的合并，overlayfs 即需要删除 upper 层对应文件系统中的文件或目录，也需要在对应位置创建同名 whiteout 文件，让 upper 层的文件被删除后不至于 lower 层的文件被暴露出来。</p>
+<p>示例：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171126143532567?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里在 upper 目录和 lower 目录中都创建了文件 file 和目录 dir，在挂载 overlayfs 后从 merge 目录删除它们，然后检查 lower 层中的文件依然不变，同时 upper 层中的原有文件已经被替换成两个同名的 whitout 文件了。</p>
+<h1 id="创建文件和目录"><a href="#创建文件和目录" class="headerlink" title="创建文件和目录"></a>创建文件和目录</h1><p>创建文件和目录同删除类似，overlayfs 也需要针对不同的场景进行不同的处理。下面分以下几个场景进行讨论：</p>
+<p>1）全新的创建一个文件或目录</p>
+<p>这个场景最为简单，如果在 lower 层中和 upper 层中都不存在对应的文件或目录，那直接在 upper 层中对应的目录下新创建文件或目录即可。</p>
+<p>示例：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171126150158570?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里在一个全为空的 overlayfs 中，挂载后通过 merge 目录中创建文件 file 和目录 dir，它们直接被创建到了 upper 层对应的文件系统中，而 lower 层不受任何影响。</p>
+<p>2）创建一个在 lower 层已经存在且在 upper 层有 whiteout 文件的同名文件</p>
+<p>该场景对应前文中的场景 2 或场景 3，在 lower 层中之前已经存在同名的文件或目录了，同时 upper 层也有 whiteout 文件将其隐藏（显然是通过 merge 层删除它了），所以用户在 merge 层看不到它们，可以新建一个同名的文件。这种场景下，overlayfs 需要删除 upper 层中的用新建的文件替换原有的 whiteout 文件，这样在 merge 层中看到的文件就是来自 upper 层的新文件了。</p>
+<p>示例：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171126151921837?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里先在 lower 目录中创建文件 file，然后在 upper 目录中创建同名的 whiteout 文件用于隐藏 lower 层中的文件（注意：此处仅是为了演示，正常使用中用户应避免自己创建 whiteout 文件），挂载文件系统后通过 merge 目录新建文件 file。新建文件后，在 lower 目录中的原有文件不变，upper 目录中的 whiteout 文件已经被替换成了新创建的文件 file，用户在 merge 中看见的也即是这个新创建的文件。</p>
+<p>3）创建一个在 lower 层已经存在且在 upper 层有 whiteout 文件的同名目录</p>
+<p>该场景和场景 2 的唯一不同是将文件转换成目录，即原 lower 层中存在一个目录，upper 层中存在一个同名 whiteout 文件用于隐藏它（同样的，它是之前被用户通过 merge 层删除了的），然后用户在 merge 层中又重新创建一个同名目录。依照 overlayfs 同名目录上下层合并的理念，如果此处不做任何特殊的处理而仅仅是在 upper 层中新建一个目录，那原有 lower 层该目录中的内容会暴露给用户。因此，overlayfs 针对这种情况引入了一种属性——Opaque 属性，它是通过在 upper 层对应的目录上设置 “trusted.overlay.opaque” 扩展属性值为 “y” 来实现（所以这也就需要 upper 层所在的文件系统支持 xattr 扩展属性），overlayfs 在读取上下层存在同名目录的目录项时，如果 upper 层的目录被设置了 opaque 属性，它将忽略这个目录下层的所有同名目录中的目录项，以保证新建的目录是一个空的目录。如下图所示：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171209165807735?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>实际示例演示：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171126160124076?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里首先在 lower 目录中创建一个目录 dir，并在其中创建一个文件 foo，然后在 upper 层创建 whiteout 文件 dir 用于隐藏 lower 目录中的目录 dir，挂载文件系统后通过 merge 目录新建目录 dir。观察该新建的目录为空，lower 层中的 foo 文件并没有暴露出来，然后查看 upper 层中的原有 whiteout 文件已经被替换层新建目录 dir，同时它被设置了 overlayfs 的 opaque 属性。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171126160852589?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>此时如果我们删除这个 opaque 属性（注意需要离线删除，不能在挂载时操作所有基础文件系统目录），底层目录 dir 中的 foo 文件就会暴露出来。</p>
+<h1 id="写时复制（copy-up）特性"><a href="#写时复制（copy-up）特性" class="headerlink" title="写时复制（copy-up）特性"></a>写时复制（copy-up）特性</h1><p>用户在写文件时，如果文件来自 upper 层，那直接写入即可。但是如果文件来自 lower 层，由于 lower 层文件无法修改，因此需要先复制到 upper 层，然后再往其中写入内容，这就是 overlayfs 的写时复制（copy-up）特性。</p>
+<p>示例：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171126164717904?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里首先在 lower 目录中新建文件 file，并往其中写入内容，挂载文件系统后，通过 merge 目录写入新的内容，观察 merge 目录下 foo 文件的内容，包含来原有的和新写入的，同时观察 upper 目录中，也同样存在一个新的从 lower 目录复制上来的文件 foo，内容同 merge 目录中看到的一致。</p>
+<p>当然，overlayfs 的 copy-up 特性并不仅仅在往一个来自 lower 层的文件写入新内容时触发，还有很多的场景会触发，简单总结如下：</p>
+<p>1）用户以写方式打开来自 lower 层的文件时，对该文件执行 copyup，即 open() 系统调用时带有 O_WRITE 或 O_RDWR 等标识；</p>
+<p>2）修改来自 lower 层文件或目录属性或者扩展属性时，对该文件或目录触发 copyup，例如 chmod、chown 或设置 acl 属性等；</p>
+<p>3）rename 来自 lower 层文件时，对该文件执行 copyup；</p>
+<p>4）对来自 lower 层的文件创建硬链接时，对链接原文件执行 copyup；</p>
+<p>5）在来自 lower 层的目录里创建文件、目录、链接等内容时，对其父目录执行 copyup；</p>
+<p>6）对来自 lower 层某个文件或目录进行删除、rename、或其它会触发 copy-up 的动作时，其对应的父目录会至下而上递归执行 copy-up。</p>
+<h1 id="Rename-文件和目录"><a href="#Rename-文件和目录" class="headerlink" title="Rename 文件和目录"></a>Rename 文件和目录</h1><p>用户在使用 mv 命令移动或 rename 文件时，mv 工具首先会尝试调用 rename 系统调用直接由内核完成文件的 renmae 操作，但对于个别文件系统内核如果不支持 rename 系统调用，那由 mv 工具代劳，它会首先复制一个一模一样的文件到目标位置，然后删除原来的文件，从而模拟达到类似的效果，但是这有一个很大的缺点就是无法保证整个 rename 过程的原子性。</p>
+<p>对于 overlayfs 来说，文件的 rename 系统调用是支持的，但是目录的 rename 系统调用支持需要分情况讨论。前文中看到在挂载文件系统时，内核提供了一个挂载选项 “redirect_dir&#x3D;on&#x2F;off”，默认的启用情况由内核的 OVERLAY_FS_REDIRECT_DIR 配置选项决定。在未启用情况下，针对单纯来自 upper 层的目录是支持 rename 系统调用的，而对于来自 lower 层的目录或是上下层合并的目录则不支持，rename 系统调用会返回 - EXDEV，由 mv 工具负责处理；在启用的情况下，无论目录来自那一层，是否合并都将支持 rename 系统调用，但是该特性非向前兼容，目前内核中默认是关闭的，用户可手动开启。下面针对目录的几种场景来分别进行演示和说明：</p>
+<p>1）关闭 redirect dir 特性</p>
+<p>在关闭 redirect dir 特性的情况下分别对来自 lower、upper 和合并的目录进行 reanme 操作，查看 overlayfs 如何进行处理。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171209131630385?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里在 upper 目录下创建单纯来自 upper 层的目录 up_src，在 lower 目录下创建单纯来自 lower 层的目录 lo_src，在 lower 目录和 upper 目录目录下分别创建目录 me_src 表示上下层合并的目录，各个目录下都创建了子目录和文件 dir(x) 和 file(x)。在挂载 overlay 文件系统后，在 merge 层通过 mv 命令 rename 各个目录，完成后观察 lower 和 merge 层中的内容不变但 upper 层中分别创建了两个 whiteout 文件 lo_src 和 me_scr 用于屏蔽 lower 目录中的目录，然后查看 lo_dst 和 me_dst 中的内容，来自 lower 目录下的子目录 dir、dirb 和文件 file、fileb 都被 copyup 了，通过 strace 跟踪其流程（省略了文件属性和其他保护性的操作）：</p>
+<p>rename(“merge&#x2F;lo_src”, “merge&#x2F;lo_dst”)  &#x3D; -1 EXDEV (Invalid cross-device link)<br>mkdir(“merge&#x2F;lo_dst”, 0700)             &#x3D; 0<br>rename(“merge&#x2F;lo_src&#x2F;dir”, “merge&#x2F;lo_dst&#x2F;dir”) &#x3D; -1 EXDEV (Invalid cross-device link)<br>mkdir(“merge&#x2F;lo_dst&#x2F;dir”, 0700)         &#x3D; 0<br>rename(“merge&#x2F;lo_src&#x2F;file”, “merge&#x2F;lo_dst&#x2F;file”) &#x3D; 0<br>unlinkat(4, “dir”, AT_REMOVEDIR)        &#x3D; 0<br>unlinkat(AT_FDCWD, “merge&#x2F;lo_src”, AT_REMOVEDIR) &#x3D; 0  </p>
+<p>可以看出，mv 工具首先调用 rename 系统调用尝试对 lo_src 目录进行 rename，但是失败并返回 - EXDEV，于是它就创建了 lo_dst 目录然后依次对子目录 dir 和文件 file 进行处理，子目录 dir 的处理方式同 lo_src 类似，文件 file 可以直接 rename 成功（copyup），最后删除原始的目录 dir 和 lo_src 即可。这一系列的模拟动作后，在 merge 层最后呈现给用户的结果是预期的，但由于是多个系统调用下发，整个过程非原子，如果操作执行过程中发生了系统奔溃，那在系统恢复后，用户就可能会发现 lo_src 和 lo_dst 同时存在的情况（这类似与跨文件系统 rename）。</p>
+<p>2）打开 redirect dir 特性</p>
+<p>打开 redirect dir 之后，将支持单纯来自 lower 层和合并目录的 rename 系统调用。由于目录里可能会包含很多子目录或文件，overlayfs 需要保证 rename 系统调用的原子性，因此它不能像 mv 命令那样将目录里的各个子目录和文件都挨个 copyup 到 upper 层中，所以 overlayfs 设计了一种 redirect xattr 扩展属性，其内容是 lower 层原始目录的相对路径（相对 lower 层挂载根目录或当前 rename 目录的父目录），设置在 upper 层中的目标目录上，并不会 copyup 原始目录中的子目录或文件。用户通过 merge 目录扫描目录项时，overlayfs 在扫描 upper 层目录时会检查它的 redirect xattr 扩展属性并找到原始 lower 层目录，同时将原始目录下的目录项也返回给用户。如下图所示：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171209165930563?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>如图，用户在 merge 层执行”mv DirA DirX“和”mv DirB DirY“之后，原始 lower 层中的 foo 文件和 bar1 文件并不会 copyup 到目标 upper 层中的 DirX 和 DirY 中，取而代之的时在 DirX 和 DirY 中的 redirect xattr 扩展属性，用户在 merge 层看到的 DirX 目录和 DirY 目录来自与 upper 层，但是其中的内容却部分来自与 lower 层。其实就本质上来看，redirect dir 其实只是一种特殊类型的 merge dir，只不过所 merge 的 lower 层目录不在是同名目录而是从 redirect xattr 中保存的名字而已。</p>
+<p>实际示例如下：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171209155910839?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>同前面一样，这里创建了 lo_src 和 me_src 及其子目录和文件，然后在启用 redirect dir 特性的 merge 目录下执行 mv rename 操作，完成后查看 upper 目录中的内容，可以看到用于屏蔽 lower 层原始目录的两个 whiteout 文件同样被创建，但是不同的是 lo_dst 目录中并没有 copyup 的 file 文件和 dir 目录，me_dst 目录也同样没有 copyup 的 dirb 目录和 filea 文件，只有原来就存在的 dira 目录和 filea 文件。最后查看 lo_dst 目录的 redirect 扩展属性和 me_dst 目录的扩展属性分别指向了相对同级父目录的 lo_src 目录和 me_src 目录。</p>
+<h1 id="原子性保证（Workdir）"><a href="#原子性保证（Workdir）" class="headerlink" title="原子性保证（Workdir）"></a>原子性保证（Workdir）</h1><p>前文中介绍了文件目录的创建、删除和 rename 等操作以及写时复制特性，描述了 overlayfs 处理这些操作的细节，但是有一点还没有提到，那就是 overlayfs 是如何保证这些操作的原子性的。例如，当用户在删除上下层都存在的文件时，overlayfs 需要删除 upper 层的文件然后创建 whiteout 文件来屏蔽 lower 层的文件，想要创建同名文件必然需要先删除原有的文件，这删除和创建分为两个步骤，如何做到原子性以保证文件系统的一致性？我们当然不希望见到文件删除了但是 whiteout 文件却没有创建的情况。又例如用户在触发 copyup 的时候，文件并不可能在一瞬间就完整的拷贝到 upper 层中，如果系统崩溃，那在恢复后用户看到的就是一个被损坏的文件，也同样需要保证原子性。</p>
+<p>对于这个问题，我们来关注前面挂载文件系统指定的 workdir 目录，在挂载文件系统后该目录下会创建一个为空的 work 目录，这个目录就是原子性保证的关键所在，下面针对不同的场景来分析 overlayfs 是如何使用这个目录的。</p>
+<p>1）删除 upper 层文件 &#x2F; 目录并创建 whiteout 的过程</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171209175707880?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>如上图所示，以文件为例，若用户删除删除文件 foo，overlayfs 首先（1）在 workdir 目录下创建用于覆盖 lower 层中 foo 文件的 whiteout 文件 foo，然后（2）将该文件与 upper 中的 foo 文件进行 rename（对于目录则为 exchange rename），这样两个文件就原子的被替换了（原子性由基础文件系统保证），即使此时系统崩溃或异常掉电，磁盘上的基础文件系统中也只会是在 work 目录中多出了一个未被及时删除的 foo 文件而已（实际命名并不是 foo 而是一个以 #开始的带有序号的文件，此处依然称之为 foo 是为了为了便于说明），并不影响用户看到的目录，当再次挂载 overlayfs 时会在挂载阶段被清除，最后（3）将 work 目录中的 foo 文件删除，这样整个 upper 层中的 foo 文件就被 “原子” 的删除了。</p>
+<p>2）在 whiteout 上创建同名文件 &#x2F; 目录的过程</p>
+<p>该过程与删除类似，只是现在在 upper 层中的是 whiteout 文件，而在 work 目录中是新创建的文件，workdir 的使用流程基本一致，不再赘述。</p>
+<p>3）删除上下层合并目录的过程</p>
+<p>由于上下层合并的目录中可能存在 whiteout 文件，因此在删除之前需要保证要删除的 upper 层目录是空的，不能有 whiteout 文件。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171209191553417?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>如图所示，在用户删除 “空” 目录 Dir 时，其实在 upper 层中 Dir 目录下存在一个 foo 的 whiteout 文件，因此不能直接立即通过场景 1 的方式进行删除。首先（1）在 work 目录下创建一个 opaque 目录，然后（2）将该目录和 upper 层的同名目录进行 exchange rename，这样 upper 层中的 Dir 目录就变成了一个 opaque 目录了，它将屏蔽底层的同名 Dir 目录。最后（3）将 workdir 下的 Dir 目录里的 whiteout 文件全部清空后再删除 Dir 目录本身。这样就确保了 Dir 目录中不存在 whiteout 文件了，随后的步骤就同场景一一样了。需要注意的是，这一些列的流程其实对于 upper 层来说，包含了（1）原始目录（2）opaque 目录（3）whiteout 文件的这 3 个状态，该过程并不是原子的，但在用户看来只有两种状态，一是删除成功，此时 upper 层已经变成状态 3，还有一种是未删除，对应 upper 层是状态 1 或状态 2，所以中间的 opaque 目录状态并不会影响文件系统对用户的输出，依然能够保证文件系统的一致性。</p>
+<p>4）文件 &#x2F; 目录 copyup 的过程</p>
+<p>在件的 copyup 过程中由于文件没有办法在一个原子操作中完成的拷贝到 upper 层中的对应目录下（不仅仅是数据拷贝耗时，还包含文件属性和扩展属性的拷贝动作），所以这里同样用到了 work 目录作为中转站。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171209202639070?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里以文件 copyup 为例，首先（1）根据基础文件系统时候支持 tempfile 功能（将使用 concurrent copy up 来提升并发 copyup 的效率），若支持则在 work 目录下创建一个临时 tmpfile，否则则创建一个真实 foo 文件，然后从 lower 层中的 foo 文件中拷贝数据、属性和扩展属性到这个文件中，接下来（2）若支持 tempfile 则将该 temp 文件链接到 upper 目录下形成正真的 foo 文件，否则在 upper 目录下创建一个空的 dentry 并通过 rename 将 work 目录下的文件转移到 upper 目录下（原子性由基础层文件系统保证），最后（3）释放这个临时 dentry。至此，由于非原子部分全部在 work 目录下完成，所以文件系统的一致性得到保证。另外，这里还需要说明的一点是，如果基础层的文件系统支持 flink，则此处的步骤 1 中的数据拷贝将使用 cloneup 功能，不用再大量复制数据块，copyup 的时间可以大幅缩短。</p>
+<h1 id="Origin-扩展属性和-Impure-扩展属性"><a href="#Origin-扩展属性和-Impure-扩展属性" class="headerlink" title="Origin 扩展属性和 Impure 扩展属性"></a>Origin 扩展属性和 Impure 扩展属性</h1><p>Overlayfs 一共有 5 中扩展属性，前文中已经看到了 opaque 和 redirect dir 这两种扩展属性，这里介绍 origin 和 impure 扩展属性，这两种扩展属性最初是为了解决文件的 st_dev 和 st_ino 值在 copyup 前后发生变化问题而设计出来的。其中 origin 扩展属性全称为 “trusted.overlay.origin”，保存的值为 lower 层原文件经过内核封装后的数据结构进行二进制值转换为 ASCII 码而成，设置在 upper 层的 copyup 之后的文件上，现在只需要知道 overlayfs 可以通过它获取到该文件是从哪个 lower 层文件 copyup 上来的即可。另一个 impure 扩展属性的全程为 “trusted.overlay.impure”，它仅作用于目录，设置在 upper 层中的目录上，用于标记该目录中的文件曾经是从底层 copyup 上来的，而不是一个纯粹来自 upper 层的目录。</p>
+<p>下面以一个简单的示例展示它们是如何保证 st_ino 的一致性的：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171210151323583?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>这里首先在 lower 目录下创建一个文件 file，并在 upper 目录下创建目录 dir，在挂载文件系统之后使用 mv 命令在 merge 目录中将文件 file rename 到目录 dir 下，这样就触发了文件 file 的 copyup，此后用户看到的文件将来自 upper&#x2F;dir 目录，但它的 inode 值在 mv 前后并没有发生任何变化。这就得归功于 upper&#x2F;dir&#x2F;file 上的 origin 属性和 upper&#x2F;dir 目录上的 impure 扩展属性了，它为下图中的两个场景做了区分：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171210153856214?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>上图中左边的场景，upper 目录下的 Dir 目录和 File 文件在挂载之前就已存在，它们没有 origin 和 impure 扩展属性，在用户查询目录项时，overlayfs 将直接返回 upper 目录下 file 文件的 st_ino 值。而上图中右边的场景就是示例中构造的场景，upper&#x2F;Dir&#x2F;File 文件从 lower 目录中 copyup 上来，此时为了保证 st_ino 的一致性，所以 st_ino 值还必须给用户显示 lower 目录中 file 文件的 st_ino，因此 File 文件上的 origin 扩展属性使得 overlayfs 可以通过它找到 lower&#x2F;File 并返回它的 st_ino 值，而 DIr 文件上的 impure 扩展属性也会使得即使目录并不是上下层合并的，也会强制其在扫描目录项时去获取可能存在的 origin st_ino 值。</p>
+<p>最后总结一下哪些场景会设置和使用 origin 和 impure 扩展属性：</p>
+<p>1）在触发文件或目录 copyup 时会设置 origin 属性，注意文件不能为多硬链接文件（启动 index 特性除外，下一节细述），因为这样会导致多个不同的 upper 层文件的 origin 属性指向同一个 lower 层原始 inode，从而导致 st_ino 重复的问题。</p>
+<p>2）在启动 index 属性之后，在挂载文件系统时会检查并设置 upper 层根目录的 origin 扩展属性指向顶层 lower 根目录，同时检查并设置 index 目录的 origin 扩展属性指向 upper 层根目录。</p>
+<p>3）在 overlayfs 查找文件（ovl_lookup）时会获取 origin 扩展属性，找到 lower 层中的原始 inode 并和当前 inode 进行绑定，以便后续保证 st_ino 一致性时使用。</p>
+<p>4）在 upper 层目录下有文件或子目录发生 copyup、rename 或链接一个 origined 的文件，将对该目录设置 impure 扩展属性。</p>
+<p>5）在遍历目录项时，如果检测到目录带有 impure 扩展属性，在扫描其中每一个文件时，都需要检测 origin 扩展属性并尝试获取和更新 lower 层 origin 文件的 st_ino 值。</p>
+<h1 id="Index-特性"><a href="#Index-特性" class="headerlink" title="Index 特性"></a>Index 特性</h1><p>前文中看到 overlayfs 还提供了一个挂载选项 “index&#x3D;on&#x2F;off”，可以通过勾选内核选项 OVERLAY_FS_INDEX 默认开启，该选项和 redirect dir 选项一样也不是向前兼容的。该选项在 Linux-4.13 正式合入内核，目前该选项的功能还在不断开发中，目前用于解决 lower 层硬链接 copyup 后断链问题，后续还会用于支持 overlayfs 提供 NFS export 和 snapshot 的功能。我们首先来分析 index 属性是如何修复硬链接断链的问题，然后再看一下开启 index 属性之后 overlayfs 会哪些变化。</p>
+<p>1）Hard link break 问题</p>
+<p>设想以下场景，在 lower 层中有一个文件有 2 个硬链接，分别为 FileA、FileB 和 FileC，它们共享同一个 inode，如下图所示：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171210114009955?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>此时若其中一个 hardlink FileA 发生了 copyup，则 FileA 将成为一个单独的文件展现给用户，而 FileB 和 FileC 还将是硬链接的关系。具体示例如下：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171210124207286?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>首先在 lower 目录下创建 filea，然后依次为它创建硬链接 fileb 和 filec。在挂载 overlayfs 之后，在 merge 层中可以看到它们的 inode 号都为 270031，且链接数为 3。在执行 touch 命令触发了 filea 文件的 copyup 之后，在 merge 目录中的 filea 文件将源自 upper 目录，它的 inode 和 upper 目录中的一致，且链接数为 1，同时 fileb 和 filec 的链接数依然为 3。</p>
+<p>更进一步，如果此时删除 filea 或是在触发 copyup 之前就删除 filea，那结果会是如何？显然不会得到一个满足一致性的结果，这里就不详细演示了，这个问题很明显是不满足 POSIX 标准的。下面来看启动 index 属性之后，硬链接文件的 copyup 过程与结果会有哪些变化：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171210134609621?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>在开启 index 属性后，在挂载文件系统时会在用户指定的 workdir 目录下创建一个名为 index 的目录用于存放链接文件（同 work 目录平级），这些链接文件的名字和 origin 扩展属性一样是以内核数据结构按照二进制 ASCII 码转换形成，并不是文件的原始名字。当前场景中，当用户触发 copyup 后，首先的一点区别就是复制的位置不再是 upper 层的 parent 目录而是 index 目录，overlayfs 先按照标准的 copyup 流程将 FileA 文件 copyup 到 index 目录下，文件名为一串二进制数据，可暂时不用关心；随后对该文件进行链接，链接文件 FileA 到正确的目的位置，最后为 FileA 文件设置 “trusted.overlay.nlink” 扩展属性值为 “U+1”（这是 overlayfs 5 种扩展属性中的最后一种），其含义就是在 merge 层向用户展现链接数时使用 upper 层对应 inode 的链接数值并 + 1（当然也会出现其他数值和 +- 的情况），而此时在 upper 层中的 FileA 文件的链接数为 2，因此最终展现给用户的链接数为 3，与 copyup 之前保持一致。实际示例如下：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdn.net/20171210140001949?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbHVja3lhcHBschunibyowMjg=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center">  </p>
+<p>对照之前没有启用 index 属性的示例，此时在 copyup 前后 merge 目录中的内容完全一致。同时观察 index 目录创建了一个 “名字古怪” 的文件，它和 upper 目录中的 filea 文件为硬链接关系，链接数为 2，最后查看 upper 目录中的 filea 文件的 “trusted.overlay.nlink” 扩展属性值为 “U+1”。</p>
+<p>2）Index 属性开启后对 overlay 发生的变化</p>
+<p>2.1）文件系统挂载时的变化：</p>
+<p>（1）明确一个 upperdir 或 workdir 无法同时被多个 overlayfs 所使用，若被复用不再仅仅是内核输出告警日志，而是会拒绝挂载，因为潜在的并发操作会影响 index 属性对 overlayfs 的一致性从而导致不可预期的结果。</p>
+<p>（2）要求所有的 underlaying 文件系统都必须支持 export_operations 接口，若 upperdir 所在的文件系统不支持会给出告警（暂时没有使用该功能所以不强制），而各 lowerdir 所在的文件系统若不支持则直接拒绝挂载。</p>
+<p>（3）如果一套 lowerdir、upperdir 和 workdir 已经配套挂载过一次 overlayfs，那之后的挂载也必须和之前的配套，否则拒绝挂载，原因是 index 属性的开启很可能之前一次挂载时设置的 origin xattr 扩展属性已经固化，若后续挂载不配套则会导致 origin xattr 变得无效而出现不可预期的结果（通过 upper 根目录和 index 目录的 origin 扩展属性进行验证）。</p>
+<p>2.2）硬链接文件的 copyup 变化：</p>
+<p>（1）硬链接文件在 copyup 时首先 copyup 到 index 目录，然后再 link 到目标目录，同时会在 copyup 后的文件中设置 nlink 扩展属性用于计算文件的硬链接数；</p>
+<p>（2）硬链接文件在 copyup 时被可以被设置 origin 属性，因为此时由于已经解决了硬链接文件断链问题，不存在多个 upper 层文件 origin 属性指向同一个 lower 层原始 inode 的问题了；</p>
+<p>（3）在创建硬链接和删除硬链接文件时，会触发重新计算和设置 nlink 值。</p>
+<h1 id="约束与限制"><a href="#约束与限制" class="headerlink" title="约束与限制"></a>约束与限制</h1><p>由于 overlayfs 依赖与底层的基础文件系统，它的工作方式也也和普通的磁盘文件系统存在着很大的不同，同时在挂载 overlayfs 之后，基础层的目录对用户也是可见的，为了避免文件系统的不一致，overlayfs 强烈建议用户在挂载文件系统之后还同步操作基础层的目录及其中的内容。与此同时，在 overlayfs 在被 umount 的时候，也应该尽量避免手动调整其中的 whiteout 文件或扩展属性，否则当文件系统再次挂载后，其状态和一致性很可能会和预期的不同，甚至出现报错。  </p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>本文介绍了目前 overlayfs 的常用使用方法和背后的原理与实现原理，包括文件系统的挂载、增删文件和目录等操作，详细描述了文件系统的上下层同名目录合并、同名文件覆盖和文件写时复制 3 大基本功能，opaque、redirect dir、origin、impure 和 nlink 5 种扩展属性，以及 redirect dir 和 index 这两项附加特性。下一篇博文将对其中比较关键的点更进一步细化，从源码的角度分析其中的实现细节。</p>
+<h1 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h1><p>1、Documentation&#x2F;filesystems&#x2F;overlayfs.txt</p>
+<p>2、Linux kernel source code</p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2023/07/12/linux/%E5%AD%98%E5%82%A8/overlayfs%E4%BD%BF%E7%94%A8%E4%B8%8E%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2023/07/12/linux/%E5%AD%98%E5%82%A8/overlayfs%E4%BD%BF%E7%94%A8%E4%B8%8E%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/')">linux-深入理解overlayfs</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2023/07/12/linux/%E5%AD%98%E5%82%A8/overlayfs%E4%BD%BF%E7%94%A8%E4%B8%8E%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=linux-深入理解overlayfs&amp;url=https://shippomx.github.io/2023/07/12/linux/%E5%AD%98%E5%82%A8/overlayfs%E4%BD%BF%E7%94%A8%E4%B8%8E%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/container/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>container<span class="tagsPageCount">27</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/06/29/debug%20c%20project%20with%20vscode/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">debug c project with vscode</div></div></a></div><div class="next-post pull-right"><a href="/2023/07/14/containers/%E8%99%9A%E6%8B%9F%E5%8C%96%E6%8A%80%E6%9C%AF/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">容器安全-虚拟化技术</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2023/10/04/containers/Calico%20%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86%E6%8F%AD%E7%A7%98/" title="Calico网络通信简略原理"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-04</div><div class="title">Calico网络通信简略原理</div></div></a></div><div><a href="/2021/12/21/containers/Docker%20%E7%9A%84%E7%BD%91%E7%BB%9C%20%E5%B0%86%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%A4%96%E9%83%A8%E4%B8%96%E7%95%8C%E8%BF%9E%E6%8E%A5/" title="docker中的网络"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-12-21</div><div class="title">docker中的网络</div></div></a></div><div><a href="/2021/12/21/containers/Docker%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%AE%B9%E5%99%A8%E9%97%B4%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/" title="docker中的网络模式"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-12-21</div><div class="title">docker中的网络模式</div></div></a></div><div><a href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-07</div><div class="title">Docker与虚拟化</div></div></a></div><div><a href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-06</div><div class="title">Kubernetes CNI 网络插件</div></div></a></div><div><a href="/2020/12/20/containers/Kata%20Containers%202.0%20%E4%BB%8B%E7%BB%8D/" title="Kata Containers 2.0"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-12-20</div><div class="title">Kata Containers 2.0</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8C%82%E8%BD%BD%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="toc-number">1.</span> <span class="toc-text">挂载文件系统</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E6%96%87%E4%BB%B6%E5%92%8C%E7%9B%AE%E5%BD%95"><span class="toc-number">2.</span> <span class="toc-text">删除文件和目录</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%96%87%E4%BB%B6%E5%92%8C%E7%9B%AE%E5%BD%95"><span class="toc-number">3.</span> <span class="toc-text">创建文件和目录</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%86%99%E6%97%B6%E5%A4%8D%E5%88%B6%EF%BC%88copy-up%EF%BC%89%E7%89%B9%E6%80%A7"><span class="toc-number">4.</span> <span class="toc-text">写时复制（copy-up）特性</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Rename-%E6%96%87%E4%BB%B6%E5%92%8C%E7%9B%AE%E5%BD%95"><span class="toc-number">5.</span> <span class="toc-text">Rename 文件和目录</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8E%9F%E5%AD%90%E6%80%A7%E4%BF%9D%E8%AF%81%EF%BC%88Workdir%EF%BC%89"><span class="toc-number">6.</span> <span class="toc-text">原子性保证（Workdir）</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Origin-%E6%89%A9%E5%B1%95%E5%B1%9E%E6%80%A7%E5%92%8C-Impure-%E6%89%A9%E5%B1%95%E5%B1%9E%E6%80%A7"><span class="toc-number">7.</span> <span class="toc-text">Origin 扩展属性和 Impure 扩展属性</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Index-%E7%89%B9%E6%80%A7"><span class="toc-number">8.</span> <span class="toc-text">Index 特性</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BA%A6%E6%9D%9F%E4%B8%8E%E9%99%90%E5%88%B6"><span class="toc-number">9.</span> <span class="toc-text">约束与限制</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">10.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="toc-number">11.</span> <span class="toc-text">参考文献</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

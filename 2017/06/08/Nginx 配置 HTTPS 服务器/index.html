@@ -1,0 +1,519 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>Nginx 配置 HTTPS 服务器 | 远辰</title><meta name="keywords" content="nginx"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="Nginx 配置 HTTPS 服务器"><meta name="application-name" content="Nginx 配置 HTTPS 服务器"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="Nginx 配置 HTTPS 服务器"><meta property="og:url" content="https://shippomx.github.io/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="Nginx 配置 HTTPS 服务器"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="Nginx 配置 HTTPS 服务器"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: 'Nginx 配置 HTTPS 服务器',
+  postAI: '',
+  pageFillDescription: 'Nginx 配置 HTTPS 服务器, 签署第三方可信任的 SSL 证书, 关于 SSL 证书, 使用 OpenSSL 生成 SSL Key 和 CSR 文件, 配置 HTTPS, 基础配置, HTTPS服务器优化, 减少 CPU 运算量, 使用 HSTS 策略强制浏览器使用 HTTPS 连接, Google HSTS 预加载列表（HSTS Preload List）, 加强 HTTPS 安全性, 优化后的综合配置, HTTPx2FHTTPS混合服务器配置, 基于服务器名称（name-based）的 HTTPS 服务器, 更多解決方案, 总结配置服务器浏览器地址栏标志着的绿色小锁头从心理层面上可以给用户专业安全的心理暗示本文简单总结一下如何在配置服务器让自己站点上绿锁配置并不复杂主要有两个步骤签署第三方可信任的证书和配置签署第三方可信任的证书关于证书有关的介绍可以参阅维基百科的传输层安全协议和阮一峰先生的协议运行机制的概述证书主要有两个功能加密和身份证明通常需要购买也有免费的通过第三方证书机构颁发机构上的证书有以下几种企业级别个人级别其中需要付费免费的证书安全认证级别一般比较低不显示单位名称不能证明网站的真实身份仅起到加密传输信息的作用适合个人网站或非电商网站由于此类只验证域名所有权的低端证书已经被国外各种欺诈网站滥用因此强烈推荐部署验证单位信息并显示单位名称的证书或申请最高信任级别的显示绿色地址栏直接在地址栏显示单位名称的证书就好像的地址栏一样更多关于购买证书的介绍证书服务大家用哪家的免费证书使用生成和文件配置要用到私钥文件和证书文件申请证书文件的时候要用到文件命令可以生成文件和证书文件证书签署请求文件里面包含申请者的标识名和公钥信息在第三方证书颁发机构签署证书的时候需要提供证书颁发机构拿到后使用其根证书私钥对证书进行加密并生成证书文件里面包含证书加密信息以及申请者的及公钥信息证书申请者私钥文件和证书里面的公钥配对使用在握手通讯过程需要使用私钥去解密客戶端发來的经过证书公钥加密的随机数信息是加密通讯过程非常重要的文件在配置的時候要用到使用命令可以在系统当前目录生成和文件下面是上述命令相关字段含义单位所在国家为两位数的国家缩写如就是中国字段单位所在州或省字段单位所在城市或县区字段此网站的单位名称字段下属部门名称也常常用于显示其他证书相关信息如证书类型证书产品名称或身份验证类型或验证内容等字段网站的域名生成文件后提供给机构签署成功后就会得到一個证书文件证书文件获得后就可以在配置文件里配置了配置基础配置要开启服务在配置文件信息块必须使用监听命令的参数和定义服务器证书文件和私钥文件如下所示参数证书文件私钥文件证书文件会作为公用实体發送到每台连接到服务器的客戶端私钥文件作为安全实体应该被存放在具有一定权限限制的目录文件并保证主进程有存取权限私钥文件也有可能会和证书文件同放在一個文件中如下面情況这种情況下证书文件的的读取权限也应该加以限制仅管证书和私钥存放在同一个文件里但是只有证书会被发送到客戶端命令和可以用来限制连接只包含的加強版本和算法默认值如下由于这两个命令的默认值已经好几次发生了改变因此不建议显性定义除非有需要额外定义的值如定义算法使用文件定义算法服务器优化减少运算量的运行计算需要消耗额外的资源一般多核处理器系统会运行多个工作进程进程的数量不会少于可用的核数通讯过程中握手阶段的运算最占用资源有两个方法可以减少每台客户端的运算量激活长连接一个连接发送更多个请求复用会话参数在并行并发的连接数中避免进行多次握手这些会话会存储在一个会话缓存里面通过命令配置可以使缓存在机器间共享然后利用客戶端在握手阶段使用的去查询服务端的如果服务端设置有的话简化握手阶段的会话缓存大概包含個会话默认的缓存超时时间为分钟可以通过使用命令设置缓存超时时间下面是一個拥有共享会话缓存的多核系统优化配置例子配置共享会话缓存大小配置会话超时时间设置长连接使用策略强制浏览器使用连接严格传输安全它允许一个网站要求浏览器总是通过来访问这使得攻击者在用戶与服务器通讯过程中拦截篡改信息以及冒充身份变得更为困难只要在配置文件加上以下头信息就可以了设置单位时间内強制使用连接可选所有子域同时生效可选非规范值用于定义使用预加载列表可选保证所有响应都发送此响应头包括各种內置错误响应当用户进行连接的时候服务器会发送一个响应头浏览器在获取该响应头后在的时间内如果遇到连接就会通过跳转強制使用进行连接并忽略其它的跳转设置如重定向跳转跳转响应头预加载列表由于需要用戶经过一次安全的连接后才会在的时间內生效因此策略并不能完美防止会话劫持在下面这些情況下还是存在被劫持的可能从未访问过的网站近期重裝过操作系統近期重裝过浏览器使用新的浏览器使用了新的设备如手机刪除了浏览器缓存近期沒有打开过网站且过期针对这种情況维护了一份预加载列表列表里包含了使用了的站点主域名和子域名可以通过以下页面申请加入申请的时候会先验证站点是否符合资格一般会检验待验证的站点主域和子域是否能通过连接和配置是否有等信息通过验证后会让你确认一些限制信息当确认提交后就会显示处理状态申请通过后列表内的站点名会被写进主流的浏览器当浏览器更新版本后只要打开列表内的站点浏览器会拒绝所有连接而自动使用即使关闭了设置可以在下面两个连接分別查找和的预加载列表内容需要注意的是一旦把自己的站点名加入预加载列表将很难彻底从列表中移除因为不能保证其它浏览器可以及时移除即使提供有便捷的移除方法也是要通过出邮件联系注明移除原因并等到最新的浏览器版本更新发布才有机会用戶不一定会及时更新所有不具备有效证书的子域或內嵌子域的访问将会被阻止因此如果自己站点子域名变化比较多又沒有泛域证书又沒法确定全站是否能应用的朋友就要谨慎申请了更多关于配置可参考的加强安全性基础配置采取的默认加密算法是这个算法非常脆弱安全性在逐年降低在年的时候官方博客就宣布在浏览器中逐渐降低证书的安全指示会从年起使用签名的证书可参阅在年发表的文章为什么急着杀死加密算法为此主流的配置方案应该避免可以使用迪菲赫尔曼密钥交换方案首先在目录运行以下代码生成文件然后加入配置优先采取服务器算法使用文件定义算法如果服务器夠強大可以使用更为复杂的位进行加密一般情況下还应该加上以下几个增强安全性的命令减少点击劫持禁止服务器自动解析资源类型防攻击这几个安全命令在大神的文章一些安全相关的响应头有详细的介紹优化后的综合配置配置共享会话缓存大小视站点访问情况设定配置会话超时时间设置长连接策略证书文件私钥文件优先采取服务器算法使用文件定义算法减少点击劫持禁止服务器自动解析资源类型防攻擊混合服务器配置可以同时配置和服务器在版本之前在独立的端口中是不能选择性开启的如上面的例子只能通过使用命令为单个端口开启命令开启因此没有辦法设置混合服务器于是新增了监听命令参数來解决这个问题現代版本的命令并不推荐使用基于服务器名称的服务器一个常见的问题就是当使用同一个地址去配置两个或更多的服务器的时候出现证书不匹配的情況这种情况下浏览器会获取默认的服务器证书如上面例子的而忽视请求的服务器名如输入网址服务器会发送的证书到客戶端而不是这是因为协议行为所致连接在浏览器发送请求之前就被建立并不知道被请求的服务器名字因此只会提供默认的服务器证书解決这个问题最原始最有效的方法就是为每个服务器分配独立的地址更多解決方案除此之外官方还介绍了两个方法泛域证书和域名指示其实在版本就支持了只要在安裝的时候加上选项就可以到了版本这个选项在安裝的时候会默认启用如果创建的时候支持可以在版本信息查到以下的字段因此如果较新版本的使用默认的库是不存在使用同时支持基于名字的虚拟主机的时候同不同域名证书不匹配的问题注意即使新版本的在创建时支持了如果动态加载不支持的库的话扩展将不可用有兴趣的朋友可以看下总结我们简单总结一下在下配置的关键要点获得证书通过命令获得和文件提供文件给第三方可靠证书颁发机构选择适合的安全级别证书并签署获得文件通过命令参数以及引用和文件完成基础配置优化减少运算量使用长连接复用会话参数使用策略强制浏览器使用连接添加头部信息使用预加载列表加强安全性使用迪菲赫尔曼密钥交换方案添加头部信息减少点击劫持添加头部信息禁止服务器自动解析资源类型添加头部信息防攻击混合服务器配置基于服务器名称的服务器为每个服务器分配独立的地址泛域证书域名标识',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/linux/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>linux</span></a></span></div></div><h1 class="post-title" itemprop="name headline">Nginx 配置 HTTPS 服务器</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2017-06-08T10:23:56.000Z" title="发表于 2017-06-08 18:23:56">2017-06-08</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.039Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/"><header><a href="/tags/linux/" tabindex="-1" itemprop="url">linux</a><h1 id="CrawlerTitle" itemprop="name headline">Nginx 配置 HTTPS 服务器</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2017-06-08T10:23:56.000Z" title="发表于 2017-06-08 18:23:56">2017-06-08</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.039Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><h1 id="Nginx-配置-HTTPS-服务器"><a href="#Nginx-配置-HTTPS-服务器" class="headerlink" title="Nginx 配置 HTTPS 服务器"></a>Nginx 配置 HTTPS 服务器</h1><p>Chrome 浏览器地址栏标志着 HTTPS 的绿色小锁头从心理层面上可以给用户专业安全的心理暗示，本文简单总结一下如何在 Nginx 配置 HTTPS 服务器，让自己站点上『绿锁』</p>
+<p>Nginx 配置 HTTPS 并不复杂，主要有两个步骤：<strong>签署第三方可信任的 SSL 证书</strong> 和 <strong>配置 HTTPS</strong></p>
+<h2 id="签署第三方可信任的-SSL-证书"><a href="#签署第三方可信任的-SSL-证书" class="headerlink" title="签署第三方可信任的 SSL 证书"></a>签署第三方可信任的 SSL 证书</h2><h3 id="关于-SSL-证书"><a href="#关于-SSL-证书" class="headerlink" title="关于 SSL 证书"></a>关于 SSL 证书</h3><p>有关 SSL 的介绍可以参阅维基百科的<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%82%B3%E8%BC%B8%E5%B1%A4%E5%AE%89%E5%85%A8%E5%8D%94%E8%AD%B0">传输层安全协议</a>和阮一峰先生的 <a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html">《SSL&#x2F;TLS协议运行机制的概述》</a>。</p>
+<p>SSL 证书主要有两个功能：<strong>加密</strong>和<strong>身份证明</strong>，通常需要购买，也有免费的，通过第三方 SSL 证书机构颁发.</p>
+<p><a target="_blank" rel="noopener" href="https://www.startssl.com/">StartCom</a> 机构上的 SSL 证书有以下几种：</p>
+<ul>
+<li>企业级别：EV(Extended Validation)、OV(Organization Validation)</li>
+<li>个人级别：IV(Identity Validation)、DV（Domain Validation）</li>
+</ul>
+<p>其中 EV、OV、IV 需要付费</p>
+<p>免费的证书安全认证级别一般比较低，不显示单位名称，不能证明网站的真实身份，仅起到加密传输信息的作用，适合个人网站或非电商网站。由于此类只验证域名所有权的低端 SSL 证书已经被国外各种欺诈网站滥用，因此强烈推荐部署验证单位信息并显示单位名称的 OV SSL 证书或申请最高信任级别的、显示绿色地址栏、直接在地址栏显示单位名称的 EV SSL 证书，就好像 <a target="_blank" rel="noopener" href="https://www.startssl.com/">StarCom</a> 的地址栏一样</p>
+<p>更多关于购买 SSL 证书的介绍：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/19578422">SSL 证书服务，大家用哪家的？</a>、<a target="_blank" rel="noopener" href="http://freessl.wosign.com/freessl">DV免费SSL证书</a></p>
+<h3 id="使用-OpenSSL-生成-SSL-Key-和-CSR-文件"><a href="#使用-OpenSSL-生成-SSL-Key-和-CSR-文件" class="headerlink" title="使用 OpenSSL 生成 SSL Key 和 CSR 文件"></a>使用 OpenSSL 生成 SSL Key 和 CSR 文件</h3><p>配置 HTTPS 要用到私钥 example.key 文件和 example.crt 证书文件，申请证书文件的时候要用到 example.csr 文件，<code>OpenSSL</code> 命令可以生成 example.key 文件和 example.csr 证书文件。</p>
+<ul>
+<li>CSR：Cerificate Signing Request，证书签署请求文件，里面包含申请者的 DN（Distinguished Name，标识名）和公钥信息，<strong>在第三方证书颁发机构签署证书的时候需要提供</strong>。证书颁发机构拿到 CSR 后使用其根证书私钥对证书进行加密并生成 CRT 证书文件，里面包含证书加密信息以及申请者的 DN 及公钥信息</li>
+<li>Key：证书申请者私钥文件，和证书里面的公钥配对使用，在 HTTPS 『握手』通讯过程需要使用私钥去解密客戶端发來的经过证书公钥加密的随机数信息，是 HTTPS 加密通讯过程非常重要的文件，<strong>在配置 HTTPS 的時候要用到</strong></li>
+</ul>
+<p>使用 <code>OpenSSl</code>命令可以在系统当前目录生成 <strong>example.key</strong> 和 <strong>example.csr</strong> 文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openssl req -new -newkey rsa:2048 -sha256 -nodes -out example_com.csr -keyout example_com.key -subj <span class="string">&quot;/C=CN/ST=ShenZhen/L=ShenZhen/O=Example Inc./OU=Web Security/CN=example.com&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>下面是上述命令相关字段含义：</p>
+<ul>
+<li>C：Country ，单位所在国家，为两位数的国家缩写，如： CN 就是中国</li>
+<li>ST 字段： State&#x2F;Province ，单位所在州或省</li>
+<li>L 字段： Locality ，单位所在城市 &#x2F; 或县区</li>
+<li>O 字段： Organization ，此网站的单位名称;</li>
+<li>OU 字段： Organization Unit，下属部门名称;也常常用于显示其他证书相关信息，如证书类型，证书产品名称或身份验证类型或验证内容等;</li>
+<li>CN 字段： Common Name ，网站的域名;</li>
+</ul>
+<p>生成 csr 文件后，提供给 CA 机构，签署成功后，就会得到一個 <strong>example.crt</strong> 证书文件，SSL 证书文件获得后，就可以在 Nginx 配置文件里配置 HTTPS 了。</p>
+<h2 id="配置-HTTPS"><a href="#配置-HTTPS" class="headerlink" title="配置 HTTPS"></a>配置 HTTPS</h2><h3 id="基础配置"><a href="#基础配置" class="headerlink" title="基础配置"></a>基础配置</h3><p>要开启 HTTPS 服务，在配置文件信息块(server block)，必须使用监听命令 <code>listen</code> 的 ssl 参数和定义服务器证书文件和私钥文件，如下所示：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">		<span class="comment">#ssl参数</span></span><br><span class="line">		<span class="attribute">listen</span> <span class="number">443</span> ssl;</span><br><span class="line">		<span class="attribute">server_name</span> example.com;</span><br><span class="line">		<span class="comment">#证书文件</span></span><br><span class="line">		<span class="attribute">ssl_certificate</span> example.com.crt;</span><br><span class="line">		<span class="comment">#私钥文件</span></span><br><span class="line">		<span class="attribute">ssl_certificate_key</span> example.com.key;</span><br><span class="line">		<span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">		<span class="attribute">ssl_ciphers</span> HIGH:!aNULL:!MD5;</span><br><span class="line">		<span class="comment">#...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>证书文件会作为公用实体發送到每台连接到服务器的客戶端，私钥文件作为安全实体，<strong>应该被存放在具有一定权限限制的目录文件，并保证 Nginx 主进程有存取权限</strong>。</p>
+<p>私钥文件也有可能会和证书文件同放在一個文件中，如下面情況：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">ssl_certificate</span> www.example.com.cert;</span><br><span class="line"><span class="attribute">ssl_certificate_key</span> www.example.com.cert;</span><br></pre></td></tr></table></figure>
+
+<p>这种情況下，证书文件的的读取权限也应该加以限制，仅管证书和私钥存放在同一个文件里，但是只有证书会被发送到客戶端</p>
+<p>命令 <code>ssl_protocols</code> 和 <code>ssl_ciphers</code> 可以用来限制连接只包含 SSL&#x2F;TLS 的加強版本和算法，默认值如下：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line"><span class="attribute">ssl_ciphers</span> HIGH:!aNULL:!MD5;</span><br></pre></td></tr></table></figure>
+
+<p>由于这两个命令的默认值已经好几次发生了改变，因此不建议显性定义，除非有需要额外定义的值，如定义 D-H 算法：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#使用DH文件</span></span><br><span class="line"><span class="attribute">ssl_dhparam</span> /etc/ssl/certs/dhparam.pem;<span class="attribute">s</span></span><br><span class="line">sl_protocols TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line"><span class="comment">#定义算法</span></span><br><span class="line"><span class="attribute">ssl_ciphers</span> <span class="string">&quot;EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDH+ECDSA+SHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH+aRSA+RC4 EECDH EDH+aRSA !aNULL !eNULL !LOW !3DES !MD5 !EXP !PSK !SRP !DSS !RC4&quot;</span>;</span><br><span class="line"><span class="comment">#...</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="HTTPS服务器优化"><a href="#HTTPS服务器优化" class="headerlink" title="HTTPS服务器优化"></a>HTTPS服务器优化</h3><h4 id="减少-CPU-运算量"><a href="#减少-CPU-运算量" class="headerlink" title="减少 CPU 运算量"></a>减少 CPU 运算量</h4><p>SSL 的运行计算需要消耗额外的 CPU 资源，一般多核处理器系统会运行多个工作进程(<a target="_blank" rel="noopener" href="http://nginx.org/en/docs/ngx_core_module.html#worker_processes">worker processes </a>)，进程的数量不会少于可用的 CPU 核数。SSL 通讯过程中『握手』阶段的运算最占用 CPU 资源，有两个方法可以减少每台客户端的运算量：</p>
+<ul>
+<li><strong>激活 <a target="_blank" rel="noopener" href="http://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout">keepalive</a> 长连接，一个连接发送更多个请求</strong></li>
+<li><strong>复用 SSL 会话参数，在并行并发的连接数中避免进行多次 SSL『握手』</strong></li>
+</ul>
+<p>这些会话会存储在一个 SSL 会话缓存里面，通过命令 <a target="_blank" rel="noopener" href="https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_session_cache">ssl_session_cache</a> 配置，可以使缓存在机器间共享，然后利用客戶端在『握手』阶段使用的 <code>seesion id</code> 去查询服务端的 session cathe(如果服务端设置有的话)，简化『握手』阶段。</p>
+<p>1M 的会话缓存大概包含 4000 個会话，默认的缓存超时时间为 5 分钟，可以通过使用 <a target="_blank" rel="noopener" href="https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_session_timeout">ssl_session_timeout</a> 命令设置缓存超时时间。下面是一個拥有 10M 共享会话缓存的多核系统优化配置例子：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">worker_processes</span> auto;</span><br><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">	<span class="comment">#配置共享会话缓存大小</span></span><br><span class="line">	<span class="attribute">ssl_session_cache</span> shared:SSL:<span class="number">10m</span>;</span><br><span class="line">	<span class="comment">#配置会话超时时间</span></span><br><span class="line">	<span class="attribute">ssl_session_timeout</span> <span class="number">10m</span>;</span><br><span class="line">	<span class="section">server</span> &#123;</span><br><span class="line">		<span class="attribute">listen</span> <span class="number">443</span> ssl;</span><br><span class="line">		<span class="attribute">server_name</span> www.example.com;</span><br><span class="line">		<span class="comment">#设置长连接</span></span><br><span class="line">		<span class="attribute">keepalive_timeout</span> <span class="number">70</span>;</span><br><span class="line">		<span class="attribute">ssl_certificate</span> www.example.com.crt;</span><br><span class="line">		<span class="attribute">ssl_certificate_key</span> www.example.com.key;</span><br><span class="line">		<span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">		<span class="attribute">ssl_ciphers</span> HIGH:!aNULL:!MD5;</span><br><span class="line">		<span class="comment">#...</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="使用-HSTS-策略强制浏览器使用-HTTPS-连接"><a href="#使用-HSTS-策略强制浏览器使用-HTTPS-连接" class="headerlink" title="使用 HSTS 策略强制浏览器使用 HTTPS 连接"></a>使用 HSTS 策略强制浏览器使用 HTTPS 连接</h4><p>HSTS – HTTP Strict Transport Security，HTTP严格传输安全。它允许一个 HTTPS 网站要求浏览器总是通过 HTTPS 来访问，这使得攻击者在用戶与服务器通讯过程中拦截、篡改信息以及冒充身份变得更为困难。</p>
+<p>只要在 Nginx 配置文件加上以下头信息就可以了：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">add_header</span> Strict-Transport-Security <span class="string">&quot;max-age=31536000;includeSubDomains;preload&quot;</span> always;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>max-age：设置单位时间内強制使用 HTTPS 连接</li>
+<li>includeSubDomains：可选，所有子域同时生效</li>
+<li>preload：可选，<em>非规范值</em>，用于定义使用『HSTS 预加载列表』</li>
+<li>always：可选，保证所有响应都发送此响应头，包括各种內置错误响应</li>
+</ul>
+<p>当用户进行 HTTPS 连接的时候，服务器会发送一个 <strong>Strict-Transport-Security</strong> 响应头</p>
+<p>浏览器在获取该响应头后，在 <code>max-age</code> 的时间内，如果遇到 HTTP 连接，就会通过 307 跳转強制使用 HTTPS 进行连接，并忽略其它的跳转设置（如 301 重定向跳转）</p>
+<p>307 跳转 <strong>Non-Authoritative-Reason</strong> 响应头</p>
+<h5 id="Google-HSTS-预加载列表（HSTS-Preload-List）"><a href="#Google-HSTS-预加载列表（HSTS-Preload-List）" class="headerlink" title="Google HSTS 预加载列表（HSTS Preload List）"></a>Google HSTS 预加载列表（HSTS Preload List）</h5><p>由于 HSTS 需要用戶经过一次安全的 HTTPS 连接后才会在 max-age 的时间內生效，因此HSTS 策略并不能完美防止 <a target="_blank" rel="noopener" href="https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/06.4.md">HTTP 会话劫持（HTTP session hijacking）</a>，在下面这些情況下还是存在被劫持的可能：</p>
+<ul>
+<li>从未访问过的网站</li>
+<li>近期重裝过操作系統</li>
+<li>近期重裝过浏览器</li>
+<li>使用新的浏览器</li>
+<li>使用了新的设备（如手机）</li>
+<li>刪除了浏览器缓存</li>
+<li>近期沒有打开过网站且 max-age 过期</li>
+</ul>
+<p>针对这种情況，Google 维护了一份『HSTS 预加载列表』，列表里包含了使用了 HSTS 的站点主域名和子域名，可以通过以下页面申请加入：</p>
+<p><a target="_blank" rel="noopener" href="https://hstspreload.appspot.com/">https://hstspreload.appspot.com/.</a></p>
+<p>申请的时候会先验证站点是否符合资格，一般会检验待验证的站点主域和子域是否能通过 HTTPS 连接、HTTPS 和 HTTP 配置是否有 STS Header 等信息，通过验证后，会让你确认一些限制信息</p>
+<p>当确认提交后，就会显示处理状态</p>
+<p>申请通过后，列表内的站点名会被写进主流的浏览器，当浏览器更新版本后，只要打开列表内的站点，浏览器会拒绝所有 HTTP 连接而自动使用 HTTPS，即使关闭了 HSTS 设置。</p>
+<p>可以在下面两个连接分別查找 Chrome 和 Firfox 的『HSTS 预加载列表』内容：</p>
+<p><a target="_blank" rel="noopener" href="https://www.chromium.org/hsts">The Chromium Projects - HTTP Strict Transport Security</a></p>
+<p><a target="_blank" rel="noopener" href="https://dxr.mozilla.org/comm-central/source/mozilla/security/manager/ssl/nsSTSPreloadList.inc">Firefox HSTS preload list - nsSTSPreloadList.inc</a></p>
+<p><strong>需要注意的是：</strong></p>
+<ul>
+<li>一旦把自己的站点名加入『HSTS 预加载列表』，将很难彻底从列表中移除，因为不能保证其它浏览器可以及时移除，即使 Chrome 提供有便捷的移除方法，也是要通过出邮件联系，注明移除原因，并等到最新的浏览器版本更新发布才有机会（用戶不一定会及时更新）</li>
+<li>所有不具备有效证书的子域或內嵌子域的访问将会被阻止</li>
+</ul>
+<p><strong>因此，如果自己站点子域名变化比较多，又沒有泛域证书，又沒法确定全站是否能应用 HTTPS 的朋友，就要谨慎申请了。</strong></p>
+<p>更多关于 HSTS 配置可参考：</p>
+<p><a target="_blank" rel="noopener" href="https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/">《HTTP Strict Transport Security (HSTS) and NGINX》</a></p>
+<p><a target="_blank" rel="noopener" href="https://developer.mozilla.org/en-US/docs/Web/Security/HTTP_strict_transport_security#Preloading_Strict_Transport_Security">MDN的《HTTP Strict Transport Security》</a></p>
+<h4 id="加强-HTTPS-安全性"><a href="#加强-HTTPS-安全性" class="headerlink" title="加强 HTTPS 安全性"></a>加强 HTTPS 安全性</h4><p>HTTPS 基础配置采取的默认加密算法是 SHA-1，这个算法非常脆弱，安全性在逐年降低，在 2014 年的时候， <strong>Google 官方博客就宣布在 Chrome 浏览器中逐渐降低 SHA-1 证书的安全指示，会从 2015 年起使用 SHA-2 签名的证书</strong>，可参阅 <a target="_blank" rel="noopener" href="http://www.freebuf.com/author/rabbit_run">Rabbit_Run</a> 在 2014 年发表的文章：<a target="_blank" rel="noopener" href="http://www.freebuf.com/news/topnews/44288.html">《为什么Google急着杀死加密算法SHA-1》</a></p>
+<p>为此，主流的 HTTPS 配置方案应该避免 SHA-1，可以使用 <a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%BF%AA%E8%8F%B2-%E8%B5%AB%E7%88%BE%E6%9B%BC%E5%AF%86%E9%91%B0%E4%BA%A4%E6%8F%9B">迪菲-赫尔曼密钥交换（D-H，Diffie–Hellman key exchange）</a>方案。</p>
+<p>首先在目录 <code>/etc/ssl/certs</code> 运行以下代码生成 <code>dhparam.pem</code> 文件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openssl dhparam -out dhparam.pem 2048</span><br></pre></td></tr></table></figure>
+
+<p>然后加入 Nginx 配置：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#优先采取服务器算法</span></span><br><span class="line"><span class="attribute">ssl_prefer_server_ciphers</span> <span class="literal">on</span>;</span><br><span class="line"><span class="comment">#使用DH文件</span></span><br><span class="line"><span class="attribute">ssl_dhparam</span> /etc/ssl/certs/dhparam.pem;</span><br><span class="line"><span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line"><span class="comment">#定义算法</span></span><br><span class="line"><span class="attribute">ssl_ciphers</span> <span class="string">&quot;EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDH+ECDSA+SHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH+aRSA+RC4 EECDH EDH+aRSA !aNULL !eNULL !LOW !3DES !MD5 !EXP !PSK !SRP !DSS !RC4&quot;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>如果服务器夠強大，可以使用更为复杂的 4096 位进行加密。</p>
+<p>一般情況下还应该加上以下几个增强安全性的命令：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#减少点击劫持</span></span><br><span class="line"><span class="attribute">add_header</span> X-Frame-Options DENY;</span><br><span class="line"><span class="comment">#禁止服务器自动解析资源类型</span></span><br><span class="line"><span class="attribute">add_header</span> X-Content-Type-Options nosniff;</span><br><span class="line"><span class="comment">#防XSS攻击add_header X-Xss-Protection 1;</span></span><br></pre></td></tr></table></figure>
+
+<p>这几个安全命令在 <a target="_blank" rel="noopener" href="https://imququ.com/">Jerry Qu</a> 大神的文章<a target="_blank" rel="noopener" href="https://imququ.com/post/web-security-and-response-header.html">《一些安全相关的HTTP响应头》</a>有详细的介紹。</p>
+<h3 id="优化后的综合配置"><a href="#优化后的综合配置" class="headerlink" title="优化后的综合配置"></a>优化后的综合配置</h3><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">worker_processes</span> auto;</span><br><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">	<span class="comment">#配置共享会话缓存大小，视站点访问情况设定</span></span><br><span class="line">	<span class="attribute">ssl_session_cache</span> shared:SSL:<span class="number">10m</span>;</span><br><span class="line">	<span class="comment">#配置会话超时时间</span></span><br><span class="line">	<span class="attribute">ssl_session_timeout</span> <span class="number">10m</span>;</span><br><span class="line">	<span class="section">server</span> &#123;</span><br><span class="line">		<span class="attribute">listen</span> <span class="number">443</span> ssl;</span><br><span class="line">		<span class="attribute">server_name</span> www.example.com;</span><br><span class="line">		<span class="comment">#设置长连接keepalive_timeout 70;</span></span><br><span class="line">		<span class="comment">#HSTS策略</span></span><br><span class="line">		<span class="attribute">add_header</span> Strict-Transport-Security <span class="string">&quot;max-age=31536000; includeSubDomains; preload&quot;</span> always;</span><br><span class="line">		<span class="comment">#证书文件</span></span><br><span class="line">		<span class="attribute">ssl_certificate</span> www.example.com.crt;</span><br><span class="line">		<span class="comment">#私钥文件</span></span><br><span class="line">		<span class="attribute">ssl_certificate_key</span> www.example.com.key;</span><br><span class="line">		<span class="comment">#优先采取服务器算法</span></span><br><span class="line">		<span class="attribute">ssl_prefer_server_ciphers</span> <span class="literal">on</span>;</span><br><span class="line">		<span class="comment">#使用DH文件</span></span><br><span class="line">		<span class="attribute">ssl_dhparam</span> /etc/ssl/certs/dhparam.pem;<span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">		<span class="comment">#定义算法</span></span><br><span class="line">		<span class="attribute">ssl_ciphers</span> <span class="string">&quot;EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDH+ECDSA+SHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH+aRSA+RC4 EECDH EDH+aRSA !aNULL !eNULL !LOW !3DES !MD5 !EXP !PSK !SRP !DSS !RC4&quot;</span>;</span><br><span class="line">		<span class="comment">#减少点击劫持add_header X-Frame-Options DENY;</span></span><br><span class="line">		<span class="comment">#禁止服务器自动解析资源类型</span></span><br><span class="line">		<span class="attribute">add_header</span> X-Content-Type-Options nosniff;</span><br><span class="line">		<span class="comment">#防XSS攻擊</span></span><br><span class="line">		<span class="attribute">add_header</span> X-Xss-Protection <span class="number">1</span>;</span><br><span class="line">		<span class="comment">#...</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="HTTP-x2F-HTTPS混合服务器配置"><a href="#HTTP-x2F-HTTPS混合服务器配置" class="headerlink" title="HTTP&#x2F;HTTPS混合服务器配置"></a>HTTP&#x2F;HTTPS混合服务器配置</h3><p>可以同时配置 HTTP 和 HTTPS 服务器：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">	<span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">	<span class="attribute">listen</span> <span class="number">443</span> ssl;</span><br><span class="line">	<span class="attribute">server_name</span> www.example.com;</span><br><span class="line">	<span class="attribute">ssl_certificate</span> www.example.com.crt;</span><br><span class="line">	<span class="attribute">ssl_certificate_key</span> www.example.com.key;</span><br><span class="line">	<span class="comment">#...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>在 0.7.14 版本之前，在独立的 server 端口中是不能选择性开启 SSL 的</strong>。如上面的例子，SSL 只能通过使用 <a target="_blank" rel="noopener" href="https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl">ssl</a> 命令为单个 server 端口开启</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">	<span class="attribute">listen</span> <span class="number">443</span>;</span><br><span class="line">	<span class="attribute">server_name</span> www.example.com;</span><br><span class="line">	<span class="attribute">ssl_certificate</span> www.example.com.crt;</span><br><span class="line">	<span class="attribute">ssl_certificate_key</span> www.example.com.key;</span><br><span class="line">	<span class="comment">#ssl命令开启 </span></span><br><span class="line">	<span class="attribute">httpsssl</span> <span class="literal">on</span>;</span><br><span class="line">	<span class="comment">#...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>因此没有辦法设置 HTTP&#x2F;HTTPS 混合服务器。于是 Nginx 新增了监听命令 <a target="_blank" rel="noopener" href="https://nginx.org/en/docs/http/ngx_http_core_module.html#listen">listen</a>参数 <code>ssl</code> 來解决这个问题，<strong>Nginx 現代版本的<code>ssl</code>命令并不推荐使用</strong></p>
+<h3 id="基于服务器名称（name-based）的-HTTPS-服务器"><a href="#基于服务器名称（name-based）的-HTTPS-服务器" class="headerlink" title="基于服务器名称（name-based）的 HTTPS 服务器"></a>基于服务器名称（name-based）的 HTTPS 服务器</h3><p>一个常见的问题就是当使用同一个 IP 地址去配置两个或更多的 HTTPS 服务器的时候，出现证书不匹配的情況：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">	<span class="attribute">listen</span> <span class="number">443</span> ssl;</span><br><span class="line">	<span class="attribute">server_name</span> www.example.com;</span><br><span class="line">	<span class="attribute">ssl_certificate</span> www.example.com.crt</span><br><span class="line">	;</span><br><span class="line">	<span class="comment">#...</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">	<span class="attribute">listen</span> <span class="number">443</span> ssl;</span><br><span class="line">	<span class="attribute">server_name</span> www.example.org;<span class="attribute">ssl_certificate</span> www.example.org.crt;</span><br><span class="line">	<span class="comment">#...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>这种情况下浏览器会获取默认的服务器证书（如上面例子的 <a href="http://www.example.com.crt）而忽视请求的服务器名，如输入网址：`www.example.org`，服务器会发送">www.example.com.crt）而忽视请求的服务器名，如输入网址：`www.example.org`，服务器会发送</a> <code>www.example.com.crt</code> 的证书到客戶端，而不是 <code>www.exaple.org.crt</code>。</p>
+<p>这是因为 SSL 协议行为所致，SSL 连接在浏览器发送 HTTP 请求之前就被建立，Nginx 并不知道被请求的服务器名字，因此 Nginx 只会提供默认的服务器证书。</p>
+<p>解決这个问题最原始最有效的方法就是为每个 HTTPS 服务器分配独立的 IP 地址：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">	<span class="attribute">listen</span> <span class="number">192.168.1.1:443</span> ssl;</span><br><span class="line">	<span class="attribute">server_name</span> www.example.com;</span><br><span class="line">	<span class="attribute">ssl_certificate</span> www.example.com.crt;</span><br><span class="line">	<span class="comment">#...</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">	<span class="attribute">listen</span> <span class="number">192.168.1.2:443</span> ssl;</span><br><span class="line">	<span class="attribute">server_name</span> www.example.org;</span><br><span class="line">	<span class="attribute">ssl_certificate</span> www.example.org.crt;</span><br><span class="line">	<span class="comment">#...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="更多解決方案"><a href="#更多解決方案" class="headerlink" title="更多解決方案"></a>更多解決方案</h4><p>除此之外，官方还介绍了两个方法：<strong>泛域证书</strong>和<strong>域名指示（SNI）</strong></p>
+<p>其实 OpenSSL 在 <strong>0.9.8f版本</strong>就支持 SNI 了，只要在安裝的时候加上 <code>--enable-tlsext</code> 选项就可以。到了 <strong>0.9.8j版本</strong>，这个选项在安裝的时候会默认启用。如果创建 Nginx 的时候支持 SNI，可以在 Nginx 版本信息查到以下的字段：</p>
+<p><code>TLS SNI support enabled</code></p>
+<p>因此，如果较新版本的 Nginx 使用默认的 OpenSSL 库，<strong>是不存在使用 HTTPS 同时支持基于名字的虚拟主机的时候同 IP 不同域名证书不匹配的问题</strong>。</p>
+<p><em>注意：即使新版本的 Nginx 在创建时支持了 SNI，如果 Nginx 动态加载不支持 SNI 的 OpenSSL 库的话，SNI 扩展将不可用</em></p>
+<p>有兴趣的朋友可以看下：</p>
+<p><a target="_blank" rel="noopener" href="http://nginx.org/en/docs/http/configuring_https_servers.html">An SSL certificate with several names &amp;&amp; Server Name Indication</a></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>OK，我们简单总结一下在 Nginx 下配置 HTTPS 的关键要点：</p>
+<ul>
+<li><strong>获得 SSL 证书</strong><ul>
+<li>通过 OpenSSL 命令获得 example.key 和 example.csr 文件</li>
+<li>提供 example.csr 文件给第三方可靠证书颁发机构，选择适合的安全级别证书并签署，获得 example.crt 文件</li>
+</ul>
+</li>
+<li><strong>通过 listen 命令 SSL 参数以及引用 example.key 和 example.crt 文件完成 HTTPS 基础配置</strong></li>
+<li><strong>HTTPS优化</strong><ul>
+<li>减少 CPU 运算量<ul>
+<li>使用 keepalive 长连接</li>
+<li>复用 SSL 会话参数</li>
+</ul>
+</li>
+<li>使用 HSTS 策略强制浏览器使用 HTTPS 连接<ul>
+<li>添加 Strict-Transport-Security 头部信息</li>
+<li>使用 HSTS 预加载列表（HSTS Preload List）</li>
+</ul>
+</li>
+<li>加强 HTTPS 安全性<ul>
+<li>使用迪菲-赫尔曼密钥交换（D-H，Diffie–Hellman key exchange）方案</li>
+<li>添加 X-Frame-Options 头部信息，减少点击劫持</li>
+<li>添加 X-Content-Type-Options 头部信息，禁止服务器自动解析资源类型</li>
+<li>添加 X-Xss-Protection 头部信息，防XSS攻击</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>HTTP&#x2F;HTTPS混合服务器配置</strong></li>
+<li><strong>基于服务器名称（name-based）的 HTTPS 服务器</strong><ul>
+<li>为每个 HTTPS 服务器分配独立的 IP 地址</li>
+<li>泛域证书</li>
+<li>域名标识（SNI）</li>
+</ul>
+</li>
+</ul>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/')">Nginx 配置 HTTPS 服务器</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=Nginx 配置 HTTPS 服务器&amp;url=https://shippomx.github.io/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/linux/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>linux<span class="tagsPageCount">16</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2018/05/20/golang/Golang%20%E7%AE%80%E6%B4%81%E5%85%A5%E9%97%A8/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Golang简洁入门</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2023/02/14/linux%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" title="简易环境配置"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-02-14</div><div class="title">简易环境配置</div></div></a></div><div><a href="/2023/03/11/linux/Linux%20%E8%BF%9B%E7%A8%8B%E7%8A%B6%E6%80%81%E8%A7%A3%E6%9E%90%20/" title="进程状态简述"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-03-11</div><div class="title">进程状态简述</div></div></a></div><div><a href="/2023/10/02/linux/%E5%88%9B%E5%BB%BA%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B%E6%AD%A5%E9%AA%A4%E4%B8%8E%20setsid/" title="守护进程与setsid"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-02</div><div class="title">守护进程与setsid</div></div></a></div><div><a href="/2023/10/01/linux/%E5%BC%80%E6%BA%90%E6%97%A5%E5%BF%97%E5%BA%93log_c%E7%9A%84%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8/" title="开源日志库log_c的简单使用"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-01</div><div class="title">开源日志库log_c的简单使用</div></div></a></div><div><a href="/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/" title="容器安全-理解cgroup中的cpuset"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-06-21</div><div class="title">容器安全-理解cgroup中的cpuset</div></div></a></div><div><a href="/2020/09/01/linux/%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1%EF%BC%88IPC%EF%BC%89%E4%BB%8B%E7%BB%8D/" title="进程间通信IPC简介"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-09-01</div><div class="title">进程间通信IPC简介</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Nginx-%E9%85%8D%E7%BD%AE-HTTPS-%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="toc-text">Nginx 配置 HTTPS 服务器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AD%BE%E7%BD%B2%E7%AC%AC%E4%B8%89%E6%96%B9%E5%8F%AF%E4%BF%A1%E4%BB%BB%E7%9A%84-SSL-%E8%AF%81%E4%B9%A6"><span class="toc-text">签署第三方可信任的 SSL 证书</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E4%BA%8E-SSL-%E8%AF%81%E4%B9%A6"><span class="toc-text">关于 SSL 证书</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-OpenSSL-%E7%94%9F%E6%88%90-SSL-Key-%E5%92%8C-CSR-%E6%96%87%E4%BB%B6"><span class="toc-text">使用 OpenSSL 生成 SSL Key 和 CSR 文件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE-HTTPS"><span class="toc-text">配置 HTTPS</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE"><span class="toc-text">基础配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTPS%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%BC%98%E5%8C%96"><span class="toc-text">HTTPS服务器优化</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%8F%E5%B0%91-CPU-%E8%BF%90%E7%AE%97%E9%87%8F"><span class="toc-text">减少 CPU 运算量</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-HSTS-%E7%AD%96%E7%95%A5%E5%BC%BA%E5%88%B6%E6%B5%8F%E8%A7%88%E5%99%A8%E4%BD%BF%E7%94%A8-HTTPS-%E8%BF%9E%E6%8E%A5"><span class="toc-text">使用 HSTS 策略强制浏览器使用 HTTPS 连接</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#Google-HSTS-%E9%A2%84%E5%8A%A0%E8%BD%BD%E5%88%97%E8%A1%A8%EF%BC%88HSTS-Preload-List%EF%BC%89"><span class="toc-text">Google HSTS 预加载列表（HSTS Preload List）</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8A%A0%E5%BC%BA-HTTPS-%E5%AE%89%E5%85%A8%E6%80%A7"><span class="toc-text">加强 HTTPS 安全性</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E5%8C%96%E5%90%8E%E7%9A%84%E7%BB%BC%E5%90%88%E9%85%8D%E7%BD%AE"><span class="toc-text">优化后的综合配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTP-x2F-HTTPS%E6%B7%B7%E5%90%88%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE"><span class="toc-text">HTTP&#x2F;HTTPS混合服务器配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%8D%E7%A7%B0%EF%BC%88name-based%EF%BC%89%E7%9A%84-HTTPS-%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="toc-text">基于服务器名称（name-based）的 HTTPS 服务器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9B%B4%E5%A4%9A%E8%A7%A3%E6%B1%BA%E6%96%B9%E6%A1%88"><span class="toc-text">更多解決方案</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

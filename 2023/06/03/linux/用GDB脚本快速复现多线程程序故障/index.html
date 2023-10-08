@@ -1,0 +1,395 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>使用GDB脚本快速复现多线程程序故障 | 远辰</title><meta name="keywords" content="container"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="使用GDB脚本快速复现多线程程序故障"><meta name="application-name" content="使用GDB脚本快速复现多线程程序故障"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="使用GDB脚本快速复现多线程程序故障"><meta property="og:url" content="https://shippomx.github.io/2023/06/03/linux/%E7%94%A8GDB%E8%84%9A%E6%9C%AC%E5%BF%AB%E9%80%9F%E5%A4%8D%E7%8E%B0%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%A8%8B%E5%BA%8F%E6%95%85%E9%9A%9C/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="1 背景 多线程程序中有一类故障复现非常困难。这类故障需要多个线程按照特定的调度顺序执行，并且需要维持一些特殊的暂态，因而难以直接构造用例。即使能够构造出用例，由于程序在运行中呈现出特定调度顺序具有偶然性，所以复现也通常也需要大量的反复执行。考虑到很多疑难故障往往需要多次复现和分析，才能最终定位和解"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="1 背景 多线程程序中有一类故障复现非常困难。这类故障需要多个线程按照特定的调度顺序执行，并且需要维持一些特殊的暂态，因而难以直接构造用例。即使能够构造出用例，由于程序在运行中呈现出特定调度顺序具有偶然性，所以复现也通常也需要大量的反复执行。考虑到很多疑难故障往往需要多次复现和分析，才能最终定位和解"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2023/06/03/linux/%E7%94%A8GDB%E8%84%9A%E6%9C%AC%E5%BF%AB%E9%80%9F%E5%A4%8D%E7%8E%B0%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%A8%8B%E5%BA%8F%E6%95%85%E9%9A%9C/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: '使用GDB脚本快速复现多线程程序故障',
+  postAI: '',
+  pageFillDescription: '1 背景, 2 popen()开源故障简介, 3.2 使用GDB脚本快速复现故障, 4 故障解决方案****, 5 经验总结背景多线程程序中有一类故障复现非常困难这类故障需要多个线程按照特定的调度顺序执行并且需要维持一些特殊的暂态因而难以直接构造用例即使能够构造出用例由于程序在运行中呈现出特定调度顺序具有偶然性所以复现也通常也需要大量的反复执行考虑到很多疑难故障往往需要多次复现和分析才能最终定位和解决所以在处理这类有调度触发条件的故障时往往需要消耗大量的时间来复现问题那么有没有什么通用的方法可以帮助我们加快复现故障提高问题的定位速度呢本文基于一个的接口发生资源泄漏的开源故障案例介绍如何利用调试器的脚本执行功能来实现多线程程序调度暂态的人工控制从而快速复现有调度触发条件的偶发性故障开源故障简介故障现象某项目同事反馈在他们的版本中当父进程调用来执行某个子程序并通过管道获取执行结果时被启动的子进程偶尔会发现存在多余的无法关闭的情况相当于产生了资源泄漏故障分析接口提供了一种执行命令并读取结果的方法其原理是父进程先建立一个然后子进程随后在子进程中完成命令操作并将执行结果重定向到最后由父进程通过取回执行结果主要流程在文件的函数中实现根据标准中的相关要求的实现必须保证在父进程执行创建子进程后子进程中不能含有在父进程执行过程中打开的文件句柄由于这些父进程中打开的文件句柄在子进程中并不可见所以如果父进程的执行过程中不自己关闭这些句柄它们就会被复制到子进程中那么在子进程中的这部分文件句柄将无法被关闭从而导致文件句柄资源泄漏为了满足这个要求中设计了一个链表用于记录已经打开的句柄该链表在时挂接节点时取下节点链表头是一个全局变量由于是一个多线程安全的函数进程中允许同时存在多个并行执行的由于在中资源的分配由系统调用完成而将节点挂接到链表是在返回用户态之后才能操作这两个动作无法做到原子完成所以其间一定存在一个中间暂态资源已经分配但是链表上还没有对应的信息那么当父进程中多个并行执行时是否有可能导致某个子进程中保留了因为链表信息不完整而无法摘除的节点呢考察的实现代码中链表相关操作片段如下这里已经分配了资源在挂接链表前就去掉了标记这个系统调用返回后如果另外一个线程在此刻进入的则会导致这里的资源泄漏因为该不在链表上无法被子进程该也没有标记所以子进程中的系统调用也不会关闭它这里才将资源节点挂上链表根据注释的解释确实有理由怀疑资源的分配与链表挂接的非原子操作可能导致资源泄漏为了证实这个故障机理的猜想我们需要构造测试用例来复现故障故障复现复现用例设计根据上节对故障机理的猜想可知故障的复现要求是有两个以上的线程在同时执行某个线程的在从系统调用返回后在执行节点挂接之前被调度出去另外一个线程的执行完成子进程创建根据这些要求设计问题复现用例如下执行将其编译为测试程序使用脚本快速复现故障如果仅仅是简单地运行测试程序那么可能需要相当长的时间才能复现子进程出现内存泄漏的现象此时我们就可以借助脚本来快速复现故障提供了功能和调试模式功能使用命令开启它可以保证在多线程环境下我们可以单独调试某个线程使得其独自向前运行当然如果有锁还是会被卡住而其他线程的状态保持不变继续执行或者暂停状态调试模式使用命令开启它可以保证在多线程状态下当某个线程遇到断点时其余线程仍然继续执行结合这两个功能我们就能比较容易地控制程序各个线程的状态从而复现出多线程暂态故障针对的复现用例我们可以构造一组命令操作来让测试程序快速达到我们复现问题锁需要的状态并且可以将这些操作固化为脚本假设名为内容如下加载测试在入口打断点启动程序第一个子线程会首先执行到入口切换到即主线程设置线程单独执行在处打断点主线程直到中断在处此时子线程全部创建完毕切换到执行到入口以下同样处理此时所有子线程都暂停在入口在调用处打断点执行到入口继续执行到返回此时资源分配已完成但是节点还未挂接到链表输出当前的值以下让执行同样的过程切换到设置父子进程调试模式为时跟踪子进程在执行时打断点继续执行完成创建子进程并中断在子进程中获取子进程执行输出子进程的资源占用列表此时预期能看到资源泄漏可以通过以下命令来执行脚本文件并通过查看到资源泄漏执行后可以从中看到上述脚本中最后命令的打印信息可见子进程中打开的资源数量明显要多于该子进程本应具备的数量说明发生了资源泄漏至此我们已成功复现出故障从而证实了节中对故障机理的猜想故障解决方案由于在创建的时候都加上标记因此只要将去除该标记的动作移动到链表挂接后即可保证一定被关闭无需更改代码只需挪动位置即可如下这里已经才挂上对应节点经验总结脚本功能人为控制多线程程序调度暂态来快速复现具有偶发性的有调度触发条件的故障将测试用例与脚本结合是一种复现多线程复杂调度状态下偶发故障的高效方法在脚本的使用中有一些经验可供参考和虽然基本稳定但是仍然有时候会出现异常行为例如虚拟机中似乎不支持需要做一些变通例如使用之类的命令让睡眠一下让调度状态回到预期状态脚本和手动执行的一个区别是脚本执行时各条命令间几乎没有时间间隔所以简单的将手动调试时的命令串在一起脚本的行为可能不满足预期如果需要延时可以用等命令以使用命令来完成一些辅助功能例如延时查看信息等等如果需要复杂的字符串处理或者其他运算可以在中完成功能后将需要的结果写入一个文件然后再该文件脚本不要留空行空行在脚本执行时可能会让重复执行上一条命令导致出现意料之外的问题',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/container/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>container</span></a></span></div></div><h1 class="post-title" itemprop="name headline">使用GDB脚本快速复现多线程程序故障</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2023-06-03T03:08:00.000Z" title="发表于 2023-06-03 11:08:00">2023-06-03</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2023/06/03/linux/%E7%94%A8GDB%E8%84%9A%E6%9C%AC%E5%BF%AB%E9%80%9F%E5%A4%8D%E7%8E%B0%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%A8%8B%E5%BA%8F%E6%95%85%E9%9A%9C/"><header><a href="/tags/container/" tabindex="-1" itemprop="url">container</a><h1 id="CrawlerTitle" itemprop="name headline">使用GDB脚本快速复现多线程程序故障</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2023-06-03T03:08:00.000Z" title="发表于 2023-06-03 11:08:00">2023-06-03</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><h1 id="1-背景"><a href="#1-背景" class="headerlink" title="1 背景"></a><strong>1 背景</strong></h1><p> 多线程程序中有一类故障复现非常困难。这类故障需要多个线程按照特定的调度顺序执行，并且需要维持一些特殊的暂态，因而难以直接构造用例。即使能够构造出用例，由于程序在运行中呈现出特定调度顺序具有偶然性，所以复现也通常也需要大量的反复执行。考虑到很多疑难故障往往需要多次复现和分析，才能最终定位和解决，所以在处理这类有调度触发条件的故障时，往往需要消耗大量的时间来复现问题。</p>
+<p> 那么，有没有什么通用的方法，可以帮助我们加快复现故障，提高问题的定位速度呢？</p>
+<p> 本文基于一个glibc的popen()接口发生资源泄漏的开源故障案例，介绍如何利用GDB调试器的脚本执行功能来实现多线程程序调度暂态的人工控制，从而快速复现有调度触发条件的偶发性故障。</p>
+<h1 id="2-popen-开源故障简介"><a href="#2-popen-开源故障简介" class="headerlink" title="2 popen()开源故障简介"></a>2 popen()开源故障简介</h1><p><strong>2.1 故障现象</strong>  </p>
+<p> 某项目同事反馈，在他们的版本中，当父进程调用popen来执行某个子程序并通过管道获取执行结果时，被启动的子进程偶尔会发现存在多余的fd无法关闭的情况，相当于产生了资源泄漏。</p>
+<p><strong>2.2 故障分析</strong></p>
+<p> popen接口提供了一种执行命令并读取结果的方法。其原理是父进程先建立一个pipe，然后fork+execve子进程，随后在子进程中完成命令操作并将执行结果重定向到pipe，最后由父进程通过pipe取回执行结果。主要流程在libio&#x2F;Iopopen.c文件的_IO_new_proc_open、_IO_new_popen函数中实现。</p>
+<p> 根据posix标准中的相关要求，popen的实现必须保证：在父进程执行fork+execve创建子进程后，子进程中不能含有在父进程popen执行过程中打开的文件句柄。由于这些父进程中打开的文件句柄在子进程中并不可见，所以如果父进程的popen()执行过程中不自己关闭这些句柄，它们就会被复制到子进程中，那么在子进程中的这部分文件句柄将无法被关闭，从而导致文件句柄资源泄漏。</p>
+<p> 为了满足这个要求，glibc中设计了一个链表用于记录已经打开的句柄，该链表在popen时挂接节点，pclose时取下节点。链表头是一个全局变量 proc_file_chain。</p>
+<p> 由于popen是一个多线程安全的函数，进程中允许同时存在多个并行执行的popen。由于在popen中，fd资源的分配由pipe系统调用完成，而将fd节点挂接到链表是在返回用户态之后才能操作，这两个动作无法做到原子完成，所以其间一定存在一个中间暂态：fd资源已经分配，但是链表上还没有对应的信息。那么，当父进程中多个popen并行执行时，是否有可能导致某个子进程中保留了因为proc_file_chain链表信息不完整而无法摘除的fd节点呢？考察glibc的popen实现代码中链表相关操作片段如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (__pipe2(pipe_fds, O_CLOEXEC) &lt; <span class="number">0</span>)</span><br><span class="line">    <span class="comment">// 这里已经分配了fd资源</span></span><br><span class="line">     <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">    ...</span><br><span class="line">    ((_IO_proc_file *)fp)</span><br><span class="line">        -&gt;pid = child_pid = __fork();</span><br><span class="line"><span class="keyword">if</span> (child_pid == <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">__close_nocancel(child_end);</span><br><span class="line"><span class="keyword">if</span> (child_pid &lt; <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    __close_nocancel(parent_end);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!do_cloexec)</span><br><span class="line">    <span class="comment">// 在挂接链表前就去掉了close-on-exec标记</span></span><br><span class="line">     <span class="comment">/* Undo the effects of the pipe2 call which set the</span></span><br><span class="line"><span class="comment">     close-on-exec flag.  */</span></span><br><span class="line">     __fcntl(parent_end, F_SETFD, <span class="number">0</span>);</span><br><span class="line"><span class="comment">// 这个系统调用返回后，如果另外一个线程在此刻进入**popen的**fork，则会导致这里的parent_end资源泄漏。</span></span><br><span class="line"> <span class="comment">// 因为该fd不在链表上，无法被子进程close。该fd也没有close-on-exec标记，所以子进程中的execve系统调用也不会关闭它。</span></span><br><span class="line">  _IO_fileno(fp) = parent_end;</span><br><span class="line"><span class="comment">/* Link into proc_file_chain. */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> _IO_MTSAFE_IO</span></span><br><span class="line">_IO_cleanup_region_start_noarg(unlock);</span><br><span class="line">_IO_lock_lock(proc_file_chain_lock);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">((_IO_proc_file *)fp)-&gt;next = proc_file_chain;</span><br><span class="line">proc_file_chain = (_IO_proc_file *)fp;</span><br><span class="line"><span class="comment">// 这里才将资源节点挂上链表</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> _IO_MTSAFE_IO</span></span><br><span class="line"> _IO_lock_unlock(proc_file_chain_lock);</span><br><span class="line">_IO_cleanup_region_end(<span class="number">0</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>根据注释的解释，确实有理由怀疑fd资源的分配与链表挂接的非原子操作，可能导致资源泄漏。</p>
+<p>为了证实这个故障机理的猜想，我们需要构造测试用例来复现故障。</p>
+<p><strong>3. 故障复现</strong></p>
+<p><strong>3.1 复现用例设计</strong></p>
+<p> 根据上节对故障机理的猜想，可知故障的复现要求是：</p>
+<p>——有两个以上的线程在同时执行popen。</p>
+<p>——某个线程的popen在从__fcntl 系统调用返回后，在执行proc_file_chain节点挂接之前被调度出去</p>
+<p>——另外一个线程的popen执行fork，完成子进程创建。</p>
+<p>根据这些要求设计问题复现用例ttfd.c如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;time.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> THREAD_NUM 4</span></span><br><span class="line"></span><br><span class="line">FILE *f = <span class="literal">NULL</span>;</span><br><span class="line"><span class="type">pthread_t</span> th[THREAD_NUM];</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> thread_idx = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">thread_entry</span><span class="params">(<span class="type">void</span> *para)</span></span><br><span class="line">&#123;</span><br><span class="line">    FILE *fp;</span><br><span class="line">    usleep(<span class="number">100</span>);</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        fp = popen(<span class="string">&quot;sleep 10&quot;</span>, <span class="string">&quot;r&quot;</span>);</span><br><span class="line">        <span class="keyword">if</span> (fp == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            perror(<span class="string">&quot;Fail to popen\n&quot;</span>);</span><br><span class="line">            <span class="built_in">abort</span>();</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;=== thread[%d] === popen\n&quot;</span>, (<span class="type">int</span>)para);</span><br><span class="line">        <span class="type">int</span> ret = pclose(fp);</span><br><span class="line">        <span class="keyword">if</span> (ret != <span class="number">0</span>)</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;error ret\n&quot;</span>);</span><br><span class="line">        <span class="keyword">if</span> (WIFEXITED(ret) == <span class="number">0</span> &amp;&amp; WIFSIGNALED(ret) &amp;&amp; WTERMSIG(ret) == SIGSEGV) &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;child fail,ret = %d \n&quot;</span>, ret);</span><br><span class="line">            <span class="built_in">abort</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">pthread_attr_t</span> attr;</span><br><span class="line">    pthread_attr_init(&amp;attr);</span><br><span class="line">    <span class="type">int</span> i = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;=== test start\n&quot;</span>);</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; THREAD_NUM; i++)</span><br><span class="line">        pthread_create(&amp;th[i], &amp;attr, thread_entry, i);</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; THREAD_NUM; i++)</span><br><span class="line">        pthread_join(th[i], <span class="literal">NULL</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;=== end\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行<code>gcc -g ttfd.c -o ttfd -static -pthread</code> 将其编译为测试程序<code>ttfd</code>。</p>
+<h1 id="3-2-使用GDB脚本快速复现故障"><a href="#3-2-使用GDB脚本快速复现故障" class="headerlink" title="3.2 使用GDB脚本快速复现故障"></a>3.2 使用GDB脚本快速复现故障</h1><p>如果仅仅是简单地运行ttfd测试程序，那么可能需要相当长的时间才能复现子进程sleep出现内存泄漏的现象。此时我们就可以借助GDB脚本来快速复现故障。</p>
+<p>gdb提供了scheduler-locking 功能和 non-stop调试模式。</p>
+<p>scheduler-locking 功能使用set scheduler-locking  on命令开启，它可以保证：在多线程环境下，我们可以单独调试某个线程，使得其独自向前运行（当然如果有锁，还是会被卡住），而其他线程的状态保持不变（继续执行或者暂停状态）。</p>
+<p>on-stop调试模式使用set non-stop  on命令开启，它可以保证：在多线程状态下，当某个线程遇到断点时，其余线程仍然继续执行。</p>
+<p>结合这两个功能，我们就能比较容易地控制程序各个线程的状态，从而复现出多线程暂态故障。</p>
+<p>针对3.1的复现用例，我们可以构造一组GDB命令操作，来让测试程序快速达到我们复现问题锁需要的状态，并且可以将这些操作固化为gdb脚本(假设名为gdbcmd），内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">file ./ttfd         //加载测试</span><br><span class="line">b popen         //在popen入口打断点</span><br><span class="line">run                 //启动程序，thread 2（第一个子线程）会首先执行到popen入口</span><br><span class="line">t 1                  //切换到thread 1，即主线程</span><br><span class="line">set scheduler-locking on    //设置线程单独执行</span><br><span class="line">b pthread_join                    //在pthread_join处打断点</span><br><span class="line">c                                          //continue主线程，直到中断在pthread_join处，此时子线程全部创建完毕</span><br><span class="line">t 3                                        //切换到thread 3</span><br><span class="line">c                                          //thread 3 执行到popen入口</span><br><span class="line">t 4                                       // 以下thread 4/5同样处理</span><br><span class="line">c</span><br><span class="line">t 5</span><br><span class="line">c</span><br><span class="line">b __fcntl                              //此时所有子线程都暂停在popen入口，在__fcntl 调用处打断点</span><br><span class="line">c                                         //thread 5 执行到__fcntl 入口</span><br><span class="line">fin                                       //thread 5 继续执行到 __fcntl 返回，此时fd资源分配已完成，但是节点还未挂接到proc_file_chain链表</span><br><span class="line">printf &quot;\nparentend=%d\n&quot;, $rdi        //输出当前的parent_end值</span><br><span class="line">t 4                                       //以下让thread 3/4 执行同样的过程</span><br><span class="line">c</span><br><span class="line">fin</span><br><span class="line">printf &quot;\nparentend=%d\n&quot;, $rdi</span><br><span class="line">t 3</span><br><span class="line">c</span><br><span class="line">fin</span><br><span class="line">printf &quot;\nparentend=%d\n&quot;, $rdi</span><br><span class="line">t 2                                         //切换到thread 2</span><br><span class="line">set $parent_pid=getpid()</span><br><span class="line">eval &quot;shell ls -l /proc/%d/fd&quot;, $parent_pid  //</span><br><span class="line">set follow-fork-mode  child   //设置父子进程调试模式为：fork时跟踪子进程</span><br><span class="line">set detach-on-fork off</span><br><span class="line">b execve                                //在execve（执行sleep时）打断点</span><br><span class="line">c                                            //thread 2 继续执行，完成fork创建子进程，并中断在execve（子进程中）</span><br><span class="line">set $child_pid=getpid()        //获取子进程PID</span><br><span class="line">fin                                          //执行execve</span><br><span class="line">eval &quot;shell ls -l /proc/%d/fd&quot;, $child_pid   //输出子进程的fd资源占用列表，此时预期能看到资源泄漏</span><br><span class="line">quit</span><br></pre></td></tr></table></figure>
+
+<p>可以通过以下命令来执行GDB脚本文件gdbcmd，并通过logfile查看到资源泄漏</p>
+<p>gdb  &lt; gdbcmd &gt; logfile 2&gt;&amp;1</p>
+<p>执行后，可以从logfile中看到上述脚本中最后eval命令的打印信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(gdb) total 0</span><br><span class="line">lr-x------. 1 tsptest tsptest 64 Jul 11 17:07 0 -&gt; /home/tsptest/gdbcmd/gdbcmd</span><br><span class="line">l-wx------. 1 tsptest tsptest 64 Jul 11 17:07 1 -&gt; pipe:[1903616144]</span><br><span class="line">l-wx------. 1 tsptest tsptest 64 Jul 11 17:07 2 -&gt; /home/tsptest/gdbcmd/logfile</span><br><span class="line">lrwx------. 1 tsptest tsptest 64 Jul 11 17:07 3 -&gt; socket:[1903608418]</span><br><span class="line">lrwx------. 1 tsptest tsptest 64 Jul 11 17:07 4 -&gt; socket:[1903608419]</span><br><span class="line">lr-x------. 1 tsptest tsptest 64 Jul 11 17:07 5 -&gt; pipe:[1903608422]</span><br><span class="line">l-wx------. 1 tsptest tsptest 64 Jul 11 17:07 6 -&gt; pipe:[1903608422]</span><br><span class="line">lr-x------. 1 tsptest tsptest 64 Jul 11 17:07 7 -&gt; pipe:[1903616142]</span><br><span class="line">lr-x------. 1 tsptest tsptest 64 Jul 11 17:07 8 -&gt; pipe:[1903591288]</span><br><span class="line">lr-x------. 1 tsptest tsptest 64 Jul 11 17:07 9 -&gt; pipe:[1903619159]</span><br></pre></td></tr></table></figure>
+
+<p>可见，子进程中打开的pipe 资源数量明显要多于该子进程本应具备的数量，说明发生了资源泄漏。</p>
+<p>至此，我们已成功复现出故障，从而证实了2.2节中对故障机理的猜想。</p>
+<h1 id="4-故障解决方案"><a href="#4-故障解决方案" class="headerlink" title="4 故障解决方案****"></a><strong>4 故障解决</strong>方案****</h1><p>由于pipe在创建fd的时候都加上close-on-exec标记，因此只要将去除该标记的动作移动到链表挂接后，即可保证fd一定被关闭。无需更改代码，只需挪动位置即可，如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!do_cloexec)</span><br><span class="line">    <span class="comment">/* Undo the effects of the pipe2 call which set the</span></span><br><span class="line"><span class="comment">    close-on-exec flag.  */</span></span><br><span class="line">    __fcntl(parent_end, F_SETFD, <span class="number">0</span>);</span><br><span class="line">_IO_fileno(fp) = parent_end;</span><br><span class="line"><span class="comment">/* Link into proc_file_chain. */</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> _IO_MTSAFE_IO</span></span><br><span class="line">_IO_cleanup_region_start_noarg(unlock);</span><br><span class="line">_IO_lock_lock(proc_file_chain_lock);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">((_IO_proc_file *)fp)-&gt;next = proc_file_chain;</span><br><span class="line">proc_file_chain = (_IO_proc_file *)fp;</span><br><span class="line">  <span class="comment">//这里已经才挂上对应节点</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> _IO_MTSAFE_IO</span></span><br><span class="line">_IO_lock_unlock(proc_file_chain_lock);</span><br><span class="line">_IO_cleanup_region_end(<span class="number">0</span>);</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!do_cloexec)</span><br><span class="line">    <span class="comment">/* Undo the effects of the pipe2 call which set the</span></span><br><span class="line"><span class="comment">    close-on-exec flag.  */</span></span><br><span class="line">    __fcntl(parent_end, F_SETFD, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
+
+<h1 id="5-经验总结"><a href="#5-经验总结" class="headerlink" title="5 经验总结"></a><strong>5 <strong>经验总结</strong></strong></h1><p> GDB脚本功能人为控制多线程程序调度暂态，来快速复现具有偶发性的、有调度触发条件的故障。将测试用例与GDB脚本结合，是一种复现多线程复杂调度状态下偶发故障的高效方法。</p>
+<p> 在GDB脚本的使用中，有一些经验可供参考：</p>
+<ul>
+<li><p>cheduler-locking和set non-stop 虽然基本稳定，但是仍然有时候会出现异常行为。例如虚拟机中似乎不支持set non-stop ，需要做一些变通，例如使用shell sleep 1之类的命令，让gdb睡眠一下，让调度状态回到预期状态。</p>
+</li>
+<li><p>DB脚本和手动执行的一个区别是，脚本执行时各条命令间几乎没有时间间隔。所以简单的将手动调试时的命令串在一起，脚本的行为可能不满足预期。如果需要延时，可以用shell sleep 1等命令。</p>
+</li>
+<li><p>以使用shell命令来完成一些辅助功能，例如延时，查看proc信息等等。如果需要复杂的字符串处理或者其他运算，可以在shell中完成功能后，将需要的结果写入一个文件，然后再source 该文件。</p>
+</li>
+<li><p>脚本4）4）不要留空行。空行在脚本执行时可能会让GDB重复执行上一条命令，导致出现意料之外的问题。</p>
+</li>
+</ul>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2023/06/03/linux/%E7%94%A8GDB%E8%84%9A%E6%9C%AC%E5%BF%AB%E9%80%9F%E5%A4%8D%E7%8E%B0%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%A8%8B%E5%BA%8F%E6%95%85%E9%9A%9C/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2023/06/03/linux/%E7%94%A8GDB%E8%84%9A%E6%9C%AC%E5%BF%AB%E9%80%9F%E5%A4%8D%E7%8E%B0%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%A8%8B%E5%BA%8F%E6%95%85%E9%9A%9C/')">使用GDB脚本快速复现多线程程序故障</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2023/06/03/linux/%E7%94%A8GDB%E8%84%9A%E6%9C%AC%E5%BF%AB%E9%80%9F%E5%A4%8D%E7%8E%B0%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%A8%8B%E5%BA%8F%E6%95%85%E9%9A%9C/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=使用GDB脚本快速复现多线程程序故障&amp;url=https://shippomx.github.io/2023/06/03/linux/%E7%94%A8GDB%E8%84%9A%E6%9C%AC%E5%BF%AB%E9%80%9F%E5%A4%8D%E7%8E%B0%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%A8%8B%E5%BA%8F%E6%95%85%E9%9A%9C/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/container/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>container<span class="tagsPageCount">27</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/06/02/containers/%E4%B8%9A%E5%8A%A1%E5%AE%B9%E5%99%A8%E5%86%85%E4%B8%8B%E8%BD%BD%E6%96%87%E4%BB%B6%E9%80%9F%E7%8E%87%E8%BE%83%E6%85%A2%E7%9A%84%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">业务容器内下载文件速率较慢的问题分析</div></div></a></div><div class="next-post pull-right"><a href="/2023/06/21/linux/systemtap/systemtap_%E5%B5%8C%E5%85%A5c/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">systemtap 嵌入C代码</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2023/10/04/containers/Calico%20%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86%E6%8F%AD%E7%A7%98/" title="Calico网络通信简略原理"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-04</div><div class="title">Calico网络通信简略原理</div></div></a></div><div><a href="/2021/12/21/containers/Docker%20%E7%9A%84%E7%BD%91%E7%BB%9C%20%E5%B0%86%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%A4%96%E9%83%A8%E4%B8%96%E7%95%8C%E8%BF%9E%E6%8E%A5/" title="docker中的网络"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-12-21</div><div class="title">docker中的网络</div></div></a></div><div><a href="/2021/12/21/containers/Docker%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%AE%B9%E5%99%A8%E9%97%B4%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/" title="docker中的网络模式"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-12-21</div><div class="title">docker中的网络模式</div></div></a></div><div><a href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-07</div><div class="title">Docker与虚拟化</div></div></a></div><div><a href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-06</div><div class="title">Kubernetes CNI 网络插件</div></div></a></div><div><a href="/2020/12/20/containers/Kata%20Containers%202.0%20%E4%BB%8B%E7%BB%8D/" title="Kata Containers 2.0"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-12-20</div><div class="title">Kata Containers 2.0</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-%E8%83%8C%E6%99%AF"><span class="toc-number">1.</span> <span class="toc-text">1 背景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-popen-%E5%BC%80%E6%BA%90%E6%95%85%E9%9A%9C%E7%AE%80%E4%BB%8B"><span class="toc-number">2.</span> <span class="toc-text">2 popen()开源故障简介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#3-2-%E4%BD%BF%E7%94%A8GDB%E8%84%9A%E6%9C%AC%E5%BF%AB%E9%80%9F%E5%A4%8D%E7%8E%B0%E6%95%85%E9%9A%9C"><span class="toc-number">3.</span> <span class="toc-text">3.2 使用GDB脚本快速复现故障</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#4-%E6%95%85%E9%9A%9C%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-number">4.</span> <span class="toc-text">4 故障解决方案****</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#5-%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">5 经验总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

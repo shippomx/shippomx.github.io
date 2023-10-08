@@ -1,0 +1,545 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>linux中的内存分配 | 远辰</title><meta name="keywords" content="linux"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="linux中的内存分配"><meta name="application-name" content="linux中的内存分配"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="linux中的内存分配"><meta property="og:url" content="https://shippomx.github.io/2022/10/22/linux/%E5%86%85%E5%AD%98/linux%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="&amp;#x2F;proc&amp;#x2F;meminfo是了解Linux系统内存使用状况的主要接口，我们最常用的”free”、”vmstat”等命令就是通过它获取数据的 ，&amp;#x2F;proc&amp;#x2F;meminfo所包含的信息比”free”等命令要丰富得多，然而真正理解它并不容易，比如我们知道”Cache"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="&amp;#x2F;proc&amp;#x2F;meminfo是了解Linux系统内存使用状况的主要接口，我们最常用的”free”、”vmstat”等命令就是通过它获取数据的 ，&amp;#x2F;proc&amp;#x2F;meminfo所包含的信息比”free”等命令要丰富得多，然而真正理解它并不容易，比如我们知道”Cache"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2022/10/22/linux/%E5%86%85%E5%AD%98/linux%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: 'linux中的内存分配',
+  postAI: '',
+  pageFillDescription: 'MemTotal, MemFree, MemAvailable, 内存黑洞, 内存都到哪里去了？, 1. 内核, 1.1 SLAB, 1.2 VmallocUsed, 1.3 kernel modules(内核模块), 1.4 HardwareCorrupted, 1.5 PageTables, 1.6 KernelStack, 1.7 Buffers, 1.8 Bounce, 2. 用户进程, 2.1 Hugepages, 2.2 AnonHugePages, 2.3 LRU, 2.4 Shmem, 2.5 AnonPages, 2.6 Mapped, 2.7 Cached, 2.8 SwapCached, 2.9 Mlocked, 其它问题, DirectMap, Dirty pages到底有多少？, 为什么【Active(anon)+Inactive(anon)】不等于AnonPages？, 为什么【Active(file)+Inactive(file)】不等于Mapped？, Linux的内存都用到哪里去了？, kernel内存的统计方式应该比较明确即, 用户进程的内存主要有三种统计口径：, 所以系统内存的使用情况可以用以下公式表示：是了解系统内存使用状况的主要接口我们最常用的等命令就是通过它获取数据的所包含的信息比等命令要丰富得多然而真正理解它并不容易比如我们知道统计的是文件缓存页上说是那为什么它不等于与有什么联系和区别很多细节在手册中并没有讲清楚本文对此做了一点探究负责输出的源代码是系统从加电开始到引导完成要保留一些内存本身要占用一些内存最后剩下可供支配的内存就是这个值在系统运行期间一般是固定不变的可参阅解读中的内存初始化信息表示系统尚未使用的内存就是已被用掉的内存有些应用程序会根据系统的可用内存大小自动调整内存申请的多少所以需要一个记录当前可用内存数量的统计值并不适用因为不能代表全部可用的内存系统中有些内存虽然已被使用但是可以回收的比如都有一部分可以回收所以这部分可回收的内存加上才是系统可用的内存即中的是内核使用特定的算法估算出来的要注意这是一个估计值并不精确内存黑洞追踪系统的内存使用一直是个难题很多人试着把能想到的各种内存消耗都加在一起等等却总是与物理内存的大小对不上这是为什么呢因为并没有滴水不漏地统计所有的内存分配动态分配的内存中就有一部分没有计入中我们知道的动态内存分配通过以下几种接口以页为单位分配以字节为单位分配虚拟地址连续的内存块以字节为单位分配物理地址连续的内存块它是以为基础的使用层的大小为名称是等在老上的名称是等通过层分配的内存会被精确统计可以参见中的通过分配的内存也有统计参见中的和下节中还有详述而通过分配的内存不会自动统计除非调用的内核模块或驱动程序主动进行统计否则我们只能看到减少了但从中看不出它们具体用到哪里去了比如在上有一个常见问题就是宿主机会通过上的占用的内存有时占用得太多会导致无内存可用这时去检查的只看见很少但看不出内存的去向原因就是通过分配内存没有在中留下统计值所以很难追踪内存都到哪里去了使用内存的不是就是用户进程下面我们就分类讨论注比较特殊很难区分是属于还是属于进程其中被进程的页面自然是属于进程的了而另一些页面没有被到任何进程那就只能算是属于了内核内核所用内存的静态部分比如内核代码页描述符等数据在引导阶段就分配掉了并不计入里而是算作在中能看到而内核所用内存的动态部分是通过上文提到的几个接口申请的其中通过申请的内存有可能未纳入统计就像黑洞一样下面讨论的都是中所统计的部分通过分配的内存被统计在以下三个值中中可回收的部分调用时加上标记表明是可回收的计入否则计入中不可回收的部分中所有的内存等于以上两者之和通过分配的内存都统计在的值中但是要注意这个值不止包括了分配的物理内存还统计了等操作的值譬如是把地址映射到内核空间并未消耗物理内存所以我们要把它们排除在外从物理内存分配的角度我们只关心操作这可以从中的记录看到注中能看到来自哪个调用者那是记录下来的相应的源代码可见通过分配了多少内存可以统计中的记录例如一些以及网络模块和文件系统模块可能会调用加载内核模块时也会用到可参见内核模块系统已经加载的内核模块可以用命令查看注意第二列就是内核模块所占内存的大小通过它可以统计内核模块所占用的内存大小但这并不准因为列出的是而实际给分配的内存是以为单位的不足的部分也会得到整个此外每个还会分到一页额外的下文我们还会细说的信息来自它显示的包括和相应的源代码参见注我们可以在目录下分别看到和的值的内存是通过分配的参见下列源代码所以在中会有记录也就是说我们可以不必通过命令来统计所占的内存大小通过就行了而且还比更准确为什么这么说呢注最终会调用因为给分配内存是以为单位的不足的部分也会得到整个此外每个还会分到一页额外的详见而列出的是比实际分配给的内存小我们做个实验来说明先卸载模块确认模块已经不在了记录以供随后比较加载模块注意模块的大小是字节然而我们看到中记录的是分配了字节为什么看到的内存大小与不同呢因为给分配内存是以为单位的而且外加一个我们来验证一下不能被整除相当于加上面的字节会分配加上个正好是记录的大小所以结论是所占用的内存包含在的统计之中不必再去计算的结果了而且也不准当系统检测到内存的硬件故障时会把有问题的页面删除掉不再使用中的统计了删除掉的内存页的总大小相应的代码参见用于将内存的虚拟地址翻译成物理地址随着内存地址分配得越来越多会增大中的统计了所占用的内存大小注请把与页帧区分开物理内存的最小单位是每个物理页对应一个描述符在内核的引导阶段就会分配好保存在数组中所占用的内存被统计在显示的中的是不包含它们的在系统上可能会有多个数组在中或中而的用途是翻译虚拟地址和物理地址它是会动态变化的要从中消耗内存每一个用户线程都会分配一个内核栈内核栈虽然属于线程但用户态的代码不能访问只有通过系统调用自陷或异常进入内核态的时候才会用到也就是说内核栈是给使用的在系统上的内核栈大小是固定的或可参阅我以前的文章内核栈溢出内核栈是常驻内存的既不包括在里也不包括在进程的内存里所以我们认为它是消耗的内存统计值是的统计的是直接访问块设备时的缓冲区的总大小有时候对文件系统元数据的操作也会用到这部分内存不好直接对应到某个用户进程应该算作占用有些老设备只能访问低端内存比如以下的内存当应用程序发出一个请求的目的地址却是高端内存时比如在以上内核将在低端内存中分配一个临时作为跳转把位于高端内存的缓存数据复制到此处这种额外的数据拷贝被称为会降低性能大量分配的也会占用额外的内存用户进程统计的是系统全局的内存使用状况单个进程的情况要看下的等等在中是被独立统计的与其它统计项不重叠既不计入进程的中又不计入也不会计入如果进程使用了它的不会增加注不要把跟搞混了的统计值是中的在中也有单个进程的统计这个统计值与进程的是有重叠的如果用户进程用到了进程的也会相应增加这与是不同的在中与有关的统计值如下使用有三种方式详见一个特殊的文件系统在上面创建文件然后用进行访问如果要用访问也是可以的但是不行通过也可以使用调用申请共享内存时要加上标志通过调用时指定标志也可以使用用户程序在申请的时候其实是了一块内存并未真正使用此时中的会增加而不会减少等到用户程序真正读写的时候它才被消耗掉了此时会减少也会减少我们说过是独立统计的如果进程使用了它的不会增加下面举例说明一个进程通过申请并使用了在中可以看到如下内存段包含的表示是注意都是统计的是与不是一回事区别很大上一节说过在中是被独立统计的与其它统计项不重叠既不计入进程的中又不计入也不会计入如果进程使用了它的不会增加而完全不同它与的其他统计项有重叠首先它被包含在之中而且在中也有单个进程的统计与进程的是有重叠的如果用户进程用到了进程的也会相应增加这与是不同的下例截取自中的一段也可以用于和缺省是禁止的打开的方法如下详见时加上等选项通过来控制因为缺省情况下和不使用所以进程之间不会共享于是就有以下等式的所有进程的中之和举例如下是的页面回收算法使用的数据结构在解读中的一文中有介绍和所有用户进程的内存和除外都在上包括如下几种在中都有对应的统计值对应对应对应对应对应注里的是长时间未被访问过的内存页里的是最近被访问过的内存页算法利用和可以判断哪些内存页可以被优先回收括号中的表示匿名页用户进程的内存页分为两种与文件对应的内存页和匿名页比如进程的代码映射的文件都是而进程的堆栈都是不与文件相对应的就属于匿名页在内存不足的时候可以直接写回对应的硬盘文件里称为不需要用到交换区而在内存不足时就只能写到硬盘上的交换区里称为括号中的表示与文件对应的内存页上是不能的内存页包括的内存页的共享内存页又被统计在中和在出现之前这些内存页都在上每次都要扫过它们但是又不能把它们这在大内存的系统上会严重影响性能设计的初衷就是避免这种情况参见与中其他统计值的关系中不包含包含了和中的统计的内容包括此处所讲的又包括因为在内核中都是基于实现的参见也就是说它们被视为基于文件系统的内存页既然基于文件系统就不算匿名页所以不被计入中的而是被统计进了当被时候然而它们背后并不存在真正的硬盘文件一旦内存不足的时候它们是需要交换区才能的所以在里它们被放在或注虽然它们在中被放进了但是不会被计入这是比较拧巴的一个地方需要特别注意或如果被的话注意当创建共享内存时物理内存尚未分配要直到真正访问时才分配中的统计的是已经分配的大小而不是创建时申请的大小前面提到用户进程的内存页分为两种与文件对应的内存页和匿名页匿名页的数量统计在的中以下是几个事实有助于了解所有里的页面都是不是注不属于而是属于因为基于所以被视为在里上一节解释过属于而属于因为也是基于的上一节解释过是与用户进程共存的一旦进程退出则也释放不像即使文件与进程不关联了还可以缓存统计值中包含了对应的参见上面提到的用户进程的就对应着中的中包含了文件的缓存页其中有些文件当前已不在使用仍然可能保留着它们的缓存页面而另一些文件正被用户进程关联比如可执行程序的文件的文件等这些文件的缓存页就称为中的就统计了中所有的页面因为系统上被计入所以被的以及上被的文件都算做进程所占的内存页分为和理论上应该有所有进程的之和然而我实际测试的结果虽然两者很接近却总是无法精确相等我猜也许是因为进程始终在变化采集的以及其实不是来自同一个时间点的缘故里包括所有统计在的中不仅包括也包括的页面当一个文件不再与进程关联之后原来在中的页面并不会立即回收仍然被计入还留在中但是统计值会减小包含中的文件以及注和在内核中都是基于实现的参见有意思的是和在不发生的时候属于而在的过程中会被加进中属于一旦进了就不再属于了和两个统计值是互不重叠的源代码参见下一节我们说过匿名页要用到交换区而和虽然未统计在里但它们背后没有硬盘文件所以也是需要交换区的也就是说需要用到交换区的内存包括和我们姑且把它们统称为匿名页好了交换区可以包括一个或多个交换区设备裸盘逻辑卷文件都可以充当交换区设备每一个交换区设备都对应自己的可以把理解为交换区设备的对应的是一个个文件对应的是一个个交换区设备管理与管理一样用的都是唯一的区别是与文件的对应关系在打开文件时就确定了而一个匿名页只有在即将被的时候才决定它会被放到哪一个交换区设备即匿名页与的对应关系在即将被时才确立并不是每一个匿名页都在中只有以下情形之一的匿名页才在匿名页即将被时会先被放进但通常只存在很短暂的时间因为紧接着在完成之后它就会从中删除毕竟的目的就是为了腾出空闲内存注参见它调用的会把页面标记成然后它调用将页面对应的都删除再调用回写最后会把该页从中删除曾经被现在又被的匿名页会在中直到页面中的内容发生变化或者原来用过的交换区空间被回收为止注当匿名页的内容发生变化时会删除对应的代码参见中的背后的含义是系统中有多少匿名页曾经被现在又被并且之后页面中的内容一直没发生变化也就是说如果这些匿名页需要被的话是无需进行操作的不属于两者没有交叉参见内存同时也在中还在或中它本身并不占用额外的内存统计的是被系统调用锁定的内存大小被锁定的内存因为不能会从移到上也就是说当增加时也同步增加而或同时减小当减小的时候也同步减小而或同时增加并不是独立的内存空间它与以下统计项重叠等其它问题中的所统计的不是关于内存的使用而是一个反映效率的指标是位于上的缓存用于将内存的虚拟地址翻译成物理地址由于的大小有限不能缓存的地址就需要访问内存里的来进行翻译速度慢很多为了尽可能地将地址放进缓存新的硬件支持比更大的页面从而达到减少地址数量的目的比如甚至的内存页视不同的硬件而定表示映射为的内存数量表示映射为的内存数量以此类推所以其实是一个反映效率的指标到底有多少中有一个统计值但是它未能包括系统中全部的应该再加上另外两项和是发给但尚未写入硬盘的缓存页是正准备回写硬盘的缓存页即系统中全部注的内存被包含在中因为内存是调用申请的注不属于参见为什么不等于因为被计入但未计入所以一个更合理的等式是但是这个等式在某些情况下也不一定成立因为如果或被的话就不在或里了而是到了里以上等式就不平衡了当准备被时分几个步骤先被加进再离开然后离开最后从中删除这几个步骤之间会有间隔而且有可能离开就因某些情况而结束了所以在某些时刻以上等式会不平衡注参见它调用的会把页面标记成然后调用将页面对应的都删除再调用回写最后把该页从中删除为什么不等于因为和中包含页面中包含这部分内存被计入了或而不在和中同理因为包含在中而不在和中如果不考虑添乱的话一个更符合逻辑的等式是注测试的结果以上等式通常都成立但内存发生交换的时候以上等式有时不平衡我猜可能是因为有些属于的内存的过程中离开进入了但没有立即从删除仍算在中的缘故的内存都用到哪里去了尽管不可能精确统计系统的内存但大体了解还是可以的内存的统计方式应该比较明确即注其实不是我们感兴趣的因为它还包括了等并未消耗物理内存的地址映射空间我们只关心操作参见节所以实际上应该统计中的记录例如此处单位是注的内存被包含在中见节注表示直接通过分配的内存没有在中统计不知道有多少就像个黑洞用户进程的内存主要有三种统计口径围绕进行统计围绕进行统计当为的时候用户进程的内存总计如下当不为的时候以上公式不成立因为可能会含有而本来被含在中一旦就从转移到了可是我们又不能把加进上述公式中因为虽然不与重叠却与有重叠它既可能含有又可能含有围绕进行统计把中的累加起来就是所有用户进程占用的内存但是还没有包括中部分以及所以公式如下所以系统内存的使用情况可以用以下公式表示',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/linux/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>linux</span></a></span></div></div><h1 class="post-title" itemprop="name headline">linux中的内存分配</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2022-10-22T06:44:56.000Z" title="发表于 2022-10-22 14:44:56">2022-10-22</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2022/10/22/linux/%E5%86%85%E5%AD%98/linux%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/"><header><a href="/tags/linux/" tabindex="-1" itemprop="url">linux</a><h1 id="CrawlerTitle" itemprop="name headline">linux中的内存分配</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2022-10-22T06:44:56.000Z" title="发表于 2022-10-22 14:44:56">2022-10-22</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><p>&#x2F;proc&#x2F;meminfo是了解Linux系统内存使用状况的主要接口，我们最常用的”free”、”vmstat”等命令就是通过它获取数据的 ，&#x2F;proc&#x2F;meminfo所包含的信息比”free”等命令要丰富得多，然而真正理解它并不容易，比如我们知道”Cached”统计的是文件缓存页，manpage上说是“In-memory  cache  for  files read from the disk (the page cache)”，那为什么它不等于[Active(file)+Inactive(file)]？AnonHugePages与AnonPages、HugePages_Total有什么联系和区别？很多细节在手册中并没有讲清楚，本文对此做了一点探究。</p>
+<p>负责输出&#x2F;proc&#x2F;meminfo的源代码是：<br>fs&#x2F;proc&#x2F;meminfo.c : meminfo_proc_show()</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">MemTotal:        3809036 kB</span><br><span class="line">MemFree:          282012 kB</span><br><span class="line">MemAvailable:     865620 kB</span><br><span class="line">Buffers:               0 kB</span><br><span class="line">Cached:           854972 kB</span><br><span class="line">SwapCached:       130900 kB</span><br><span class="line">Active:          1308168 kB</span><br><span class="line">Inactive:        1758160 kB</span><br><span class="line">Active(anon):    1010416 kB</span><br><span class="line">Inactive(anon):  1370480 kB</span><br><span class="line">Active(file):     297752 kB</span><br><span class="line">Inactive(file):   387680 kB</span><br><span class="line">Unevictable:           0 kB</span><br><span class="line">Mlocked:               0 kB</span><br><span class="line">SwapTotal:       4063228 kB</span><br><span class="line">SwapFree:        3357108 kB</span><br><span class="line">Dirty:                 0 kB</span><br><span class="line">Writeback:             0 kB</span><br><span class="line">AnonPages:       2104412 kB</span><br><span class="line">Mapped:            40988 kB</span><br><span class="line">Shmem:            169540 kB</span><br><span class="line">Slab:             225420 kB</span><br><span class="line">SReclaimable:     134220 kB</span><br><span class="line">SUnreclaim:        91200 kB</span><br><span class="line">KernelStack:        5936 kB</span><br><span class="line">PageTables:        35628 kB</span><br><span class="line">NFS_Unstable:          0 kB</span><br><span class="line">Bounce:                0 kB</span><br><span class="line">WritebackTmp:          0 kB</span><br><span class="line">CommitLimit:     5967744 kB</span><br><span class="line">Committed_AS:    5626436 kB</span><br><span class="line">VmallocTotal:   34359738367 kB</span><br><span class="line">VmallocUsed:      351900 kB</span><br><span class="line">VmallocChunk:   34359363652 kB</span><br><span class="line">HardwareCorrupted:     0 kB</span><br><span class="line">AnonHugePages:    139264 kB</span><br><span class="line">HugePages_Total:       0</span><br><span class="line">HugePages_Free:        0</span><br><span class="line">HugePages_Rsvd:        0</span><br><span class="line">HugePages_Surp:        0</span><br><span class="line">Hugepagesize:       2048 kB</span><br><span class="line">DirectMap4k:      204484 kB</span><br><span class="line">DirectMap2M:     3915776 kB</span><br></pre></td></tr></table></figure>
+
+<h2 id="MemTotal"><a href="#MemTotal" class="headerlink" title="MemTotal"></a>MemTotal</h2><p>系统从加电开始到引导完成，firmware&#x2F;BIOS要保留一些内存，kernel本身要占用一些内存，最后剩下可供kernel支配的内存就是MemTotal。这个值在系统运行期间一般是固定不变的。可参阅<a target="_blank" rel="noopener" href="http://linuxperf.com/?p=139">解读DMESG中的内存初始化信息</a>。</p>
+<h2 id="MemFree"><a href="#MemFree" class="headerlink" title="MemFree"></a>MemFree</h2><p>表示系统尚未使用的内存。(MemTotal-MemFree)就是已被用掉的内存。</p>
+<h2 id="MemAvailable"><a href="#MemAvailable" class="headerlink" title="MemAvailable"></a>MemAvailable</h2><p>有些应用程序会根据系统的可用内存大小自动调整内存申请的多少，所以需要一个记录当前可用内存数量的统计值，MemFree并不适用，因为MemFree不能代表全部可用的内存，系统中有些内存虽然已被使用但是可以回收的，比如cache&#x2F;buffer、slab都有一部分可以回收，所以这部分可回收的内存加上MemFree才是系统可用的内存，即MemAvailable。&#x2F;proc&#x2F;meminfo中的MemAvailable是内核使用特定的算法估算出来的，要注意这是一个估计值，并不精确。</p>
+<h2 id="内存黑洞"><a href="#内存黑洞" class="headerlink" title="内存黑洞"></a>内存黑洞</h2><p>追踪Linux系统的内存使用一直是个难题，很多人试着把能想到的各种内存消耗都加在一起，kernel text、kernel modules、buffer、cache、slab、page table、process RSS…等等，却总是与物理内存的大小对不上，这是为什么呢？因为Linux kernel并没有滴水不漏地统计所有的内存分配，kernel动态分配的内存中就有一部分没有计入&#x2F;proc&#x2F;meminfo中。</p>
+<p>我们知道，Kernel的动态内存分配通过以下几种接口：</p>
+<ul>
+<li>alloc_pages&#x2F;__get_free_page: 以页为单位分配</li>
+<li>vmalloc: 以字节为单位分配虚拟地址连续的内存块</li>
+<li>slab allocator<ul>
+<li>kmalloc: 以字节为单位分配物理地址连续的内存块，它是以slab为基础的，使用slab层的general caches — 大小为2^n，名称是kmalloc-32、kmalloc-64等（在老kernel上的名称是size-32、size-64等）。</li>
+</ul>
+</li>
+</ul>
+<p>通过slab层分配的内存会被精确统计，可以参见&#x2F;proc&#x2F;meminfo中的slab&#x2F;SReclaimable&#x2F;SUnreclaim；</p>
+<p>通过vmalloc分配的内存也有统计，参见&#x2F;proc&#x2F;meminfo中的VmallocUsed 和 &#x2F;proc&#x2F;vmallocinfo（下节中还有详述）；</p>
+<p>而通过alloc_pages分配的内存不会自动统计，除非调用alloc_pages的内核模块或驱动程序主动进行统计，否则我们只能看到free memory减少了，但从&#x2F;proc&#x2F;meminfo中看不出它们具体用到哪里去了。比如在VMware guest上有一个常见问题，就是VMWare ESX宿主机会通过guest上的Balloon driver(vmware_balloon module)占用guest的内存，有时占用得太多会导致guest无内存可用，这时去检查guest的&#x2F;proc&#x2F;meminfo只看见MemFree很少、但看不出内存的去向，原因就是Balloon driver通过alloc_pages分配内存，没有在&#x2F;proc&#x2F;meminfo中留下统计值，所以很难追踪。</p>
+<h1 id="内存都到哪里去了？"><a href="#内存都到哪里去了？" class="headerlink" title="内存都到哪里去了？"></a>内存都到哪里去了？</h1><p>使用内存的，不是kernel就是用户进程，下面我们就分类讨论。</p>
+<p><em>注：page cache比较特殊，很难区分是属于kernel还是属于进程，其中被进程mmap的页面自然是属于进程的了，而另一些页面没有被mapped到任何进程，那就只能算是属于kernel了。</em></p>
+<h2 id="1-内核"><a href="#1-内核" class="headerlink" title="1. 内核"></a>1. 内核</h2><p>内核所用内存的静态部分，比如内核代码、页描述符等数据在引导阶段就分配掉了，并不计入MemTotal里，而是算作Reserved(在dmesg中能看到)。而内核所用内存的动态部分，是通过上文提到的几个接口申请的，其中通过alloc_pages申请的内存有可能未纳入统计，就像黑洞一样。</p>
+<p>下面讨论的都是&#x2F;proc&#x2F;meminfo中所统计的部分。</p>
+<h3 id="1-1-SLAB"><a href="#1-1-SLAB" class="headerlink" title="1.1 SLAB"></a>1.1 SLAB</h3><p>通过slab分配的内存被统计在以下三个值中：</p>
+<ul>
+<li>SReclaimable: slab中可回收的部分。调用kmem_getpages()时加上SLAB_RECLAIM_ACCOUNT标记，表明是可回收的，计入SReclaimable，否则计入SUnreclaim。</li>
+<li>SUnreclaim: slab中不可回收的部分。</li>
+<li>Slab: slab中所有的内存，等于以上两者之和。</li>
+</ul>
+<h3 id="1-2-VmallocUsed"><a href="#1-2-VmallocUsed" class="headerlink" title="1.2 VmallocUsed"></a>1.2 VmallocUsed</h3><p>通过vmalloc分配的内存都统计在&#x2F;proc&#x2F;meminfo的 VmallocUsed 值中，但是要注意这个值不止包括了分配的物理内存，还统计了VM_IOREMAP、VM_MAP等操作的值，譬如VM_IOREMAP是把IO地址映射到内核空间、并未消耗物理内存，所以我们要把它们排除在外。从物理内存分配的角度，我们只关心VM_ALLOC操作，这可以从&#x2F;proc&#x2F;vmallocinfo中的vmalloc记录看到：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># grep vmalloc /proc/vmallocinfo</span><br><span class="line">...</span><br><span class="line">0xffffc90004702000-0xffffc9000470b000   36864 alloc_large_system_hash+0x171/0x239 pages=8 vmalloc N0=8</span><br><span class="line">0xffffc9000470b000-0xffffc90004710000   20480 agp_add_bridge+0x2aa/0x440 pages=4 vmalloc N0=4</span><br><span class="line">0xffffc90004710000-0xffffc90004731000  135168 raw_init+0x41/0x141 pages=32 vmalloc N0=32</span><br><span class="line">0xffffc90004736000-0xffffc9000473f000   36864 drm_ht_create+0x55/0x80 [drm] pages=8 vmalloc N0=8</span><br><span class="line">0xffffc90004744000-0xffffc90004746000    8192 dm_table_create+0x9e/0x130 [dm_mod] pages=1 vmalloc N0=1</span><br><span class="line">0xffffc90004746000-0xffffc90004748000    8192 dm_table_create+0x9e/0x130 [dm_mod] pages=1 vmalloc N0=1</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p><em>注：&#x2F;proc&#x2F;vmallocinfo中能看到vmalloc来自哪个调用者(caller)，那是vmalloc()记录下来的，相应的源代码可见：</em><br>mm&#x2F;vmalloc.c: vmalloc &gt; __vmalloc_node_flags &gt; __vmalloc_node &gt; __vmalloc_node_range &gt; __get_vm_area_node &gt; setup_vmalloc_vm*</p>
+<p>通过vmalloc分配了多少内存，可以统计&#x2F;proc&#x2F;vmallocinfo中的vmalloc记录，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># grep vmalloc /proc/vmallocinfo | awk &#x27;&#123;total+=$2&#125;; END &#123;print total&#125;&#x27;</span><br><span class="line">23375872</span><br></pre></td></tr></table></figure>
+
+<p>一些driver以及网络模块和文件系统模块可能会调用vmalloc，加载内核模块(kernel module)时也会用到，可参见 kernel&#x2F;module.c。</p>
+<h3 id="1-3-kernel-modules-内核模块"><a href="#1-3-kernel-modules-内核模块" class="headerlink" title="1.3 kernel modules(内核模块)"></a>1.3 kernel modules(内核模块)</h3><p>系统已经加载的内核模块可以用 lsmod 命令查看，注意第二列就是内核模块所占内存的大小，通过它可以统计内核模块所占用的内存大小，但这并不准，因为”lsmod”列出的是[init_size+core_size]，而实际给kernel module分配的内存是以page为单位的，不足 1 page的部分也会得到整个page，此外每个module还会分到一页额外的guard page。下文我们还会细说。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># lsmod | less</span><br><span class="line">Module                  Size  Used by</span><br><span class="line">rpcsec_gss_krb5        31477  0 </span><br><span class="line">auth_rpcgss            59343  1 rpcsec_gss_krb5</span><br><span class="line">nfsv4                 474429  0 </span><br><span class="line">dns_resolver           13140  1 nfsv4</span><br><span class="line">nfs                   246411  1 nfsv4</span><br><span class="line">lockd                  93977  1 nfs</span><br><span class="line">sunrpc                295293  5 nfs,rpcsec_gss_krb5,auth_rpcgss,lockd,nfsv4</span><br><span class="line">fscache                57813  2 nfs,nfsv4</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>lsmod的信息来自&#x2F;proc&#x2F;modules，它显示的size包括init_size和core_size，相应的源代码参见：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// kernel/module.c</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">m_show</span><span class="params">(<span class="keyword">struct</span> seq_file *m, <span class="type">void</span> *p)</span></span><br><span class="line">&#123;</span><br><span class="line">...</span><br><span class="line">        seq_printf(m, <span class="string">&quot;%s %u&quot;</span>,</span><br><span class="line">                   mod-&gt;name, mod-&gt;init_size + mod-&gt;core_size);</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><em>注：我们可以在 &#x2F;sys&#x2F;module&#x2F;<module-name>&#x2F; 目录下分别看到coresize和initsize的值。</em></p>
+<p>kernel module的内存是通过vmalloc()分配的（参见下列源代码），所以在&#x2F;proc&#x2F;vmallocinfo中会有记录，也就是说我们可以不必通过”lsmod”命令来统计kernel module所占的内存大小，通过&#x2F;proc&#x2F;vmallocinfo就行了，而且还比lsmod更准确，为什么这么说呢？</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// kernel/module.c</span></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">move_module</span><span class="params">(<span class="keyword">struct</span> module *mod, <span class="keyword">struct</span> load_info *info)</span></span><br><span class="line">&#123;</span><br><span class="line">...</span><br><span class="line">        ptr = module_alloc_update_bounds(mod-&gt;core_size);</span><br><span class="line">...</span><br><span class="line">        <span class="keyword">if</span> (mod-&gt;init_size) &#123;</span><br><span class="line">                ptr = module_alloc_update_bounds(mod-&gt;init_size);</span><br><span class="line">...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 注：module_alloc_update_bounds()最终会调用vmalloc_exec()</span></span><br></pre></td></tr></table></figure>
+
+<p>因为给kernel module分配内存是以page为单位的，不足 1 page的部分也会得到整个page，此外，每个module还会分到一页额外的guard page。<br>详见：mm&#x2F;vmalloc.c: __get_vm_area_node()</p>
+<p>而”lsmod”列出的是[init_size+core_size]，比实际分配给kernel module的内存小。我们做个实验来说明：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"># 先卸载floppy模块</span><br><span class="line">$ modprobe -r floppy</span><br><span class="line"># 确认floppy模块已经不在了</span><br><span class="line">$ lsmod | grep floppy</span><br><span class="line"># 记录vmallocinfo以供随后比较</span><br><span class="line">$ cat /proc/vmallocinfo &gt; vmallocinfo.1</span><br><span class="line"></span><br><span class="line"># 加载floppy模块</span><br><span class="line">$ modprobe -a floppy</span><br><span class="line"># 注意floppy模块的大小是69417字节：</span><br><span class="line">$ lsmod | grep floppy</span><br><span class="line">floppy                 69417  0 </span><br><span class="line">$ cat /proc/vmallocinfo &gt; vmallocinfo.2</span><br><span class="line"># 然而，我们看到vmallocinfo中记录的是分配了73728字节：</span><br><span class="line">$ diff vmallocinfo.1 vmallocinfo.2</span><br><span class="line">68a69</span><br><span class="line">&gt; 0xffffffffa03d7000-0xffffffffa03e9000   73728 module_alloc_update_bounds+0x14/0x70 pages=17 vmalloc N0=17</span><br><span class="line"></span><br><span class="line"># 为什么lsmod看到的内存大小与vmallocinfo不同呢？</span><br><span class="line"># 因为给kernel module分配内存是以page为单位的，而且外加一个guard page</span><br><span class="line"># 我们来验证一下：</span><br><span class="line">$ bc -q</span><br><span class="line">69417%4096</span><br><span class="line">3881    &lt;--- 不能被4096整除</span><br><span class="line">69417/4096</span><br><span class="line">16      &lt;--- 相当于16 pages，加上面的3881字节，会分配17 pages</span><br><span class="line">18*4096 &lt;--- 17 pages 加上 1个guard page</span><br><span class="line">73728   &lt;--- 正好是vmallocinfo记录的大小</span><br></pre></td></tr></table></figure>
+
+<p>所以结论是kernel module所占用的内存包含在&#x2F;proc&#x2F;vmallocinfo的统计之中，不必再去计算”lsmod”的结果了，而且”lsmod”也不准。</p>
+<h3 id="1-4-HardwareCorrupted"><a href="#1-4-HardwareCorrupted" class="headerlink" title="1.4 HardwareCorrupted"></a>1.4 HardwareCorrupted</h3><p>当系统检测到内存的硬件故障时，会把有问题的页面删除掉，不再使用，&#x2F;proc&#x2F;meminfo中的HardwareCorrupted统计了删除掉的内存页的总大小。相应的代码参见 mm&#x2F;memory-failure.c: <strong>memory_failure</strong>()。</p>
+<h3 id="1-5-PageTables"><a href="#1-5-PageTables" class="headerlink" title="1.5 PageTables"></a>1.5 PageTables</h3><p>Page Table用于将内存的虚拟地址翻译成物理地址，随着内存地址分配得越来越多，Page Table会增大，&#x2F;proc&#x2F;meminfo中的PageTables统计了Page Table所占用的内存大小。</p>
+<p>注：请把Page Table与Page Frame（页帧）区分开，物理内存的最小单位是page frame，每个物理页对应一个描述符(struct page)，在内核的引导阶段就会分配好、保存在mem_map[]数组中，mem_map[]所占用的内存被统计在dmesg显示的reserved中，&#x2F;proc&#x2F;meminfo的MemTotal是不包含它们的。（在NUMA系统上可能会有多个mem_map数组，在node_data中或mem_section中）。<br>而Page Table的用途是翻译虚拟地址和物理地址，它是会动态变化的，要从MemTotal中消耗内存。</p>
+<h3 id="1-6-KernelStack"><a href="#1-6-KernelStack" class="headerlink" title="1.6 KernelStack"></a>1.6 KernelStack</h3><p>每一个用户线程都会分配一个kernel stack（内核栈），内核栈虽然属于线程，但用户态的代码不能访问，只有通过系统调用(syscall)、自陷(trap)或异常(exception)进入内核态的时候才会用到，也就是说内核栈是给kernel code使用的。在x86系统上Linux的内核栈大小是固定的8K或16K（可参阅我以前的文章：<a target="_blank" rel="noopener" href="http://linuxperf.com/?p=116">内核栈溢出</a>）。</p>
+<p>Kernel stack（内核栈）是常驻内存的，既不包括在LRU lists里，也不包括在进程的RSS&#x2F;PSS内存里，所以我们认为它是kernel消耗的内存。统计值是&#x2F;proc&#x2F;meminfo的KernelStack。</p>
+<h3 id="1-7-Buffers"><a href="#1-7-Buffers" class="headerlink" title="1.7 Buffers"></a>1.7 Buffers</h3><p>Buffers统计的是直接访问块设备时的缓冲区的总大小，有时候对文件系统元数据的操作也会用到buffers。这部分内存不好直接对应到某个用户进程，应该算作kernel占用。</p>
+<h3 id="1-8-Bounce"><a href="#1-8-Bounce" class="headerlink" title="1.8 Bounce"></a>1.8 Bounce</h3><p>有些老设备只能访问低端内存，比如16M以下的内存，当应用程序发出一个I&#x2F;O 请求，DMA的目的地址却是高端内存时（比如在16M以上），内核将在低端内存中分配一个临时buffer作为跳转，把位于高端内存的缓存数据复制到此处。这种额外的数据拷贝被称为“bounce buffering”，会降低I&#x2F;O 性能。大量分配的bounce buffers 也会占用额外的内存。</p>
+<h1 id="2-用户进程"><a href="#2-用户进程" class="headerlink" title="2. 用户进程"></a>2. 用户进程</h1><p>&#x2F;proc&#x2F;meminfo统计的是系统全局的内存使用状况，单个进程的情况要看&#x2F;proc&#x2F;<pid>&#x2F;下的smaps等等。</p>
+<h2 id="2-1-Hugepages"><a href="#2-1-Hugepages" class="headerlink" title="2.1 Hugepages"></a>2.1 Hugepages</h2><p>Hugepages在&#x2F;proc&#x2F;meminfo中是被独立统计的，与其它统计项不重叠，既不计入进程的RSS&#x2F;PSS中，又不计入LRU Active&#x2F;Inactive，也不会计入cache&#x2F;buffer。如果进程使用了Hugepages，它的RSS&#x2F;PSS不会增加。</p>
+<p><em>注：不要把 Transparent HugePages (THP)跟 Hugepages 搞混了，THP的统计值是&#x2F;proc&#x2F;meminfo中的”AnonHugePages”，在&#x2F;proc&#x2F;<pid>&#x2F;smaps中也有单个进程的统计，这个统计值与进程的RSS&#x2F;PSS是有重叠的，如果用户进程用到了THP，进程的RSS&#x2F;PSS也会相应增加，这与Hugepages是不同的。</em></p>
+<p>在&#x2F;proc&#x2F;meminfo中与Hugepages有关的统计值如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ cat /proc/meminfo | grep Huge</span><br><span class="line">MemFree: 570736 kB</span><br><span class="line">...</span><br><span class="line">HugePages_Total: 0</span><br><span class="line">HugePages_Free: 0</span><br><span class="line">HugePages_Rsvd: 0</span><br><span class="line">HugePages_Surp: 0</span><br><span class="line">Hugepagesize: 2048 kB</span><br></pre></td></tr></table></figure>
+
+<p>使用Hugepages有三种方式：<br>(详见 <a target="_blank" rel="noopener" href="https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt">https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt</a>)</p>
+<ol>
+<li>mount一个特殊的 hugetlbfs 文件系统，在上面创建文件，然后用mmap() 进行访问，如果要用 read() 访问也是可以的，但是 write() 不行。</li>
+<li>通过shmget&#x2F;shmat也可以使用Hugepages，调用shmget申请共享内存时要加上 SHM_HUGETLB 标志。</li>
+<li>通过 mmap()，调用时指定MAP_HUGETLB 标志也可以使用Huagepages。</li>
+</ol>
+<p>用户程序在申请Hugepages的时候，其实是reserve了一块内存，并未真正使用，此时&#x2F;proc&#x2F;meminfo中的 HugePages_Rsvd 会增加，而 HugePages_Free 不会减少。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HugePages_Total: 128</span><br><span class="line">HugePages_Free: 128</span><br><span class="line">HugePages_Rsvd: 128</span><br><span class="line">HugePages_Surp: 0</span><br><span class="line">Hugepagesize: 2048 kB</span><br></pre></td></tr></table></figure>
+
+<p>等到用户程序真正读写Hugepages的时候，它才被消耗掉了，此时HugePages_Free会减少，HugePages_Rsvd也会减少。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HugePages_Total: 128</span><br><span class="line">HugePages_Free: 0</span><br><span class="line">HugePages_Rsvd: 0</span><br><span class="line">HugePages_Surp: 0</span><br><span class="line">Hugepagesize: 2048 kB</span><br></pre></td></tr></table></figure>
+
+<p>我们说过，Hugepages是独立统计的，如果进程使用了Hugepages，它的RSS&#x2F;PSS不会增加。下面举例说明，一个进程通过mmap()申请并使用了Hugepages，在&#x2F;proc&#x2F;<pid>&#x2F;smaps中可以看到如下内存段，VmFlags包含的”ht”表示Hugepages，kernelPageSize是2048kB，注意RSS&#x2F;PSS都是0：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">2aaaaac00000-2aaabac00000 rw-p 00000000 00:0c 311151 /anon_hugepage (deleted)</span><br><span class="line">Size: 262144 kB</span><br><span class="line">Rss: 0 kB</span><br><span class="line">Pss: 0 kB</span><br><span class="line">Shared_Clean: 0 kB</span><br><span class="line">Shared_Dirty: 0 kB</span><br><span class="line">Private_Clean: 0 kB</span><br><span class="line">Private_Dirty: 0 kB</span><br><span class="line">Referenced: 0 kB</span><br><span class="line">Anonymous: 0 kB</span><br><span class="line">AnonHugePages: 0 kB</span><br><span class="line">Swap: 0 kB</span><br><span class="line">KernelPageSize: 2048 kB</span><br><span class="line">MMUPageSize: 2048 kB</span><br><span class="line">Locked: 0 kB</span><br><span class="line">VmFlags: rd wr mr mw me de ht</span><br><span class="line">... </span><br></pre></td></tr></table></figure>
+
+<h2 id="2-2-AnonHugePages"><a href="#2-2-AnonHugePages" class="headerlink" title="2.2 AnonHugePages"></a>2.2 AnonHugePages</h2><p>AnonHugePages统计的是Transparent HugePages (THP)，THP与Hugepages不是一回事，区别很大。</p>
+<p>上一节说过，Hugepages在&#x2F;proc&#x2F;meminfo中是被独立统计的，与其它统计项不重叠，既不计入进程的RSS&#x2F;PSS中，又不计入LRU Active&#x2F;Inactive，也不会计入cache&#x2F;buffer。如果进程使用了Hugepages，它的RSS&#x2F;PSS不会增加。</p>
+<p>而AnonHugePages完全不同，它与&#x2F;proc&#x2F;meminfo的其他统计项有重叠，首先它被包含在AnonPages之中，而且在&#x2F;proc&#x2F;<pid>&#x2F;smaps中也有单个进程的统计，与进程的RSS&#x2F;PSS是有重叠的，如果用户进程用到了THP，进程的RSS&#x2F;PSS也会相应增加，这与Hugepages是不同的。下例截取自&#x2F;proc&#x2F;<pid>&#x2F;smaps中的一段：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">7efcf0000000-7efd30000000 rw-p 00000000 00:00 0 </span><br><span class="line">Size:            1048576 kB</span><br><span class="line">Rss:              313344 kB</span><br><span class="line">Pss:              313344 kB</span><br><span class="line">Shared_Clean:          0 kB</span><br><span class="line">Shared_Dirty:          0 kB</span><br><span class="line">Private_Clean:         0 kB</span><br><span class="line">Private_Dirty:    313344 kB</span><br><span class="line">Referenced:       239616 kB</span><br><span class="line">Anonymous:        313344 kB</span><br><span class="line">AnonHugePages:    313344 kB</span><br><span class="line">Swap:                  0 kB</span><br><span class="line">KernelPageSize:        4 kB</span><br><span class="line">MMUPageSize:           4 kB</span><br><span class="line">Locked:                0 kB</span><br><span class="line">VmFlags: rd wr mr mw me dc ac hg mg</span><br></pre></td></tr></table></figure>
+
+<p>THP也可以用于shared memory和tmpfs，缺省是禁止的，打开的方法如下（详见 <a target="_blank" rel="noopener" href="https://www.kernel.org/doc/Documentation/vm/transhuge.txt%EF%BC%89%EF%BC%9A">https://www.kernel.org/doc/Documentation/vm/transhuge.txt）：</a></p>
+<ul>
+<li>mount时加上”huge&#x3D;always”等选项</li>
+<li>通过&#x2F;sys&#x2F;kernel&#x2F;mm&#x2F;transparent_hugepage&#x2F;shmem_enabled来控制</li>
+</ul>
+<p>因为缺省情况下shared memory和tmpfs不使用THP，所以进程之间不会共享AnonHugePages，于是就有以下等式：<br>&#x2F;proc&#x2F;meminfo的AnonHugePages&#x3D;&#x3D;所有进程的&#x2F;proc&#x2F;<pid>&#x2F;smaps中AnonHugePages之和<br>举例如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># grep AnonHugePages /proc/[1-9]*/smaps | awk &#x27;&#123;total+=$2&#125;; END &#123;print total&#125;&#x27;</span><br><span class="line">782336</span><br><span class="line"># grep AnonHugePages /proc/meminfo </span><br><span class="line">AnonHugePages:    782336 kB</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-3-LRU"><a href="#2-3-LRU" class="headerlink" title="2.3 LRU"></a>2.3 LRU</h2><p>LRU是Kernel的页面回收算法(Page Frame Reclaiming)使用的数据结构，在<a target="_blank" rel="noopener" href="http://linuxperf.com/?p=97">解读vmstat中的Active&#x2F;Inactive memory</a>一文中有介绍。Page cache和所有用户进程的内存（kernel stack和huge pages除外）都在LRU lists上。</p>
+<p>LRU lists包括如下几种，在&#x2F;proc&#x2F;meminfo中都有对应的统计值：</p>
+<p>LRU_INACTIVE_ANON  –  对应 Inactive(anon)<br>LRU_ACTIVE_ANON  –  对应 Active(anon)<br>LRU_INACTIVE_FILE  –  对应 Inactive(file)<br>LRU_ACTIVE_FILE  –  对应 Active(file)<br>LRU_UNEVICTABLE  –  对应 Unevictable</p>
+<p>注：</p>
+<ul>
+<li>Inactive list里的是长时间未被访问过的内存页，Active list里的是最近被访问过的内存页，LRU算法利用Inactive list和Active list可以判断哪些内存页可以被优先回收。</li>
+<li>括号中的 anon 表示匿名页(anonymous pages)。<br>用户进程的内存页分为两种：file-backed pages（与文件对应的内存页），和anonymous pages（匿名页），比如进程的代码、映射的文件都是file-backed，而进程的堆、栈都是不与文件相对应的、就属于匿名页。file-backed pages在内存不足的时候可以直接写回对应的硬盘文件里，称为page-out，不需要用到交换区(swap)；而anonymous pages在内存不足时就只能写到硬盘上的交换区(swap)里，称为swap-out。</li>
+<li>括号中的 file 表示 file-backed pages（与文件对应的内存页）。</li>
+<li>Unevictable LRU list上是不能pageout&#x2F;swapout的内存页，包括VM_LOCKED的内存页、SHM_LOCK的共享内存页（又被统计在”Mlocked”中）、和ramfs。在unevictable list出现之前，这些内存页都在Active&#x2F;Inactive lists上，vmscan每次都要扫过它们，但是又不能把它们pageout&#x2F;swapout，这在大内存的系统上会严重影响性能，设计unevictable list的初衷就是避免这种情况，参见：<br><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/Documentation/vm/unevictable-lru.txt">https://www.kernel.org/doc/Documentation/vm/unevictable-lru.txt</a></li>
+</ul>
+<p>LRU与&#x2F;proc&#x2F;meminfo中其他统计值的关系：</p>
+<ul>
+<li>LRU中不包含HugePages_*。</li>
+<li>LRU包含了 Cached 和 AnonPages。</li>
+</ul>
+<h2 id="2-4-Shmem"><a href="#2-4-Shmem" class="headerlink" title="2.4 Shmem"></a>2.4 Shmem</h2><p>&#x2F;proc&#x2F;meminfo中的Shmem统计的内容包括：</p>
+<ul>
+<li>shared memory</li>
+<li>tmpfs。</li>
+</ul>
+<p>此处所讲的shared memory又包括：</p>
+<ul>
+<li>SysV shared memory [shmget etc.]</li>
+<li>POSIX shared memory [shm_open etc.]</li>
+<li>shared anonymous mmap [ mmap(…MAP_ANONYMOUS|MAP_SHARED…)]</li>
+</ul>
+<p>因为shared memory在内核中都是基于tmpfs实现的，参见：<br><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt">https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt</a><br>也就是说它们被视为基于tmpfs文件系统的内存页，既然基于文件系统，就不算匿名页，所以不被计入&#x2F;proc&#x2F;meminfo中的AnonPages，而是被统计进了：</p>
+<ul>
+<li>Cached (i.e. page cache)</li>
+<li>Mapped (当shmem被attached时候)</li>
+</ul>
+<p>然而它们背后并不存在真正的硬盘文件，一旦内存不足的时候，它们是需要交换区才能swap-out的，所以在LRU lists里，它们被放在：</p>
+<ul>
+<li>Inactive(anon) 或 Active(anon)<br>注：虽然它们在LRU中被放进了anon list，但是不会被计入 AnonPages。这是shared memory &amp; tmpfs比较拧巴的一个地方，需要特别注意。</li>
+<li>或 unevictable （如果被locked的话）</li>
+</ul>
+<p>注意：<br>当shmget&#x2F;shm_open&#x2F;mmap创建共享内存时，物理内存尚未分配，要直到真正访问时才分配。&#x2F;proc&#x2F;meminfo中的 Shmem 统计的是已经分配的大小，而不是创建时申请的大小。</p>
+<h2 id="2-5-AnonPages"><a href="#2-5-AnonPages" class="headerlink" title="2.5 AnonPages"></a>2.5 AnonPages</h2><p>前面提到用户进程的内存页分为两种：file-backed pages（与文件对应的内存页），和anonymous pages（匿名页）。Anonymous pages(匿名页)的数量统计在&#x2F;proc&#x2F;meminfo的AnonPages中。</p>
+<p>以下是几个事实，有助于了解Anonymous Pages：</p>
+<ul>
+<li>所有page cache里的页面(Cached)都是file-backed pages，不是Anonymous Pages。<br>注：shared memory 不属于 AnonPages，而是属于Cached，因为shared memory基于tmpfs，所以被视为file-backed、在page cache里，上一节解释过。</li>
+<li>mmap <strong>private</strong> anonymous pages属于AnonPages(Anonymous Pages)，而mmap <strong>shared</strong> anonymous pages属于Cached(file-backed pages)，因为shared anonymous mmap也是基于tmpfs的，上一节解释过。</li>
+<li>Anonymous Pages是与用户进程共存的，一旦进程退出，则Anonymous pages也释放，不像page cache即使文件与进程不关联了还可以缓存。</li>
+<li>AnonPages统计值中包含了Transparent HugePages (THP)对应的 AnonHugePages 。参见：</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">fs/proc/meminfo.c:</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">meminfo_proc_show</span><span class="params">(<span class="keyword">struct</span> seq_file *m, <span class="type">void</span> *v)</span></span><br><span class="line">&#123;</span><br><span class="line">...</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> CONFIG_TRANSPARENT_HUGEPAGE</span></span><br><span class="line">                K(global_page_state(NR_ANON_PAGES)</span><br><span class="line">                  + global_page_state(NR_ANON_TRANSPARENT_HUGEPAGES) *</span><br><span class="line">                  HPAGE_PMD_NR),</span><br><span class="line">... </span><br></pre></td></tr></table></figure>
+
+<h2 id="2-6-Mapped"><a href="#2-6-Mapped" class="headerlink" title="2.6 Mapped"></a>2.6 Mapped</h2><p>上面提到的用户进程的file-backed pages就对应着&#x2F;proc&#x2F;meminfo中的”Mapped”。Page cache中(“Cached”)包含了文件的缓存页，其中有些文件当前已不在使用，page cache仍然可能保留着它们的缓存页面；而另一些文件正被用户进程关联，比如shared libraries、可执行程序的文件、mmap的文件等，这些文件的缓存页就称为mapped。</p>
+<p>&#x2F;proc&#x2F;meminfo中的”Mapped”就统计了page cache(“Cached”)中所有的mapped页面。</p>
+<p>因为Linux系统上shared memory &amp; tmpfs被计入page cache(“Cached”)，所以被attached的shared memory、以及tmpfs上被map的文件都算做”Mapped”。</p>
+<p>进程所占的内存页分为anonymous pages和file-backed pages，理论上应该有：<br>【所有进程的PSS之和】 &#x3D;&#x3D; 【Mapped + AnonPages】。<br>然而我实际测试的结果，虽然两者很接近，却总是无法精确相等，我猜也许是因为进程始终在变化、采集的&#x2F;proc&#x2F;[1-9]*&#x2F;smaps以及&#x2F;proc&#x2F;meminfo其实不是来自同一个时间点的缘故。</p>
+<h2 id="2-7-Cached"><a href="#2-7-Cached" class="headerlink" title="2.7 Cached"></a>2.7 Cached</h2><p>Page Cache里包括所有file-backed pages，统计在&#x2F;proc&#x2F;meminfo的”Cached”中。</p>
+<ul>
+<li>Cached不仅包括mapped，也包括unmapped的页面，当一个文件不再与进程关联之后，原来在page cache中的页面并不会立即回收，仍然被计入Cached，还留在LRU中，但是 Mapped 统计值会减小。【ummaped &#x3D; (Cached – Mapped)】</li>
+<li>Cached包含tmpfs中的文件，POSIX&#x2F;SysV shared memory，以及shared anonymous mmap。<br>注：POSIX&#x2F;SysV shared memory和shared anonymous mmap在内核中都是基于tmpfs实现的，参见：<br><a target="_blank" rel="noopener" href="https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt">https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt</a></li>
+</ul>
+<p>有意思的是，Shared memory和tmpfs在不发生swap-out的时候属于”Cached”，而在swap-out&#x2F;swap-in的过程中会被加进swap cache中、属于”SwapCached”，一旦进了”SwapCached”，就不再属于”Cached”了。”Cached”和”SwapCached”两个统计值是互不重叠的，源代码参见下一节。</p>
+<h2 id="2-8-SwapCached"><a href="#2-8-SwapCached" class="headerlink" title="2.8 SwapCached"></a>2.8 SwapCached</h2><p>我们说过，匿名页(anonymous pages)要用到交换区，而shared memory和tmpfs虽然未统计在AnonPages里，但它们背后没有硬盘文件，所以也是需要交换区的。也就是说需要用到交换区的内存包括：”AnonPages”和”Shmem”，我们姑且把它们统称为匿名页好了。</p>
+<p>交换区可以包括一个或多个交换区设备（裸盘、逻辑卷、文件都可以充当交换区设备），每一个交换区设备都对应自己的swap cache，可以把swap cache理解为交换区设备的”page cache”：page cache对应的是一个个文件，swap cache对应的是一个个交换区设备，kernel管理swap cache与管理page cache一样，用的都是radix-tree，唯一的区别是：page cache与文件的对应关系在打开文件时就确定了，而一个匿名页只有在即将被swap-out的时候才决定它会被放到哪一个交换区设备，即匿名页与swap cache的对应关系在即将被swap-out时才确立。</p>
+<p>并不是每一个匿名页都在swap cache中，只有以下情形之一的匿名页才在：</p>
+<ul>
+<li>匿名页即将被swap-out时会先被放进swap cache，但通常只存在很短暂的时间，因为紧接着在pageout完成之后它就会从swap cache中删除，毕竟swap-out的目的就是为了腾出空闲内存；<br>【注：参见mm&#x2F;vmscan.c: shrink_page_list()，它调用的add_to_swap()会把swap cache页面标记成dirty，然后它调用try_to_unmap()将页面对应的page table mapping都删除，再调用pageout()回写dirty page，最后try_to_free_swap()会把该页从swap cache中删除。】</li>
+<li>曾经被swap-out现在又被swap-in的匿名页会在swap cache中，直到页面中的内容发生变化、或者原来用过的交换区空间被回收为止。<br>【注：当匿名页的内容发生变化时会删除对应的swap cache，代码参见mm&#x2F;swapfile.c: reuse_swap_page()。】</li>
+</ul>
+<p>&#x2F;proc&#x2F;meminfo中的SwapCached背后的含义是：系统中有多少匿名页曾经被swap-out、现在又被swap-in并且swap-in之后页面中的内容一直没发生变化。也就是说，如果这些匿名页需要被swap-out的话，是无需进行I&#x2F;O write操作的。</p>
+<p>“SwapCached”不属于”Cached”，两者没有交叉。参见：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">fs/proc/meminfo.c:</span><br><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">meminfo_proc_show</span><span class="params">(<span class="keyword">struct</span> seq_file *m, <span class="type">void</span> *v)</span></span><br><span class="line">&#123;</span><br><span class="line">...</span><br><span class="line">        cached = global_page_state(NR_FILE_PAGES) -</span><br><span class="line">                        total_swapcache_pages() - i.bufferram;</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>“SwapCached”内存同时也在LRU中，还在”AnonPages”或”Shmem”中，它本身并不占用额外的内存。</p>
+<h2 id="2-9-Mlocked"><a href="#2-9-Mlocked" class="headerlink" title="2.9 Mlocked"></a>2.9 Mlocked</h2><p>“Mlocked”统计的是被mlock()系统调用锁定的内存大小。被锁定的内存因为不能pageout&#x2F;swapout，会从Active&#x2F;Inactive LRU list移到Unevictable LRU list上。也就是说，当”Mlocked”增加时，”Unevictable”也同步增加，而”Active”或”Inactive”同时减小；当”Mlocked”减小的时候，”Unevictable”也同步减小，而”Active”或”Inactive”同时增加。</p>
+<p>“Mlocked”并不是独立的内存空间，它与以下统计项重叠：LRU Unevictable，AnonPages，Shmem，Mapped等。</p>
+<h2 id="其它问题"><a href="#其它问题" class="headerlink" title="其它问题"></a>其它问题</h2><h3 id="DirectMap"><a href="#DirectMap" class="headerlink" title="DirectMap"></a>DirectMap</h3><p>&#x2F;proc&#x2F;meminfo中的DirectMap所统计的不是关于内存的使用，而是一个反映TLB效率的指标。TLB(Translation Lookaside Buffer)是位于CPU上的缓存，用于将内存的虚拟地址翻译成物理地址，由于TLB的大小有限，不能缓存的地址就需要访问内存里的page table来进行翻译，速度慢很多。为了尽可能地将地址放进TLB缓存，新的CPU硬件支持比4k更大的页面从而达到减少地址数量的目的， 比如2MB，4MB，甚至1GB的内存页，视不同的硬件而定。”DirectMap4k”表示映射为4kB的内存数量， “DirectMap2M”表示映射为2MB的内存数量，以此类推。所以DirectMap其实是一个反映TLB效率的指标。</p>
+<h3 id="Dirty-pages到底有多少？"><a href="#Dirty-pages到底有多少？" class="headerlink" title="Dirty pages到底有多少？"></a>Dirty pages到底有多少？</h3><p>&#x2F;proc&#x2F;meminfo 中有一个Dirty统计值，但是它未能包括系统中全部的dirty pages，应该再加上另外两项：NFS_Unstable 和 Writeback，NFS_Unstable是发给NFS server但尚未写入硬盘的缓存页，Writeback是正准备回写硬盘的缓存页。即：</p>
+<p>系统中全部dirty pages &#x3D; ( Dirty + NFS_Unstable + Writeback )</p>
+<p>注1：NFS_Unstable的内存被包含在Slab中，因为nfs request内存是调用kmem_cache_zalloc()申请的。</p>
+<p>注2：anonymous pages不属于dirty pages。<br>参见mm&#x2F;vmscan.c: page_check_dirty_writeback()<br><em>“Anonymous pages are not handled by flushers and must be written from reclaim context.”</em></p>
+<h3 id="为什么【Active-anon-Inactive-anon-】不等于AnonPages？"><a href="#为什么【Active-anon-Inactive-anon-】不等于AnonPages？" class="headerlink" title="为什么【Active(anon)+Inactive(anon)】不等于AnonPages？"></a>为什么【Active(anon)+Inactive(anon)】不等于AnonPages？</h3><p>因为Shared memory &amp; tmpfs 被计入LRU Active&#x2F;Inactive(anon)，但未计入 AnonPages。所以一个更合理的等式是：</p>
+<p>【Active(anon)+Inactive(anon)】 &#x3D; 【AnonPages + Shmem】</p>
+<p>但是这个等式在某些情况下也不一定成立，因为：</p>
+<ul>
+<li>如果shmem或anonymous pages被mlock的话，就不在Active(non)或Inactive(anon)里了，而是到了Unevictable里，以上等式就不平衡了；</li>
+<li>当anonymous pages准备被swap-out时，分几个步骤：先被加进swap cache，再离开AnonPages，然后离开LRU Inactive(anon)，最后从swap cache中删除，这几个步骤之间会有间隔，而且有可能离开AnonPages就因某些情况而结束了，所以在某些时刻以上等式会不平衡。<br>【注：参见mm&#x2F;vmscan.c: shrink_page_list()：<br>它调用的add_to_swap()会把swap cache页面标记成dirty，然后调用try_to_unmap()将页面对应的page table mapping都删除，再调用pageout()回写dirty page，最后try_to_free_swap()把该页从swap cache中删除。】</li>
+</ul>
+<h3 id="为什么【Active-file-Inactive-file-】不等于Mapped？"><a href="#为什么【Active-file-Inactive-file-】不等于Mapped？" class="headerlink" title="为什么【Active(file)+Inactive(file)】不等于Mapped？"></a>为什么【Active(file)+Inactive(file)】不等于Mapped？</h3><ol>
+<li>因为LRU Active(anon)和Inactive(anon)中包含unmapped页面；</li>
+<li>Mapped中包含shared memory &amp; tmpfs，这部分内存被计入了LRU Active(anon)或Inactive(anon)、而不在Active(file)和Inactive(file)中。</li>
+</ol>
+<p>同理：【Active(file)+Inactive(file)】!&#x3D; Cached<br>因为shared memory &amp; tmpfs包含在Cached中，而不在Active(file)和Inactive(file)中。</p>
+<p>如果不考虑mlock添乱的话，一个更符合逻辑的等式是：<br>【Active(file) + Inactive(file) + Shmem】&#x3D;&#x3D; Cached<br>注：<br>测试的结果以上等式通常都成立，但内存发生交换的时候以上等式有时不平衡，我猜可能是因为有些属于Shmem的内存swap-out的过程中离开Cached进入了Swapcached，但没有立即从swap cache删除、仍算在Shmem中的缘故。</p>
+<h1 id="Linux的内存都用到哪里去了？"><a href="#Linux的内存都用到哪里去了？" class="headerlink" title="Linux的内存都用到哪里去了？"></a>Linux的内存都用到哪里去了？</h1><p>尽管不可能精确统计Linux系统的内存，但大体了解还是可以的。</p>
+<h6 id="kernel内存的统计方式应该比较明确，即"><a href="#kernel内存的统计方式应该比较明确，即" class="headerlink" title="kernel内存的统计方式应该比较明确，即"></a>kernel内存的统计方式应该比较明确，即</h6><p>【Slab+ VmallocUsed + PageTables + KernelStack + Buffers + HardwareCorrupted + Bounce + X】</p>
+<ul>
+<li>注1：VmallocUsed其实不是我们感兴趣的，因为它还包括了VM_IOREMAP等并未消耗物理内存的IO地址映射空间，我们只关心VM_ALLOC操作，（参见1.2节），所以实际上应该统计&#x2F;proc&#x2F;vmallocinfo中的vmalloc记录，例如（此处单位是byte）：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># grep vmalloc /proc/vmallocinfo | awk &#x27;&#123;total+=$2&#125;; END &#123;print total&#125;&#x27;</span><br><span class="line">23375872</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>注2：kernel module的内存被包含在VmallocUsed中，见1.3节。</li>
+<li>注3：X表示直接通过alloc_pages&#x2F;__get_free_page分配的内存，没有在&#x2F;proc&#x2F;meminfo中统计，不知道有多少，就像个黑洞。</li>
+</ul>
+<h6 id="用户进程的内存主要有三种统计口径："><a href="#用户进程的内存主要有三种统计口径：" class="headerlink" title="用户进程的内存主要有三种统计口径："></a>用户进程的内存主要有三种统计口径：</h6><ul>
+<li>[1]围绕LRU进行统计<br>【(Active + Inactive + Unevictable) + (HugePages_Total * Hugepagesize)】</li>
+<li>[2]围绕Page Cache进行统计<br>当SwapCached为0的时候，用户进程的内存总计如下：<br>【(Cached + AnonPages) + (HugePages_Total * Hugepagesize)】<br>当SwapCached不为0的时候，以上公式不成立，因为SwapCached可能会含有Shmem，而Shmem本来被含在Cached中，一旦swap-out就从Cached转移到了SwapCached，可是我们又不能把SwapCached加进上述公式中，因为SwapCached虽然不与Cached重叠却与AnonPages有重叠，它既可能含有Shared memory又可能含有Anonymous Pages。</li>
+<li>[3]围绕RSS&#x2F;PSS进行统计<br>把&#x2F;proc&#x2F;[1-9]*&#x2F;smaps 中的 Pss 累加起来就是所有用户进程占用的内存，但是还没有包括Page Cache中unmapped部分、以及HugePages，所以公式如下：<br>ΣPss + (Cached – mapped) + (HugePages_Total * Hugepagesize)</li>
+</ul>
+<h6 id="所以系统内存的使用情况可以用以下公式表示："><a href="#所以系统内存的使用情况可以用以下公式表示：" class="headerlink" title="所以系统内存的使用情况可以用以下公式表示："></a>所以系统内存的使用情况可以用以下公式表示：</h6><ul>
+<li>MemTotal &#x3D; MemFree +【Slab+ VmallocUsed + PageTables + KernelStack + Buffers + HardwareCorrupted + Bounce + X】+【Active + Inactive + Unevictable + (HugePages_Total * Hugepagesize)】</li>
+<li>MemTotal &#x3D; MemFree +【Slab+ VmallocUsed + PageTables + KernelStack + Buffers + HardwareCorrupted + Bounce + X】+【Cached + AnonPages + (HugePages_Total * Hugepagesize)】</li>
+<li>MemTotal &#x3D; MemFree +【Slab+ VmallocUsed + PageTables + KernelStack + Buffers + HardwareCorrupted + Bounce + X】+【ΣPss + (Cached – mapped) + (HugePages_Total * Hugepagesize)】</li>
+</ul>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2022/10/22/linux/%E5%86%85%E5%AD%98/linux%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2022/10/22/linux/%E5%86%85%E5%AD%98/linux%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/')">linux中的内存分配</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2022/10/22/linux/%E5%86%85%E5%AD%98/linux%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=linux中的内存分配&amp;url=https://shippomx.github.io/2022/10/22/linux/%E5%86%85%E5%AD%98/linux%E4%B8%AD%E7%9A%84%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/linux/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>linux<span class="tagsPageCount">16</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2022/08/27/containers/%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%20Shim/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">containerd中的shim</div></div></a></div><div class="next-post pull-right"><a href="/2022/11/18/linux/%E5%86%85%E5%AD%98/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E6%8E%92%E6%9F%A5%EF%BC%9AHeap%20Profiling%20%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">内存泄露的定位与排查</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/" title="Nginx 配置 HTTPS 服务器"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2017-06-08</div><div class="title">Nginx 配置 HTTPS 服务器</div></div></a></div><div><a href="/2023/02/14/linux%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" title="简易环境配置"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-02-14</div><div class="title">简易环境配置</div></div></a></div><div><a href="/2023/03/11/linux/Linux%20%E8%BF%9B%E7%A8%8B%E7%8A%B6%E6%80%81%E8%A7%A3%E6%9E%90%20/" title="进程状态简述"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-03-11</div><div class="title">进程状态简述</div></div></a></div><div><a href="/2023/10/02/linux/%E5%88%9B%E5%BB%BA%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B%E6%AD%A5%E9%AA%A4%E4%B8%8E%20setsid/" title="守护进程与setsid"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-02</div><div class="title">守护进程与setsid</div></div></a></div><div><a href="/2023/10/01/linux/%E5%BC%80%E6%BA%90%E6%97%A5%E5%BF%97%E5%BA%93log_c%E7%9A%84%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8/" title="开源日志库log_c的简单使用"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-01</div><div class="title">开源日志库log_c的简单使用</div></div></a></div><div><a href="/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/" title="容器安全-理解cgroup中的cpuset"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-06-21</div><div class="title">容器安全-理解cgroup中的cpuset</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#MemTotal"><span class="toc-number">1.</span> <span class="toc-text">MemTotal</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MemFree"><span class="toc-number">2.</span> <span class="toc-text">MemFree</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MemAvailable"><span class="toc-number">3.</span> <span class="toc-text">MemAvailable</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E9%BB%91%E6%B4%9E"><span class="toc-number">4.</span> <span class="toc-text">内存黑洞</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E9%83%BD%E5%88%B0%E5%93%AA%E9%87%8C%E5%8E%BB%E4%BA%86%EF%BC%9F"><span class="toc-number"></span> <span class="toc-text">内存都到哪里去了？</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%86%85%E6%A0%B8"><span class="toc-number">1.</span> <span class="toc-text">1. 内核</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-SLAB"><span class="toc-number">1.1.</span> <span class="toc-text">1.1 SLAB</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-VmallocUsed"><span class="toc-number">1.2.</span> <span class="toc-text">1.2 VmallocUsed</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-kernel-modules-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97"><span class="toc-number">1.3.</span> <span class="toc-text">1.3 kernel modules(内核模块)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-HardwareCorrupted"><span class="toc-number">1.4.</span> <span class="toc-text">1.4 HardwareCorrupted</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-5-PageTables"><span class="toc-number">1.5.</span> <span class="toc-text">1.5 PageTables</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-6-KernelStack"><span class="toc-number">1.6.</span> <span class="toc-text">1.6 KernelStack</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-7-Buffers"><span class="toc-number">1.7.</span> <span class="toc-text">1.7 Buffers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-8-Bounce"><span class="toc-number">1.8.</span> <span class="toc-text">1.8 Bounce</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-%E7%94%A8%E6%88%B7%E8%BF%9B%E7%A8%8B"><span class="toc-number"></span> <span class="toc-text">2. 用户进程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-Hugepages"><span class="toc-number">1.</span> <span class="toc-text">2.1 Hugepages</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-AnonHugePages"><span class="toc-number">2.</span> <span class="toc-text">2.2 AnonHugePages</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-LRU"><span class="toc-number">3.</span> <span class="toc-text">2.3 LRU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-Shmem"><span class="toc-number">4.</span> <span class="toc-text">2.4 Shmem</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-5-AnonPages"><span class="toc-number">5.</span> <span class="toc-text">2.5 AnonPages</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-6-Mapped"><span class="toc-number">6.</span> <span class="toc-text">2.6 Mapped</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-7-Cached"><span class="toc-number">7.</span> <span class="toc-text">2.7 Cached</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-8-SwapCached"><span class="toc-number">8.</span> <span class="toc-text">2.8 SwapCached</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-9-Mlocked"><span class="toc-number">9.</span> <span class="toc-text">2.9 Mlocked</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E5%AE%83%E9%97%AE%E9%A2%98"><span class="toc-number">10.</span> <span class="toc-text">其它问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#DirectMap"><span class="toc-number">10.1.</span> <span class="toc-text">DirectMap</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Dirty-pages%E5%88%B0%E5%BA%95%E6%9C%89%E5%A4%9A%E5%B0%91%EF%BC%9F"><span class="toc-number">10.2.</span> <span class="toc-text">Dirty pages到底有多少？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E3%80%90Active-anon-Inactive-anon-%E3%80%91%E4%B8%8D%E7%AD%89%E4%BA%8EAnonPages%EF%BC%9F"><span class="toc-number">10.3.</span> <span class="toc-text">为什么【Active(anon)+Inactive(anon)】不等于AnonPages？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E3%80%90Active-file-Inactive-file-%E3%80%91%E4%B8%8D%E7%AD%89%E4%BA%8EMapped%EF%BC%9F"><span class="toc-number">10.4.</span> <span class="toc-text">为什么【Active(file)+Inactive(file)】不等于Mapped？</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Linux%E7%9A%84%E5%86%85%E5%AD%98%E9%83%BD%E7%94%A8%E5%88%B0%E5%93%AA%E9%87%8C%E5%8E%BB%E4%BA%86%EF%BC%9F"><span class="toc-number"></span> <span class="toc-text">Linux的内存都用到哪里去了？</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#kernel%E5%86%85%E5%AD%98%E7%9A%84%E7%BB%9F%E8%AE%A1%E6%96%B9%E5%BC%8F%E5%BA%94%E8%AF%A5%E6%AF%94%E8%BE%83%E6%98%8E%E7%A1%AE%EF%BC%8C%E5%8D%B3"><span class="toc-number">0.0.0.0.1.</span> <span class="toc-text">kernel内存的统计方式应该比较明确，即</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%86%85%E5%AD%98%E4%B8%BB%E8%A6%81%E6%9C%89%E4%B8%89%E7%A7%8D%E7%BB%9F%E8%AE%A1%E5%8F%A3%E5%BE%84%EF%BC%9A"><span class="toc-number">0.0.0.0.2.</span> <span class="toc-text">用户进程的内存主要有三种统计口径：</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#%E6%89%80%E4%BB%A5%E7%B3%BB%E7%BB%9F%E5%86%85%E5%AD%98%E7%9A%84%E4%BD%BF%E7%94%A8%E6%83%85%E5%86%B5%E5%8F%AF%E4%BB%A5%E7%94%A8%E4%BB%A5%E4%B8%8B%E5%85%AC%E5%BC%8F%E8%A1%A8%E7%A4%BA%EF%BC%9A"><span class="toc-number">0.0.0.0.3.</span> <span class="toc-text">所以系统内存的使用情况可以用以下公式表示：</span></a></li></ol></li></ol></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

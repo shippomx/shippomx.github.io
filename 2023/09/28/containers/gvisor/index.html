@@ -1,0 +1,407 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>远辰 | 远辰</title><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="远辰"><meta name="application-name" content="远辰"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="远辰"><meta property="og:url" content="https://shippomx.github.io/2023/09/28/containers/gvisor/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="本文由 简悦 SimpRead 转码， 原文地址 www.cnblogs.com   5 月 2 日，谷歌发布了一款新型的沙箱容器运行时 gVisor，号称能够为容器提供更安全的隔离，同时比 VM 更轻量。容器基于共享内核，安全性是大家关注的一大要点，gVisor 的发布势必将引来更多对容器隔离性"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="本文由 简悦 SimpRead 转码， 原文地址 www.cnblogs.com   5 月 2 日，谷歌发布了一款新型的沙箱容器运行时 gVisor，号称能够为容器提供更安全的隔离，同时比 VM 更轻量。容器基于共享内核，安全性是大家关注的一大要点，gVisor 的发布势必将引来更多对容器隔离性"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2023/09/28/containers/gvisor/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: '远辰',
+  postAI: '',
+  pageFillDescription: '网络, 文件系统, 性能测试 - 数据对比本文由简悦转码原文地址月日谷歌发布了一款新型的沙箱容器运行时号称能够为容器提供更安全的隔离同时比更轻量容器基于共享内核安全性是大家关注的一大要点的发布势必将引来更多对容器隔离性的关注那么在技术上如何实现隔离其性能如何隔壁阿里巴巴已经有人为你探索了的架构和组件并作了性能分析背景的开源为安全容器的实现提供了一种新思路所谓安全容器需要包含两个要点安全隔离与兼容如今共用内核的容器在安全隔离上还是比较弱虽然内核在不断地增强自身的安全特性但由于内核自身代码极端复杂漏洞层出不穷年至今已经公开了个与内核相关的安全漏洞而年全年则是个大家已经有了一个共识要有良好的安全隔离就要阻断容器内程序对物理机内核的依赖以及二者合二为一的就遵循了这个思路容器本质上是个虚拟机但兼容了标准每个容器都有一个自己的通过对与的深度优化减弱了在启动速度与运行效率上的劣势也隔离了容器内的恶意代码对的访问但使用了另一种方法我们将这种方法称之为进程虚拟化它在内核之外实现了一个内核进程它提供了大部分的系统调用并且通过巧妙的方式将容器内进程的系统调用转化为对这个内核进程的访问将定位为而不是安全容器一个原因是还不能完全代替部分系统调用还是要转接到上当前开源的版本更像是一个版在一些典型的应用场景下性能比不上但是我们把它的名字拆解来看猜测还会有后招本文简单分析了的技术实现时间仓促文中叙述难免有不妥甚至错误之处欢迎大家拍砖架构分析整体架构由个组件构成与类似与是一种引擎负责容器的创建与销毁就是上文提到的那个内核进程容器内程序的系统调用都由它进行处理是文件系统的操作代理请求都会由它转接到上这个组件均由语言实现这有利有弊语言开发较简单并且类型安全但是却限制了的性能各组件间的关系如图所示图的架构的概念较容易理解我们不再多说基于可以通过这种方式启动一个容器是的核心组件它就像一个简单的操作系统内核提供了系统调用进程管理内存管理等功能系统调用设计上的一个巧妙之处是它对系统调用的劫持方法目前提供了两种劫持模式模式与模式模式的性能不及模式因为应用的每个都需要通过访问严格来说它的安全性也不及模式严重怀疑模式是最初的本文不做过多分析在模式下能够截获应用程序的每个系统调用并将其转交给进行处理相比较我们看不到的身影也看不到包揽了所有必要的操作这种对虚拟化的实现方法我们称之为进程级虚拟化既然基于就有多种身份有时它运行在态的此时它就像容器内应用的有时运行在态的此时它就像上的一个普通进程处在什么状态上完全取决于它当前正在处理的工作当它在处理容器内的系统调用时就处于态而当它需要跟进行交互时就会通过指令陷回模式目前约实现了个左右的系统调用而则为提供了个系统调用内核当应用调用了那些未被实现的系统调用时会直接报错返回由于系统调用尚未完备导致部分软件还不能无缝地运行在中而且已支持的系统调用中有若干还必须依赖内核当处理这些系统调用时会陷回模式的进程管理承担了一定的进程管理职责启动容器后可以在上看到两个进程一个进程负责容器创建与另一个向容器内的应用提供系统调用支持也就是我们前面提到的内核进程容器内所有的进程都以进程的线程存在这有点像进程在启动时会创建一定量的线程复用了语言的模型每个应用的线程均对应到语言内置的参见函数即会根据情况选择是通过内核的原生生成新的工作线程还是复用之前的在这里即最后调度器将和工作线程三者结合起来线程的调度由内核来调用内存管理容器内应用的所有代码均由进程进行映射并代理执行为每个应用进程都维护了一个页表进程自身也有一个页表这么做是出于安全性的考虑隔离了各个进程以及之间的地址空间避免它们在内存上相互踩踏也避免了恶意代码对的攻击但在这种架构下应用程序每次触发都会伴随着一次页表的切换熟悉虚拟化的同学知道这是一个非常可观的开销可以与之鲜明对比的是在典型的的架构下所有的进程内核均运行在同一个地址空间中系统调用等同于一次函数调用但是应用程序中的任何一个不小心都可能导致整个系统掉安全与性能永远是个网络里面看到的网络设备是由创建容器的时候创建的并且在容器内部将虚拟网络设备改名为这与普通的容器并没有太大区别提供两种网络通信的方式通过宿主机协议栈通过实现的用户态协议栈默认配置是使用如果需要更高的网络性能可以通过修改配置文件切换到使用宿主机的协议栈通过的网络通信在捕获到应用的程序的系统调用的时候并不使用宿主机的系统调用接口而是调用提供的接口在经过协议栈之后通过宿主机的的方式进行收发包通过宿主机协议栈进行网络通信其整个数据流跟原生容器一样唯一区别在于需要捕获到安全容器内应用程序关于网络的系统调用例如等等之后再将其转换成的系统调用来进行网络通信文件系统也跟一样对文件系统做了一层抽象提供了层在其之下分别实现具体的文件系统有等兼容因此它的的文件来源就来自容器镜像各层聚合以后的为了减少直接对系统调用的依赖使用了应用程序通过协议与进程通信内部运行着的功能通过间接地来对的进行操作本身并未提供容器中的应用可以直接链接镜像中的所有的无需重新编译链接确保了对已有程序的兼容性除此之外还开发了内部的这主要是为了保证运行性能如果应用程序的临时文件也要经过性能上将无法忍受还模拟开发了与文件系统中的部分文件做到与的兼容性性能测试数据对比我们利用与对比了与普通容器类似与阿里内部自研的下一代执行单元的主要开销在网络上在的性能的差距是由于它自身的协议栈未被优化过如上为几种模型对的指标数值越大性能越好发现确实小于并且明显低于的性能最佳在我们的测试中主要开销在处理的根文件系统通过协议访问上的文件协议性能相比容器本地性能甚至是和的的虚拟磁盘性能都要差很多如上为使用对进行混合测试的平均时延的性能明显也最低另外对内核的依赖与劫持的低效也是比要差的原因之一功能对比容器备注自包含完整较完整完整有部分的实现依赖于内核性能高较高低高资源占用少较少较少较少兼容性强较强弱某些内核功能支持不完整同时接口与差别较大安全性弱强较强强某些非外部资源访问的内核功能对内核产生依赖增大了安全容器与内核的攻击面前景展望是一种对安全容器的解决方案它在兼容二进制兼容多进程方面实现得很巧妙随着的完善和软件代码的成熟会有越来越多的容器能够无缝地迁移到上但是的当前版本在性能上还不尽如人意应用程序每次调用都伴有页表切换而且部分功能还依赖于内核而陷出到同时方面采用了性能不佳的加上网络协议栈方面未进行过优化这些都导致了它的性能相比较普通容器来说有较大程度地降低对性能有较高要求的应用无法应用在上面参考文献',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"></span></div></div><h1 class="post-title" itemprop="name headline">无题</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.043Z" title="发表于 2023-09-28 16:22:11">2023-09-28</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.043Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2023/09/28/containers/gvisor/"><header><h1 id="CrawlerTitle" itemprop="name headline">无题</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.043Z" title="发表于 2023-09-28 16:22:11">2023-09-28</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.043Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><blockquote>
+<p>本文由 <a target="_blank" rel="noopener" href="http://ksria.com/simpread/">简悦 SimpRead</a> 转码， 原文地址 <a target="_blank" rel="noopener" href="https://www.cnblogs.com/dream397/p/14252745.html">www.cnblogs.com</a></p>
+</blockquote>
+<p> 5 月 2 日，谷歌发布了一款新型的沙箱容器运行时 gVisor，号称能够为容器提供更安全的隔离，同时比 VM 更轻量。容器基于共享内核，安全性是大家关注的一大要点，gVisor 的发布势必将引来更多对容器隔离性的关注。那么 gVisor 在技术上如何实现隔离，其性能如何？隔壁阿里巴巴已经有人为你探索了 gVisor 的架构和组件，并作了性能分析。</p>
+<p>   背景   </p>
+<p>gVisor 的开源为安全容器的实现提供了一种新思路。所谓安全容器需要包含两个要点：安全隔离与 OCI 兼容。如今，共用内核的容器在安全隔离上还是比较弱。虽然内核在不断地增强自身的安全特性，但由于内核自身代码极端复杂，CVE 漏洞层出不穷。2018 年至今，已经公开了 63 个与内核相关的安全漏洞，而 2017 年全年则是 453 个 [1]。</p>
+<p>大家已经有了一个共识：要有良好的安全隔离，就要阻断容器内程序对物理机内核的依赖。Hyper，Clear Container 以及二者合二为一的 KATA[2]，就遵循了这个思路。KATA 容器本质上是个虚拟机，但兼容了 OCI 标准。每个容器都有一个自己的 Guest Kernel。KATA 通过对 Qemu 与 Guest Kernel 的深度优化，减弱了 VM 在启动速度与运行效率上的劣势。</p>
+<p>gVisor 也隔离了容器内的恶意代码对 Host Kernel 的访问，但使用了另一种方法。我们将这种方法称之为进程虚拟化。它在内核之外实现了一个 “内核进程”，Sentry，它提供了大部分 Linux Kernel 的系统调用。并且通过巧妙的方式将容器内进程的系统调用转化为对这个“内核进程” 的访问。Google 将 gVisor 定位为“Sandbox”，而不是安全容器，一个原因是 Sentry 还不能完全代替 Linux Kernel，部分系统调用还是要转接到 Host Kernel 上。</p>
+<p>Google 当前开源的 gVisor 版本更像是一个 Demo 版，在一些典型的应用场景下，性能比不上 KATA。但是我们把它的名字拆解来看：gVisor &#x3D; Google’s new HyperVisor? 猜测 Google 还会有后招。</p>
+<p>本文简单分析了 gVisor 的技术实现。时间仓促，文中叙述难免有不妥甚至错误之处，欢迎大家拍砖。</p>
+<p><strong>架构分析 -</strong> 整体架构</p>
+<p>gVisor 由 3 个组件构成：Runsc，Sentry 与 Gofer。类似 RunC 与 RunV，Runsc 是一种 Runtime 引擎，<strong>负责容器的创建与销毁</strong>。Sentry 就是上文提到的那个 “内核进程”，容器内程序的系统调用都由它进行处理。Gofer 是文件系统的操作代理，IO 请求都会由它转接到 Host 上。这 3 个组件均由 Go 语言实现。这有利有弊：Go 语言开发较简单，并且类型安全，但是却限制了 gVisor 的性能。各组件间的关系如图 1 所示。</p>
+<p> <img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img2020.cnblogs.com/blog/665372/202101/665372-20210108180022427-177964885.png"></p>
+<p>    图 1: gVisor 的架构</p>
+<p>Runsc 的概念较容易理解，我们不再多说。基于 Runsc，可以通过这种方式启动一个 gVisor 容器：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ docker run --runtime=Runsc hello-gVisor</span><br></pre></td></tr></table></figure>
+
+<p>Sentry</p>
+<p>Sentry 是 gVisor 的核心组件，它就像一个简单的操作系统内核，提供了系统调用，进程管理，内存管理等功能。</p>
+<p> 系统调用</p>
+<p>gVisor 设计上的一个巧妙之处是它对系统调用的劫持方法。目前提供了两种劫持模式：KVM 模式，与 ptrace 模式。ptrace 模式的性能不及 KVM 模式。因为应用的每个 SYSCALL 都需要通过 ptrace 访问 Sentry。严格来说，它的安全性也不及 KVM 模式。严重怀疑 ptrace 模式是 Google 最初的 demo，本文不做过多分析。</p>
+<p>在 KVM 模式下，gVisor 能够截获应用程序的每个系统调用，并将其转交给 Sentry 进行处理。相比较 VM，我们看不到 Qemu 的身影，也看不到 Guest Kernel，Sentry 包揽了所有必要的操作。这种对虚拟化的实现方法，我们称之为 “进程级虚拟化”。</p>
+<p>既然基于 KVM，Sentry 就有多种身份。有时它运行在 Guest 态的 Ring0， 此时它就像容器内应用的 Kernel。有时运行在 Host 态的 Ring 3，此时它就像 Host 上的一个普通进程。Sentry 处在什么状态上，完全取决于它当前正在处理的工作。当它在处理容器内的系统调用时，就处于 Guest 态。而当它需要跟 Host Kernel 进行交互时，就会通过 HLT 指令陷回 Host 模式。</p>
+<p>Sentry 目前约实现了 200 个左右的系统调用，而 Linux Kernel 则为 X86_64 提供了 318 个系统调用 (4.16 内核)。当应用调用了那些未被实现的系统调用时，Sentry 会直接报错返回。由于系统调用尚未完备，导致部分软件还不能无缝地运行在 gVisor 中。而且 gVisor 已支持的系统调用中，有若干还必须依赖 Host 内核。当处理这些系统调用时，Sentry 会陷回 Host 模式。</p>
+<p> Sentry 的进程管理</p>
+<p>Sentry 承担了一定的进程管理职责。启动 gVisor 容器后，可以在 Host 上看到两个 Runsc 进程。一个进程负责容器创建与 IO（Gofer），另一个向容器内的应用提供系统调用支持，也就是我们前面提到的 “内核进程”。容器内所有的进程，都以 Runsc 进程的线程存在。这有点像 Qemu。Runsc 进程在启动时会创建一定量的 vCPU 线程。</p>
+<p>Sentry 复用了 go 语言的 GMP 模型 [3]。每个应用的线程均对应到 go 语言内置的 goroutine（参见 kernle.Task.Start 函数），即 G。go runtime 会根据情况，选择是通过 Host 内核的原生 sys_clone 生成新的 M（工作线程）还是复用之前的。在这里 vCPU 即 P。最后 go runtime 调度器，将 goroutine、vCPU 和工作线程三者结合起来。M、P 线程的调度由 Host 内核来调用。</p>
+<p> 内存管理</p>
+<p>容器内应用的所有代码均由 Runsc 进程进行映射，并代理执行。gVisor 为每个应用进程都维护了一个 Guest 页表， Runsc 进程自身也有一个 Guest 页表。这么做是出于安全性的考虑，隔离了各个进程以及 Runsc 之间的地址空间。避免它们在内存上相互踩踏，也避免了恶意代码对 Runsc 的攻击。但在这种架构下，应用程序每次触发 syscall，都会伴随着一次 Guest 页表的切换。熟悉虚拟化的同学知道，这是一个非常可观的开销。</p>
+<p>可以与之鲜明对比的是 Unikernel[4]，在典型的 Unikernel 的架构下，所有的进程 &#x2F; 内核均运行在同一个地址空间中，系统调用等同于一次函数调用。但是应用程序中的任何一个不小心都可能导致整个系统 core 掉。安全与性能永远是个 Tradeoff。</p>
+<h1 id="网络"><a href="#网络" class="headerlink" title="网络"></a><strong>网络</strong></h1><p>gVisor 里面看到的网络设备是由 docker 创建容器的时候创建的 veth pair，并且在容器内部将虚拟网络设备改名为 eth0。这与普通的容器并没有太大区别。</p>
+<p> <img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img2020.cnblogs.com/blog/665372/202101/665372-20210108180054926-942707522.png"></p>
+<p>gVisor 提供两种网络通信的方式：</p>
+<ol>
+<li><p>通过宿主机 TCP&#x2F;IP 协议栈</p>
+</li>
+<li><p>通过 gVisor 实现的用户态 TCP&#x2F;IP 协议栈 (netstack)</p>
+</li>
+</ol>
+<p>默认配置是使用 netstack，如果需要更高的网络性能可以通过修改配置文件切换到使用宿主机的 TCP&#x2F;IP 协议栈。</p>
+<p>通过 gVisor 的 netstack 网络通信，gVisor 在捕获到应用的程序的系统调用的时候，并不使用宿主机的系统调用接口而是调用 netstack 提供的 socket 接口, 在经过 netstack 协议栈之后，通过宿主机的 raw socket 的方式进行收发包。</p>
+<p>通过宿主机 TCP&#x2F;IP 协议栈进行网络通信，其整个数据流跟原生容器一样，唯一区别在于 gVisor 需要捕获到安全容器内应用程序关于网络的系统调用。例如, listen&#x2F;accept&#x2F;sendmsg 等等。之后再将其转换成 host 的系统调用来进行网络通信。</p>
+<h1 id="文件系统"><a href="#文件系统" class="headerlink" title="文件系统"></a><strong>文件系统</strong></h1><p> <img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img2020.cnblogs.com/blog/665372/202101/665372-20210108180107058-992948047.png"></p>
+<p>gVisor 也跟 linux 一样对文件系统做了一层抽象，提供了 VFS 层，在其之下分别实现具体的文件系统。有 9p，tmpfs，procfs，sysfs 等。</p>
+<p>gVisor 兼容 OCI，因此它的 rootfs 的文件来源就来自容器 OCI 镜像各层聚合以后的 rootfs。为了减少 Guest App 直接对 Host 系统调用的依赖，Sentry 使用了 9pfs。应用程序通过 9p 协议与 Runsc 进程通信（内部运行着 Gofer Server 的功能），通过 Runsc 间接地来对 Host 的 rootfs 进行操作。</p>
+<p>gVisor 本身并未提供 Library，容器中的应用可以直接链接镜像 rootfs 中的 Library。所有的 binary 无需重新编译链接，确保了 gVisor 对已有程序的兼容性。</p>
+<p>除此之外，Sentry 还开发了内部的 tmpfs，这主要是为了保证运行性能。如果应用程序的临时文件也要经过 9pfs，性能上将无法忍受。Sentry 还模拟 Linux，开发了 &#x2F;proc 与 &#x2F;sys 文件系统中的部分文件，做到与 Linux 的兼容性。</p>
+<h1 id="性能测试-数据对比"><a href="#性能测试-数据对比" class="headerlink" title="性能测试 - 数据对比"></a><strong>性能测试 - 数据对比</strong></h1><p>我们利用 memcached 与 mysql 对比了 gVisor 与普通容器， RunV （类似 KATA），与 AliUK（阿里内部自研的下一代执行单元）。</p>
+<p> 1. memcached: memcached 的主要开销在网络上。gVisor 在 memcached 的    性能的差距是由于它自身的协议栈未被优化过。</p>
+<table cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="81">&nbsp;</td><td valign="top" width="113"><p>gVisor(ptrace)</p></td><td valign="top" width="109"><p>gVisor(kvm)</p></td><td valign="top" width="91"><p>runc</p></td><td valign="top" width="81"><p>runv</p></td><td valign="top" width="92"><p>aliuk</p></td></tr><tr><td valign="top" width="81"><p>memcached</p></td><td valign="top" width="113"><p>11.8M/s</p></td><td valign="top" width="109"><p>13.5M/s</p></td><td valign="top" width="91"><p>66.5M/s</p></td><td valign="top" width="81"><p>57.8M/s</p></td><td valign="top" width="92"><p>82.7M/s</p></td></tr></tbody></table>
+
+<p>如上为几种模型对 memcached 的 net_rate 指标，数值越大性能越好，发现 gVisor(ptrace) 确实小于 gVisor(kvm), 并且明显低于 runc&#x2F;runv&#x2F;aliuk；aliuk 的性能最佳。</p>
+<p> 2. mysql：在我们的测试中，mysql 主要开销在 IO 处理。gVisor 的根文件系 .   统通过 9p 协议访问 Host 上的文件。9p 协议性能相比 runc 容器本地 fs 性   能，甚至是 runv 和 aliuk 的 qcow2 的虚拟磁盘性能，都要差很多。</p>
+<table cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="81">&nbsp;</td><td valign="top" width="116"><p>gVisor(kvm)</p></td><td valign="top" width="86"><p>runc</p></td><td valign="top" width="188"><p>aliuk</p></td></tr><tr><td valign="top" width="81"><p>mysql</p></td><td valign="top" width="136"><p>22773.19ms</p></td><td valign="top" width="86"><p>1371.44ms</p></td><td valign="top" width="188"><p>1673.86ms</p></td></tr></tbody></table>
+
+<p>如上为 gVisor(kvm)、runc、aliuk 使用 sysbench 对 mysql oltp.lua 进行混合测试的平均时延，gVisor 的性能明显也最低。</p>
+<p>另外，Sentry 对 Host 内核的依赖，与 Syscall 劫持的低效也是 gVisor 比 AliUK 要差的原因之一。</p>
+<p>功能对比</p>
+<table cellspacing="0" cellpadding="0"><tbody><tr><td valign="top" width="102">&nbsp;</td><td valign="top" width="85"><p>runc 容器</p></td><td valign="top" width="66"><p>RunV</p></td><td valign="top" width="66"><p>gVisor</p></td><td valign="top" width="66"><p>AliUK</p></td><td valign="top" width="288"><p>备注</p></td></tr><tr><td valign="top" width="102"><p>自包含</p></td><td valign="top" width="85"><p>NA</p></td><td valign="top" width="66"><p>完整</p></td><td valign="top" width="66"><p>较完整</p></td><td valign="top" width="66"><p>完整</p></td><td valign="top" width="266"><p>gVisor 有部分 SYSCALL 的实现依赖于 Host 内核</p></td></tr><tr><td valign="top" width="102"><p>性能</p></td><td valign="top" width="85"><p>高</p></td><td valign="top" width="66"><p>较高</p></td><td valign="top" width="66"><p>低</p></td><td valign="top" width="66"><p>高</p></td><td valign="top" width="224">&nbsp;</td></tr><tr><td valign="top" width="102"><p>资源占用</p></td><td valign="top" width="85"><p>少</p></td><td valign="top" width="66"><p>较少</p></td><td valign="top" width="66"><p>较少</p></td><td valign="top" width="66"><p>较少</p></td><td valign="top" width="288">&nbsp;</td></tr><tr><td valign="top" width="102"><p>兼容性</p></td><td valign="top" width="85"><p>NA</p></td><td valign="top" width="66"><p>强</p></td><td valign="top" width="66"><p>较强</p></td><td valign="top" width="66"><p>弱</p></td><td valign="top" width="288"><p>gVisor 某些内核功能支持不完整，同时 / proc &nbsp;/sys 接口与 Linux 差别较大</p></td></tr><tr><td valign="top" width="102"><p>安全性</p></td><td valign="top" width="85"><p>弱</p></td><td valign="top" width="66"><p>强</p></td><td valign="top" width="66"><p>较强</p></td><td valign="top" width="66"><p>强</p></td><td valign="top" width="288"><p>gVisor 某些非外部资源访问的内核功能对 Host 内核产生依赖，增大了安全容器与 Host 内核的攻击面</p></td></tr></tbody></table>
+
+<p>前景展望</p>
+<p>gVisor 是一种对安全容器的解决方案。它在 OCI 兼容、二进制兼容、多进程方面实现得很巧妙，随着 SYSCALL 的完善和软件代码的成熟，会有越来越多的容器能够无缝地迁移到 gVisor 上。</p>
+<p>但是 gVisor 的当前版本在性能上还不尽如人意。应用程序每次调用 SYSCALL 都伴有页表切换，而且部分功能还依赖于 Host 内核而陷出到 Host。同时 IO 方面采用了性能不佳的 9pfs，加上网络协议栈方面未进行过优化。这些都导致了它的性能相比较普通容器来说，有较大程度地降低。对性能有较高要求的应用无法应用在 gVisor 上面。</p>
+<p>参考文献：</p>
+<p>[1]<a target="_blank" rel="noopener" href="https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html?vendor_id=33">https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html?vendor_id=33</a></p>
+<p>[2] <a target="_blank" rel="noopener" href="https://github.com/kata-containers">https://github.com/kata-containers</a></p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2023/09/28/containers/gvisor/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2023/09/28/containers/gvisor/')">远辰</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2023/09/28/containers/gvisor/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=远辰&amp;url=https://shippomx.github.io/2023/09/28/containers/gvisor/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/07/15/containers/docker%20cp%E4%B8%8Emount%E6%8C%82%E8%BD%BD%E4%BC%A0%E6%92%AD%E5%B1%9E%E6%80%A7%E5%AF%BC%E8%87%B4%E5%AE%B9%E5%99%A8%E6%8C%82%E8%BD%BD%E7%82%B9%E8%B6%85%E9%99%90%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">docker cp mount挂载属性传播</div></div></a></div><div class="next-post pull-right"><a href="/2023/09/28/linux/linux.%C2%A0%E7%BB%88%E7%AB%AF/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info"></div></div></a></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C"><span class="toc-number">1.</span> <span class="toc-text">网络</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="toc-number">2.</span> <span class="toc-text">文件系统</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95-%E6%95%B0%E6%8D%AE%E5%AF%B9%E6%AF%94"><span class="toc-number">3.</span> <span class="toc-text">性能测试 - 数据对比</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

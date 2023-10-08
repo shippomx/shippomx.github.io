@@ -1,0 +1,529 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>Kubernetes proxy详解 | 远辰</title><meta name="keywords" content="container"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="Kubernetes proxy详解"><meta name="application-name" content="Kubernetes proxy详解"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="Kubernetes proxy详解"><meta property="og:url" content="https://shippomx.github.io/2023/10/03/containers/k8s%20kubeproxy%20%E8%AF%A6%E8%A7%A3/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="kubernetes kube-proxytags: kube-proxy 文章目录 kubernetes kube-proxy  1. 介绍 2. 原理 3. Service, Endpoints 与 Pod 的关系 4. kubernetes 服务发现 5. kubernetes 发布 (暴露)"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="kubernetes kube-proxytags: kube-proxy 文章目录 kubernetes kube-proxy  1. 介绍 2. 原理 3. Service, Endpoints 与 Pod 的关系 4. kubernetes 服务发现 5. kubernetes 发布 (暴露)"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2023/10/03/containers/k8s%20kubeproxy%20%E8%AF%A6%E8%A7%A3/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: 'Kubernetes proxy详解',
+  postAI: '',
+  pageFillDescription: 'kubernetes kube-proxy, 文章目录, 7.1 userspace mode, 7.2 Iptables mode, 7.3 ipvs mode文章目录介绍原理与的关系服务发现发布暴露服务不足实现方式启动示例地心引力介绍是一个简单的网络代理和负载均衡器它的作用主要是负责的实现具体来说就是实现了内部从到和外部的从向的访问每台机器上都运行一个服务它监听中和的变化情况并通过等来为服务配置负载均衡仅支持和可以直接运行在物理机上也可以以或者的方式运行原理在中提供相同服务的一组可以抽象成一个通过提供的统一入口对外提供服务每个都有一个虚拟地址和端口号供客户端访问存在于各个节点上主要用于功能的实现具体来说就是实现集群内的客户端访问或者是集群外的主机通过等方式访问在当前版本的中默认使用的是模式通过各个节点上的规则来实现的负载均衡但是随着数量的增大模式由于线性查找匹配全量更新等特点其性能会显著下降从的版本开始引入了模式模式与同样基于但是采用的表因此当数量达到一定规模时查表的速度优势就会显现出来从而提高的服务性能负责为提供内部的服务发现和负载均衡它运行在每个计算节点上负责网络代理它会定时从服务获取到信息来做相应的策略维护网络规则和四层负载均衡工作在集群中微服务的负载均衡是由实现的它是集群内部的负载均衡器也是一个分布式代理服务器在的每个节点上都有一个这一设计体现了它的伸缩性优势需要访问服务的节点越多提供负载均衡能力的就越多高可用节点也随之增多是一组的服务抽象相当于一组的负责将请求分发给对应的会为这个提供一个一般称为的作用主要是负责的实现具体来说就是实现了内部从到和外部的从向的访问简单来说其实就是管理的访问入口包括集群内到的访问和集群外访问管理的该对外暴露一个也成为集群内通过访问这个就能访问到集群内对应的下的是通过选择的一组的服务抽象其实就是一个微服务提供了服务的和反向代理的能力而的主要作用就是负责的实现另外一个重要作用是一个服务后端的可能会随着生存灭亡而发生的改变的出现给服务提供了一个固定的而无视后端的变化举个例子比如现在有和是的服务抽象那么的作用就是可以将不管是或者向的请求进行转发到所代表的一个具体或者上请求的分配方法一般分配是采用轮询方法进行分配另外还提供了一种在节点上暴露一个端口从而提供从外部访问的方式比如这里使用这样的一个来创建举个例子比如现在有和是的服务抽象那么的作用就是可以将不管是或者向的请求进行转发到所代表的一个具体或者上请求的分配方法一般分配是采用轮询方法进行分配另外还提供了一种在节点上暴露一个端口从而提供从外部访问的方式比如这里使用这样的一个来创建上面配置的含义是在上暴露出端口当访问上的端口时其请求会转发到对应的的端口并进一步转发到的端口与的关系进程获取每个的实现的负载均衡功能的负载均衡转发规则访问的请求不论是的方式还是用节点的方式都被节点的规则重定向到监听服务代理端口接收到的访问请求后根据负载策略转发到后端的服务发现提供了两种方式进行服务发现即环境变量和简单说明如下环境变量当你创建一个的时候会在该中注入集群内所有的相关环境变量需要注意要想一个中注入某个的环境变量则必须要先比该创建这一点几乎使得这种方式进行服务发现不可用比如一个为的对应的为则其对应的环境变量为这是官方强烈推荐的方式可以通过方式轻松的创建来对集群内的进行服务发现发布暴露服务原生的一个的决定了其发布服务的方式这是默认的通过集群内的在内部发布服务这种方式是常用的用来对集群外暴露你可以通过访问集群内的每个的方式访问到对应后端的这也是用来对集群外暴露服务的不同的是这需要的支持比如等这个也是在集群内发布服务用的需要借助的支持就是用将该和做一个返回一个记录不足目前仅支持和不支持路由并且也没有健康检查机制这些可以通过自定义的方法来解决实现方式最早的负载均衡方案它在用户空间监听一个端口所有服务通过转发到这个端口然后在其内部负载均衡到实际的该方式最主要的问题是效率低有明显的性能瓶颈目前推荐的方案完全以规则的方式来实现负载均衡该方式最主要的问题是在服务多的时候产生太多的规则非增量式更新会引入一定的时延大规模情况下有明显的性能问题为解决模式的性能问题新增了模式开始支持测试版并在采用增量式更新并可以保证更新期间连接保持不断开同但仅工作在节点上注意使用模式时需要预先在每台上加载内核模块等在后就已经被淘汰了的作用就是在的用户空间监听一个端口所有的都转到这个端口然后的内部应用层对其进行转发会为每个随机监听一个端口并增加一个规则从客户端到的报文都会被重定向到收到报文后通过轮询或者会话亲和力即同一都走同一链路给同一服务分发给对应的所有流量都是在用户空间进行转发的虽然比较稳定但是效率不高如下图为的工作流程是在用户空间通过来实现的代理服务其原理如下可见这种最大的问题是的请求会先从用户空间进入内核然后再回到用户空间由完成后端的选择和代理工作这样流量从用户空间进出内核带来的性能损耗是不可接受的这也是及之前版本中对质疑最大的一点因此社区就开始研究这种模式下持续监听以及对象的变化对每个它都为其在本地节点开放一个端口作为其服务代理端口发往该端口的请求会采用一定的策略转发给与该服务对应的后端实体同时会在本地节点设置规则配置一个把发往的请求重定向到与该对应的服务代理端口上其工作流程大体如下由此分析该模式请求在到达进行处理时就会进入内核而监听则是在用户态请求就形成了从用户态到内核态再返回到用户态的传递过程一定程度降低了服务性能这种模式是从开始并在之前的默认模式在这种模式下监控对和对象进行增删改查并且这种模式使用来做用户态的入口而真正提供服务的是内核的采用模块化设计具有良好的可扩充性其重要工具模块从用户态的连接到内核态的的架构中与协议栈是无缝契合的并允许使用者对数据报进行过滤地址转换处理等操作这种情况下只作为监听增加和删除以及的消息对于每一个创建相应的规则并将发送到的流量转发到后端提供服务的的相应端口上并且流量的转发都是在内核态进行的所以性能更高更加可靠在这种模式下缺点就是在大规模的集群中添加规则会有很大的延迟因为使用每增加一个都会增加一条的并且修改了规则后必须得全部刷新才可以生效自定义几条链路和五个链并主要通过为链附着在和增加来配制规则模式下正常的通信链路在的里将将经过里的数据包重定向到中在自定义链里找到为目标地址的对于相同目标地址都有给对于非之间的访问进入对于之间的访问进入里找到对应的只有有对应信息的才有并找到对应的在里会对来自自身的打对于其他的做转换如果服务设置了并且当前上面没有任何属于该服务的那么在中会直接丢掉从公网请求的包因为使用来完成转发也存在不可忽视的性能损耗另外如果集群中存在上万的那么上的将会非常庞大性能还会再打折扣这也导致目前大部分企业用上生产时都不会直接用作为服务代理而是通过自己开发或者通过来集成来代替模式与相同持续监听以及对象的变化但它并不在本地节点开启反向代理服务而是把反向代理全部交给来实现即直接将对的请求转发给后端通过设置转发策略其工作流程大体如下由此分析该模式相比模式克服了请求在用户态内核态反复传递的问题性能上有所提升但使用来完成转发存在不可忽视的性能损耗而且在大规模场景下规则的条目会十分巨大性能上还要再打折扣的方式则是利用了的的转发进行实现对应的暴露出来的端口为对应的的端口为进一步对应于后端的的端口为后端代理了两个分别是和这里先来看一下的模型中有两个角色调度器又称为调度器主要用于接受用户请求真实主机简称为用于真正处理用户的请求从开始增加了支持相对于来说效率会更加高使用模式需要在允许的节点上安装工具包加载的内核模块并且可以轻松处理每秒万次以上的转发请求当启动的时候将验证节点上是否安装了模块如果未安装的话将回退到模式并在成为的默认代理模式模式也是基于对比模式在大规模集群有更好的扩展性和性能支持更加复杂的负载均衡算法如最小负载最少连接加权等支持的健康检查和连接重试等功能依赖于使用进行包过滤将使用需要被或的源地址或目标地址这样就能保证规则数量的固定我们不需要关心集群中有多少个了列出了各种服务在模式下的工作原理注意模式也会使用来执行和伪装并使用来简化规则的管理名成员用途这种模式会监视对象和调用接口以相应地创建规则并定期与对象和对象同步规则以确保状态与期望一致访问服务时流量将被重定向到其中一个后端以下情况下会使用将使用在数据包过滤和支持类型的服务这几个场景中具体来说将在以下个场景中回归启动项设置了如果以开头则将伪装访问服务群集的所有流量其行为与相同注节点上也需要进行配置因为在有些情况下是依赖的中这三条链是被创建和维护的不会创建它们在启动中指定集群如果以开头则将伪装访问服务群集的群集外流量其行为与相同为类型服务指定当服务的不为空并且指定了服务的时将安装支持为了支持类型的服务将在中继续现有的实现中实现原理图为什么每个会在网卡增加地址由于的钩子挂在链上因此必须要让内核识别是本机的这样才会过链要不然就通过链出去了通过设置将绑定到虚拟网卡因为绑定到虚拟网卡上内核可以识别访问的是本机的数据包到达链监听到达链的数据包比对数据包请求的服务是为集群服务修改数据包的目标地址为对应的然后将数据包发至链数据包经过链选路将数据包通过网卡发送出去从虚拟网卡获得源接收到请求之后构建响应报文改变源地址和目的地址返回给客户端模拟模式新增链路将地址即的地址为的包丢弃在指定的节点执行当该地址进入到这个的链路的时候直接如下查看链路是否有包因为当我们访问这个地址的时候会感知到这个是本机的地址所以会线进入的链路所以我们在增加了为的链路的话会有限之后恢复的话直接删除掉指定规则代表输出的行号启动示例或者如果设置了选项则也需要设置该选项并且名字一致否则会出现找不到的情况参考模式详解',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-10-08 11:31:38',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/container/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>container</span></a></span></div></div><h1 class="post-title" itemprop="name headline">Kubernetes proxy详解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2023-10-03T06:44:56.000Z" title="发表于 2023-10-03 14:44:56">2023-10-03</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-10-08T03:31:38.291Z" title="更新于 2023-10-08 11:31:38">2023-10-08</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2023/10/03/containers/k8s%20kubeproxy%20%E8%AF%A6%E8%A7%A3/"><header><a href="/tags/container/" tabindex="-1" itemprop="url">container</a><h1 id="CrawlerTitle" itemprop="name headline">Kubernetes proxy详解</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2023-10-03T06:44:56.000Z" title="发表于 2023-10-03 14:44:56">2023-10-03</time><time itemprop="dateCreated datePublished" datetime="2023-10-08T03:31:38.291Z" title="更新于 2023-10-08 11:31:38">2023-10-08</time></header><h1 id="kubernetes-kube-proxy"><a href="#kubernetes-kube-proxy" class="headerlink" title="kubernetes kube-proxy"></a>kubernetes kube-proxy</h1><p>tags: kube-proxy</p>
+<h3 id="文章目录"><a href="#文章目录" class="headerlink" title="文章目录"></a>文章目录</h3><ul>
+<li><a href="#kubernetes_kubeproxy_0">kubernetes kube-proxy</a></li>
+<li><ul>
+<li><a href="#1__16">1. 介绍</a></li>
+<li><a href="#2__21">2. 原理</a></li>
+<li><a href="#3_Service_EndpointsPod_62">3. Service, Endpoints 与 Pod 的关系</a></li>
+<li><a href="#4_kubernetes_71">4. kubernetes 服务发现</a></li>
+<li><a href="#5_kubernetes_88">5. kubernetes 发布 (暴露) 服务</a></li>
+<li><a href="#6_kubeproxy__96">6. kube-proxy 不足</a></li>
+<li><a href="#7__102">7. 实现方式</a></li>
+<li><ul>
+<li><a href="#71_userspace_mode_126">7.1 userspace mode</a></li>
+<li><a href="#72_Iptables_mode_137">7.2 Iptables mode</a></li>
+<li><a href="#73_ipvs_mode_246">7.3 ipvs mode</a></li>
+</ul>
+</li>
+<li><a href="#8__kubeproxy__370">8. 启动 kube-proxy 示例</a></li>
+</ul>
+</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://www.rottentomatoes.com/m/gravity_2013"><br><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/f89f89db2d1c4e1c98a7a8511b34a180.png"></a></p>
+<p><em>《地心引力》</em></p>
+<ol>
+<li>介绍</li>
+</ol>
+<hr>
+<p><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/">Kube-proxy</a> 是一个简单的网络代理和负载均衡器，它的作用主要是负责 Service 的实现，具体来说，就是实现了内部从 Pod 到 Service 和外部的从 NodePort 向 Service 的访问，每台机器上都运行一个 kube-proxy 服务，它监听 API server 中 service 和 endpoint 的变化情况，并通过 iptables 等来为服务配置负载均衡（仅支持 TCP 和 UDP）。</p>
+<p>kube-proxy 可以直接运行在物理机上，也可以以 static pod 或者 daemonset 的方式运行。</p>
+<ol start="2">
+<li>原理</li>
+</ol>
+<hr>
+<p>在 k8s 中，提供相同服务的一组 pod 可以抽象成一个 service，通过 service 提供的统一入口对外提供服务，每个 service 都有一个虚拟 IP 地址（VIP）和端口号供客户端访问。kube-proxy 存在于各个 node 节点上，主要用于 Service 功能的实现，具体来说，就是实现集群内的客户端 pod 访问 service，或者是集群外的主机通过 NodePort 等方式访问 service。在当前版本的 k8s 中，kube-proxy 默认使用的是 iptables 模式，通过各个 node 节点上的 iptables 规则来实现 service 的负载均衡，但是随着 service 数量的增大，iptables 模式由于线性查找匹配、全量更新等特点，其性能会显著下降。从 k8s 的 1.8 版本开始，kube-proxy 引入了 IPVS 模式，IPVS 模式与 iptables 同样基于 Netfilter，但是采用的 hash 表，因此当 service 数量达到一定规模时，hash 查表的速度优势就会显现出来，从而提高 service 的服务性能。</p>
+<p>kube-proxy 负责为 Service 提供 cluster 内部的服务发现和负载均衡，它运行在每个 Node 计算节点上，负责 Pod 网络代理, 它会定时从 etcd 服务获取到 service 信息来做相应的策略，维护网络规则和四层负载均衡工作。在 K8s 集群中微服务的负载均衡是由 Kube-proxy 实现的，它是 K8s 集群内部的负载均衡器，也是一个分布式代理服务器，在 K8s 的每个节点上都有一个，这一设计体现了它的伸缩性优势，需要访问服务的节点越多，提供负载均衡能力的 Kube-proxy 就越多，高可用节点也随之增多。</p>
+<p>service 是一组 pod 的服务抽象，相当于一组 pod 的 LB，负责将请求分发给对应的 pod。service 会为这个 LB 提供一个 IP，一般称为 cluster IP。kube-proxy 的作用主要是负责 service 的实现，具体来说，就是实现了内部从 pod 到 service 和外部的从 node port 向 service 的访问。</p>
+<p>简单来说:</p>
+<ul>
+<li>-&gt; kube-proxy 其实就是管理 service 的访问入口，包括集群内 Pod 到 Service 的访问和集群外访问 service。</li>
+<li>-&gt; kube-proxy 管理 sevice 的 Endpoints，该 service 对外暴露一个 Virtual IP，也成为 Cluster IP, 集群内通过访问这个 Cluster IP:Port 就能访问到集群内对应的 serivce 下的 Pod。</li>
+<li>-&gt; service 是通过 Selector 选择的一组 Pods 的服务抽象，其实就是一个微服务，提供了服务的 LB 和反向代理的能力，而 kube-proxy 的主要作用就是负责 service 的实现。</li>
+<li>-&gt; service 另外一个重要作用是，一个服务后端的 Pods 可能会随着生存灭亡而发生 IP 的改变，service 的出现，给服务提供了一个固定的 IP，而无视后端 Endpoint 的变化。</li>
+</ul>
+<p>举个例子，比如现在有 podA，podB，podC 和 serviceAB。serviceAB 是 podA，podB 的服务抽象 (service)。那么 kube-proxy 的作用就是可以将 pod(不管是 podA，podB 或者 podC) 向 serviceAB 的请求，进行转发到 service 所代表的一个具体 pod(podA 或者 podB)上。请求的分配方法一般分配是采用轮询方法进行分配。另外，kubernetes 还提供了一种在 node 节点上暴露一个端口，从而提供从外部访问 service 的方式。比如这里使用这样的一个 manifest 来创建 service</p>
+<p>举个例子，比如现在有 podA，podB，podC 和 serviceAB。serviceAB 是 podA，podB 的服务抽象 (service)。那么 kube-proxy 的作用就是可以将 pod(不管是 podA，podB 或者 podC) 向 serviceAB 的请求，进行转发到 service 所代表的一个具体 pod(podA 或者 podB)上。请求的分配方法一般分配是采用轮询方法进行分配。另外，kubernetes 还提供了一种在 node 节点上暴露一个端口，从而提供从外部访问 service 的方式。比如这里使用这样的一个 manifest 来创建 service</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    name: mysql</span><br><span class="line">    role: service</span><br><span class="line">  name: mysql-service</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">    - port: 3306</span><br><span class="line">      targetPort: 3306</span><br><span class="line">      nodePort: 30964</span><br><span class="line">  type: NodePort</span><br><span class="line">  selector:</span><br><span class="line">    mysql-service: &quot;true&quot;</span><br></pre></td></tr></table></figure>
+
+<p>上面配置的含义是在 node 上暴露出 30964 端口。当访问 node 上的 30964 端口时，其请求会转发到 service 对应的 cluster IP 的 3306 端口，并进一步转发到 pod 的 3306 端口。<br><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210401113617620.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"></p>
+<ol start="3">
+<li>Service, Endpoints 与 Pod 的关系</li>
+</ol>
+<hr>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210401135532843.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"></p>
+<p>Kube-proxy 进程获取每个 Service 的 Endpoints, 实现 Service 的负载均衡功能<br>Service 的负载均衡转发规则</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210401135605151.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"><br><strong>访问 Service 的请求，不论是 Cluster IP+TargetPort 的方式；还是用 Node 节点 IP+NodePort 的方式，都被 Node 节点的 Iptables 规则重定向到 Kube-proxy 监听 Service 服务代理端口。kube-proxy 接收到 Service 的访问请求后，根据负载策略，转发到后端的 Pod。</strong></p>
+<ol start="4">
+<li>kubernetes 服务发现</li>
+</ol>
+<hr>
+<p>Kubernetes 提供了两种方式进行服务发现, 即环境变量和 DNS, 简单说明如下:</p>
+<ol>
+<li>环境变量： 当你创建一个 Pod 的时候，kubelet 会在该 Pod 中注入集群内所有 Service 的相关环境变量。需要注意: 要想一个 Pod 中注入某个 Service 的环境变量，则必须 Service 要先比该 Pod 创建。这一点，几乎使得这种方式进行服务发现不可用。比如，一个 ServiceName 为 redis-master 的 Service，对应的 ClusterIP:Port 为 172.16.50.11:6379，则其对应的环境变量为:</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">REDIS_MASTER_SERVICE_HOST=172.16.50.11</span><br><span class="line">REDIS_MASTER_SERVICE_PORT=6379</span><br><span class="line">REDIS_MASTER_PORT=tcp://172.16.50.11:6379</span><br><span class="line">REDIS_MASTER_PORT_6379_TCP=tcp://172.16.50.11:6379</span><br><span class="line">REDIS_MASTER_PORT_6379_TCP_PROTO=tcp</span><br><span class="line">REDIS_MASTER_PORT_6379_TCP_PORT=6379</span><br><span class="line">REDIS_MASTER_PORT_6379_TCP_ADDR=172.16.50.11</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><p>DNS：这是 k8s 官方强烈推荐的方式!!! 可以通过 cluster add-on 方式轻松的创建 KubeDNS 来对集群内的 Service 进行服务发现。</p>
+</li>
+<li><p>kubernetes 发布 (暴露) 服务</p>
+</li>
+</ol>
+<hr>
+<p>kubernetes 原生的，一个 Service 的<code>ServiceType</code>决定了其发布服务的方式。</p>
+<ul>
+<li>-&gt; <code>ClusterIP</code>：这是 k8s 默认的 ServiceType。通过集群内的 ClusterIP 在内部发布服务。</li>
+<li>-&gt; <code>NodePort</code>：这种方式是常用的，用来对集群外暴露 Service，你可以通过访问集群内的每个 NodeIP:NodePort 的方式，访问到对应 Service 后端的 Endpoint。</li>
+<li>-&gt; <code>LoadBalancer</code>: 这也是用来对集群外暴露服务的，不同的是这需要 Cloud Provider 的支持，比如 AWS 等。</li>
+<li>-&gt; <code>ExternalName</code>：这个也是在集群内发布服务用的，需要借助 KubeDNS(version&gt;&#x3D; 1.7) 的支持，就是用 KubeDNS 将该 service 和 ExternalName 做一个 Map，KubeDNS 返回一个 CNAME 记录。</li>
+</ul>
+<ol start="6">
+<li>kube-proxy 不足</li>
+</ol>
+<hr>
+<p>kube-proxy 目前仅支持 TCP 和 UDP，不支持 HTTP 路由，并且也没有健康检查机制。这些可以通过自定义 <a target="_blank" rel="noopener" href="https://feisky.gitbooks.io/kubernetes/content/plugins/ingress.html">Ingress Controller</a> 的方法来解决。</p>
+<ol start="7">
+<li>实现方式</li>
+</ol>
+<hr>
+<ul>
+<li>userspace：最早的负载均衡方案，它在用户空间监听一个端口，所有服务通过 iptables 转发到这个端口，然后在其内部负载均衡到实际的 Pod。该方式最主要的问题是效率低，有明显的性能瓶颈。</li>
+<li>iptables：目前推荐的方案，完全以 iptables 规则的方式来实现 service 负载均衡。该方式最主要的问题是在服务多的时候产生太多的 iptables 规则，非增量式更新会引入一定的时延，大规模情况下有明显的性能问题</li>
+<li>ipvs：为解决 iptables 模式的性能问题，v1.11 新增了 ipvs 模式（v1.8 开始支持测试版，并在 v1.11<br>GA），采用增量式更新，并可以保证 service 更新期间连接保持不断开</li>
+<li>winuserspace：同 userspace，但仅工作在 windows 节点上</li>
+</ul>
+<p>注意：使用 ipvs 模式时，需要预先在每台 Node 上加载内核模块 nf_conntrack_ipv4, ip_vs, ip_vs_rr, ip_vs_wrr, ip_vs_sh 等。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># load module &lt;module_name&gt;</span><br><span class="line">modprobe -- ip_vs</span><br><span class="line">modprobe -- ip_vs_rr</span><br><span class="line">modprobe -- ip_vs_wrr</span><br><span class="line">modprobe -- ip_vs_sh</span><br><span class="line">modprobe -- nf_conntrack_ipv4</span><br><span class="line"></span><br><span class="line"># to check loaded modules, use</span><br><span class="line">lsmod | grep -e ip_vs -e nf_conntrack_ipv4</span><br><span class="line"># or</span><br><span class="line">cut -f1 -d &quot; &quot;  /proc/modules | grep -e ip_vs -e nf_conntrack_ipv4</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-1-userspace-mode"><a href="#7-1-userspace-mode" class="headerlink" title="7.1 userspace mode"></a>7.1 userspace mode</h3><p>在 k8s v1.2 后就已经被淘汰了，userspace 的作用就是在 proxy 的用户空间监听一个端口，所有的 svc 都转到这个端口，然后 proxy 的内部应用层对其进行转发。proxy 会为每个 svc 随机监听一个端口，并增加一个 iptables 规则，从客户端到 ClusterIP:Port 的报文都会被重定向到 Proxy Port，Kube-Proxy 收到报文后，通过 Round Robin (轮询) 或者 Session Affinity（会话亲和力，即同一 Client IP 都走同一链路给同一 Pod 服务）分发给对应的 Pod。所有流量都是在用户空间进行转发的，虽然比较稳定，但是效率不高。如下图为 userspace 的工作流程。<br>serspace 是在用户空间，通过 kube-proxy 来实现 service 的代理服务, 其原理如下:<br><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210401211423686.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"><br>可见，userspace 这种 mode 最大的问题是，service 的请求会先从用户空间进入内核 iptables，然后再回到用户空间，由 kube-proxy 完成后端 Endpoints 的选择和代理工作，这样流量从用户空间进出内核带来的性能损耗是不可接受的。这也是 k8s v1.0 及之前版本中对 kube-proxy 质疑最大的一点，因此社区就开始研究 iptables mode.</p>
+<p>userspace 这种模式下，kube-proxy 持续监听 Service 以及 Endpoints 对象的变化；对每个 Service，它都为其在本地节点开放一个端口，作为其服务代理端口；发往该端口的请求会采用一定的策略转发给与该服务对应的后端 Pod 实体。kube-proxy 同时会在本地节点设置 iptables 规则，配置一个 Virtual IP，把发往 Virtual IP 的请求重定向到与该 Virtual IP 对应的服务代理端口上。其工作流程大体如下:</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210401211505152.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"><br>由此分析: 该模式请求在到达 iptables 进行处理时就会进入内核，而 kube-proxy 监听则是在用户态, 请求就形成了从用户态到内核态再返回到用户态的传递过程, 一定程度降低了服务性能。</p>
+<h3 id="7-2-Iptables-mode"><a href="#7-2-Iptables-mode" class="headerlink" title="7.2 Iptables mode"></a>7.2 Iptables mode</h3><p>iptables 这种模式是从 kubernetes1.2 开始并在 v1.12 之前的默认模式。在这种模式下 proxy 监控 kubernetes 对 svc 和 ep 对象进行增删改查。并且这种模式使用 iptables 来做用户态的入口，而真正提供服务的是内核的 Netilter，Netfilter 采用模块化设计，具有良好的可扩充性。其重要工具模块 IPTables 从用户态的 iptables 连接到内核态的 Netfilter 的架构中，Netfilter 与 IP 协议栈是无缝契合的，并允许使用者对数据报进行过滤、地址转换、处理等操作。这种情况下 proxy 只作为 Controller。Kube-Proxy 监听 Kubernetes Master 增加和删除 Service 以及 Endpoint 的消息。对于每一个 Service，Kube Proxy 创建相应的 IPtables 规则，并将发送到 Service Cluster IP 的流量转发到 Service 后端提供服务的 Pod 的相应端口上。并且流量的转发都是在内核态进行的，所以性能更高更加可靠。</p>
+<p>在这种模式下缺点就是在大规模的集群中，iptables 添加规则会有很大的延迟。因为使用 iptables，每增加一个 svc 都会增加一条 iptables 的 chain。并且 iptables 修改了规则后必须得全部刷新才可以生效。</p>
+<p>iptables 自定义几条链路：KUBE-SERVICES，KUBE-NODEPORTS，KUBE-POSTROUTING，KUBE-MARK-MASQ 和 KUBE-MARK-DROP 五个链，并主要通过为 KUBE-SERVICES 链（附着在 PREROUTING 和 OUTPUT）增加 rule 来配制 traffic routing 规则。</p>
+<p>iptabels 模式下正常的通信链路：</p>
+<p>在 PREROUTING 的 chain 里将 将经过 PREROUTING 里的数据包重定向到 KUBE-SERVICES 中</p>
+<p>在自定义链 kube-services 里找到 dst 为目标地址的 ip（ps：kube-services 对于相同目标地址都有 2 给 target，对于非 pod 之间的访问进入 KUBE-MARK-MASQ，对于 pod 之间的访问进入 KUBE-SVC- <em>里)，找到对应的 KUBE-SVC-</em>(ps: 只有有对应 endpoint 信息的才有 KUBE-SVC-*)，并找到 KUBE-SVC- _对应的 KUBE-SEP-_。在 SEP 里会对 source 来自自身 ip 的打 KUBE-MARK-MASQ，对于其他的做 DNAT 转换<br><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210401112856314.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"># Masquerade</span><br><span class="line">-A KUBE-MARK-DROP -j MARK --set-xmark 0x8000/0x8000</span><br><span class="line">-A KUBE-MARK-MASQ -j MARK --set-xmark 0x4000/0x4000</span><br><span class="line">-A KUBE-POSTROUTING -m comment --comment &quot;kubernetes service traffic requiring SNAT&quot; -m mark --mark 0x4000/0x4000 -j MASQUERADE</span><br><span class="line"></span><br><span class="line"># clusterIP and publicIP</span><br><span class="line">-A KUBE-SERVICES ! -s 10.244.0.0/16 -d 10.98.154.163/32 -p tcp -m comment --comment &quot;default/nginx: cluster IP&quot; -m tcp --dport 80 -j KUBE-MARK-MASQ</span><br><span class="line">-A KUBE-SERVICES -d 10.98.154.163/32 -p tcp -m comment --comment &quot;default/nginx: cluster IP&quot; -m tcp --dport 80 -j KUBE-SVC-4N57TFCL4MD7ZTDA</span><br><span class="line">-A KUBE-SERVICES -d 12.12.12.12/32 -p tcp -m comment --comment &quot;default/nginx: loadbalancer IP&quot; -m tcp --dport 80 -j KUBE-FW-4N57TFCL4MD7ZTDA</span><br><span class="line"></span><br><span class="line"># Masq for publicIP</span><br><span class="line">-A KUBE-FW-4N57TFCL4MD7ZTDA -m comment --comment &quot;default/nginx: loadbalancer IP&quot; -j KUBE-MARK-MASQ</span><br><span class="line">-A KUBE-FW-4N57TFCL4MD7ZTDA -m comment --comment &quot;default/nginx: loadbalancer IP&quot; -j KUBE-SVC-4N57TFCL4MD7ZTDA</span><br><span class="line">-A KUBE-FW-4N57TFCL4MD7ZTDA -m comment --comment &quot;default/nginx: loadbalancer IP&quot; -j KUBE-MARK-DROP</span><br><span class="line"></span><br><span class="line"># Masq for nodePort</span><br><span class="line">-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;default/nginx:&quot; -m tcp --dport 30938 -j KUBE-MARK-MASQ</span><br><span class="line">-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;default/nginx:&quot; -m tcp --dport 30938 -j KUBE-SVC-4N57TFCL4MD7ZTDA</span><br><span class="line"></span><br><span class="line"># load balance for each endpoints</span><br><span class="line">-A KUBE-SVC-4N57TFCL4MD7ZTDA -m comment --comment &quot;default/nginx:&quot; -m statistic --mode random --probability 0.33332999982 -j KUBE-SEP-UXHBWR5XIMVGXW3H</span><br><span class="line">-A KUBE-SVC-4N57TFCL4MD7ZTDA -m comment --comment &quot;default/nginx:&quot; -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-TOYRWPNILILHH3OR</span><br><span class="line">-A KUBE-SVC-4N57TFCL4MD7ZTDA -m comment --comment &quot;default/nginx:&quot; -j KUBE-SEP-6QCC2MHJZP35QQAR</span><br><span class="line"></span><br><span class="line"># endpoint #1</span><br><span class="line">-A KUBE-SEP-6QCC2MHJZP35QQAR -s 10.244.3.4/32 -m comment --comment &quot;default/nginx:&quot; -j KUBE-MARK-MASQ</span><br><span class="line">-A KUBE-SEP-6QCC2MHJZP35QQAR -p tcp -m comment --comment &quot;default/nginx:&quot; -m tcp -j DNAT --to-destination 10.244.3.4:80</span><br><span class="line"></span><br><span class="line"># endpoint #2</span><br><span class="line">-A KUBE-SEP-TOYRWPNILILHH3OR -s 10.244.2.4/32 -m comment --comment &quot;default/nginx:&quot; -j KUBE-MARK-MASQ</span><br><span class="line">-A KUBE-SEP-TOYRWPNILILHH3OR -p tcp -m comment --comment &quot;default/nginx:&quot; -m tcp -j DNAT --to-destination 10.244.2.4:80</span><br><span class="line"></span><br><span class="line"># endpoint #3</span><br><span class="line">-A KUBE-SEP-UXHBWR5XIMVGXW3H -s 10.244.1.2/32 -m comment --comment &quot;default/nginx:&quot; -j KUBE-MARK-MASQ</span><br><span class="line">-A KUBE-SEP-UXHBWR5XIMVGXW3H -p tcp -m comment --comment &quot;default/nginx:&quot; -m tcp -j DNAT --to-destination 10.244.1.2:80</span><br></pre></td></tr></table></figure>
+
+<p>如果服务设置了 <code>externalTrafficPolicy: Local</code> 并且当前 Node 上面没有任何属于该服务的 Pod，那么在 KUBE-XLB-4N57TFCL4MD7ZTDA 中会直接丢掉从公网 IP 请求的包：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">-A KUBE-XLB-4N57TFCL4MD7ZTDA -m comment --comment &quot;default/nginx: has no local endpoints&quot; -j KUBE-MARK-DROP</span><br></pre></td></tr></table></figure>
+
+<p>iptables mode 因为使用 iptable NAT 来完成转发，也存在不可忽视的性能损耗。另外，如果集群中存在上万的 Service&#x2F;Endpoint，那么 Node 上的 iptables rules 将会非常庞大，性能还会再打折扣。这也导致目前大部分企业用 k8s 上生产时，都不会直接用 kube-proxy 作为服务代理，而是通过自己开发或者通过 Ingress Controller 来集成 HAProxy, Nginx 来代替 kube-proxy。</p>
+<p>iptables 模式与 userspace 相同，kube-proxy 持续监听 Service 以及 Endpoints 对象的变化；但它并不在本地节点开启反向代理服务，而是把反向代理全部交给 iptables 来实现；即 <code>iptables</code> 直接将对 <code>VIP</code> 的请求转发给后端 Pod，通过 iptables 设置转发策略。其工作流程大体如下:<br><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210401211721205.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"></p>
+<p>由此分析: 该模式相比 userspace 模式，克服了请求在用户态 - 内核态反复传递的问题，性能上有所提升，但使用 iptables NAT 来完成转发，存在不可忽视的性能损耗，而且在大规模场景下，iptables 规则的条目会十分巨大，性能上还要再打折扣。</p>
+<p>iptables 的方式则是利用了 linux 的 iptables 的 nat 转发进行实现:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">apiVersion: v1</span><br><span class="line">kind: Service</span><br><span class="line">metadata:</span><br><span class="line">  labels:</span><br><span class="line">    name: mysql</span><br><span class="line">    role: service</span><br><span class="line">  name: mysql-service</span><br><span class="line">spec:</span><br><span class="line">  ports:</span><br><span class="line">    - port: 3306</span><br><span class="line">      targetPort: 3306</span><br><span class="line">      nodePort: 30964</span><br><span class="line">  type: NodePort</span><br><span class="line">  selector:</span><br><span class="line">    mysql-service: &quot;true&quot;</span><br></pre></td></tr></table></figure>
+
+<p>mysql-service 对应的 nodePort 暴露出来的端口为<code>30964</code>，对应的<code>cluster IP(10.254.162.44)</code>的端口为 3306，进一步对应于后端的 pod 的端口为 3306。 mysql-service 后端代理了两个 pod，ip 分别是 192.168.125.129 和 192.168.125.131, 这里先来看一下 iptables:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">$iptables -S -t nat</span><br><span class="line">...</span><br><span class="line">-A PREROUTING -m comment --comment &quot;kubernetes service portals&quot; -j KUBE-SERVICES</span><br><span class="line">-A OUTPUT -m comment --comment &quot;kubernetes service portals&quot; -j KUBE-SERVICES</span><br><span class="line">-A POSTROUTING -m comment --comment &quot;kubernetes postrouting rules&quot; -j KUBE-POSTROUTING</span><br><span class="line">-A KUBE-MARK-MASQ -j MARK --set-xmark 0x4000/0x4000</span><br><span class="line">-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;default/mysql-service:&quot; -m tcp --dport 30964 -j KUBE-MARK-MASQ</span><br><span class="line">-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;default/mysql-service:&quot; -m tcp --dport 30964 -j KUBE-SVC-67RL4FN6JRUPOJYM</span><br><span class="line">-A KUBE-SEP-ID6YWIT3F6WNZ47P -s 192.168.125.129/32 -m comment --comment &quot;default/mysql-service:&quot; -j KUBE-MARK-MASQ</span><br><span class="line">-A KUBE-SEP-ID6YWIT3F6WNZ47P -p tcp -m comment --comment &quot;default/mysql-service:&quot; -m tcp -j DNAT --to-destination 192.168.125.129:3306</span><br><span class="line">-A KUBE-SEP-IN2YML2VIFH5RO2T -s 192.168.125.131/32 -m comment --comment &quot;default/mysql-service:&quot; -j KUBE-MARK-MASQ</span><br><span class="line">-A KUBE-SEP-IN2YML2VIFH5RO2T -p tcp -m comment --comment &quot;default/mysql-service:&quot; -m tcp -j DNAT --to-destination 192.168.125.131:3306</span><br><span class="line">-A KUBE-SERVICES -d 10.254.162.44/32 -p tcp -m comment --comment &quot;default/mysql-service: cluster IP&quot; -m tcp --dport 3306 -j KUBE-SVC-67RL4FN6JRUPOJYM</span><br><span class="line">-A KUBE-SERVICES -m comment --comment &quot;kubernetes service nodeports; NOTE: this must be the last rule in this chain&quot; -m addrtype --dst-type LOCAL -j KUBE-NODEPORTS</span><br><span class="line">-A KUBE-SVC-67RL4FN6JRUPOJYM -m comment --comment &quot;default/mysql-service:&quot; -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-ID6YWIT3F6WNZ47P</span><br><span class="line">-A KUBE-SVC-67RL4FN6JRUPOJYM -m comment --comment &quot;default/mysql-service:&quot; -j KUBE-SEP-IN2YML2VIFH5RO2T</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-3-ipvs-mode"><a href="#7-3-ipvs-mode" class="headerlink" title="7.3 ipvs mode"></a>7.3 ipvs mode</h3><p><strong>ipvs 的模型中有两个角色</strong>：</p>
+<ul>
+<li>调度器: Director，又称为 Balancer。 调度器主要用于接受用户请求。</li>
+<li>真实主机: Real Server，简称为 RS。用于真正处理用户的请求。</li>
+</ul>
+<p>kubernetes 从 1.8 开始增加了 IPVS 支持，IPVS 相对于 iptables 来说效率会更加高，使用 ipvs 模式需要在允许 proxy 的节点上安装 ipvsadm，ipset 工具包加载 ipvs 的内核模块。并且 ipvs 可以轻松处理每秒 10 万次以上的转发请求。</p>
+<p>当 proxy 启动的时候，proxy 将验证节点上是否安装了 ipvs 模块。如果未安装的话将回退到 iptables 模式。</p>
+<p>并在 Kubernetes 1.12 成为 kube-proxy 的默认代理模式。ipvs 模式也是基于 netfilter，对比 iptables 模式在大规模 Kubernetes 集群有更好的扩展性和性能，支持更加复杂的负载均衡算法 (如：最小负载、最少连接、加权等)，支持 Server 的健康检查和连接重试等功能。ipvs 依赖于 iptables，使用 iptables 进行包过滤、SNAT、masquared。ipvs 将使用 ipset 需要被 DROP 或 MASQUARED 的源地址或目标地址，这样就能保证 iptables 规则数量的固定，我们不需要关心集群中有多少个 Service 了。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/ipvs/README.md">Kube-proxy IPVS mode</a> 列出了各种服务在 IPVS 模式下的工作原理</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210401113020267.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ ipvsadm -ln</span><br><span class="line">IP Virtual Server version 1.2.1 (size=4096)</span><br><span class="line">Prot LocalAddress:Port Scheduler Flags</span><br><span class="line">  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn</span><br><span class="line">TCP  10.0.0.1:443 rr persistent 10800</span><br><span class="line">  -&gt; 192.168.0.1:6443             Masq    1      1          0</span><br><span class="line">TCP  10.0.0.10:53 rr</span><br><span class="line">  -&gt; 172.17.0.2:53                Masq    1      0          0</span><br><span class="line">UDP  10.0.0.10:53 rr</span><br><span class="line">  -&gt; 172.17.0.2:53                Masq    1      0          0</span><br></pre></td></tr></table></figure>
+
+<p>注意，IPVS 模式也会使用 iptables 来执行 SNAT 和 IP 伪装（MASQUERADE），并使用 ipset 来简化 iptables 规则的管理：</p>
+<table><thead><tr><th>ipset 名</th><th>成员</th><th>用途</th></tr></thead><tbody><tr><td>KUBE-CLUSTER-IP</td><td>All service IP + port</td><td>Mark-Masq for cases that masquerade-all=true or clusterCIDR specified</td></tr><tr><td>KUBE-LOOP-BACK</td><td>All service IP + port + IP</td><td>masquerade for solving hairpin purpose</td></tr><tr><td>KUBE-EXTERNAL-IP</td><td>service external IP + port</td><td>masquerade for packages to external IPs</td></tr><tr><td>KUBE-LOAD-BALANCER</td><td>load balancer ingress IP + port</td><td>masquerade for packages to load balancer type service</td></tr><tr><td>KUBE-LOAD-BALANCER-LOCAL</td><td>LB ingress IP + port with externalTrafficPolicy=local</td><td>accept packages to load balancer with externalTrafficPolicy=local</td></tr><tr><td>KUBE-LOAD-BALANCER-FW</td><td>load balancer ingress IP + port with loadBalancerSourceRanges</td><td>package filter for load balancer with loadBalancerSourceRanges specified</td></tr><tr><td>KUBE-LOAD-BALANCER-SOURCE-CIDR</td><td>load balancer ingress IP + port + source CIDR</td><td>package filter for load balancer with loadBalancerSourceRanges specified</td></tr><tr><td>KUBE-NODE-PORT-TCP</td><td>nodeport type service TCP port</td><td>masquerade for packets to nodePort(TCP)</td></tr><tr><td>KUBE-NODE-PORT-LOCAL-TCP</td><td>nodeport type service TCP port with externalTrafficPolicy=local</td><td>accept packages to nodeport service with externalTrafficPolicy=local</td></tr><tr><td>KUBE-NODE-PORT-UDP</td><td>nodeport type service UDP port</td><td>masquerade for packets to nodePort(UDP)</td></tr><tr><td>KUBE-NODE-PORT-LOCAL-UDP</td><td>nodeport type service UDP port withexternalTrafficPolicy=local</td><td>accept packages to nodeport service withexternalTrafficPolicy=local</td></tr></tbody></table>
+
+<p>这种模式，Kube-Proxy 会监视 Kubernetes Service 对象 和 Endpoints，调用 Netlink 接口以相应地创建 IPVS 规则并定期与 Kubernetes Service 对象 和 Endpoints 对象同步 IPVS 规则，以确保 IPVS 状态与期望一致。访问服务时，流量将被重定向到其中一个后端 Pod。</p>
+<p>以下情况下 IPVS 会使用 iptables</p>
+<p>IPVS proxier 将使用 iptables，在数据包过滤，SNAT 和支持 NodePort 类型的服务这几个场景中。具体来说，ipvs proxier 将在以下 4 个场景中回归 iptables。</p>
+<p>kube-proxy 启动项设置了 –masquerade-all&#x3D;true</p>
+<p>如果 kube-proxy 以<code>--masquerade-all = true</code>开头，则 ipvs proxier 将伪装访问服务群集 IP 的所有流量，其行为与 iptables proxier 相同</p>
+<p>注：master 节点上也需要进行 kubelet 配置。因为 ipvs 在有些情况下是依赖 iptables 的，iptables 中 KUBE-POSTROUTING，KUBE-MARK-MASQ， KUBE-MARK-DROP 这三条链是被 kubelet 创建和维护的， ipvs 不会创建它们。</p>
+<p>在 kube-proxy 启动中指定集群 CIDR</p>
+<p>如果 kube-proxy 以–cluster-cidr &#x3D; 开头，则 ipvs proxier 将伪装访问服务群集 IP 的群集外流量，其行为与 iptables proxier 相同。</p>
+<p>为 LB 类型服务指定 Load Balancer Source Ranges</p>
+<p>当服务的 LoadBalancerStatus.ingress.IP 不为空并且指定了服务的 LoadBalancerSourceRanges 时，ipvs proxier 将安装 iptables。</p>
+<p>支持 NodePort type service</p>
+<p>为了支持 NodePort 类型的服务，ipvs 将在 iptables proxier 中继续现有的实现。</p>
+<p>kubernetes 中 ipvs 实现原理图：<br><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210402173302972.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"><br>为什么每个 svc 会在 ipvs 网卡增加 vip 地址：</p>
+<p>由于 IPVS 的 DNAT 钩子挂在 INPUT 链上，因此必须要让内核识别 VIP 是本机的 IP。这样才会过 INPUT 链，要不然就通过 OUTPUT 链出去了。k8s 通过设置将 service cluster ip 绑定到虚拟网卡 kube-ipvs0。</p>
+<p>①因为 service cluster ip 绑定到虚拟网卡 kube-ipvs0 上，内核可以识别访问的 VIP 是本机的 IP.</p>
+<p>②数据包到达 INPUT 链.</p>
+<p>③ipvs 监听到达 input 链的数据包，比对数据包请求的服务是为集群服务，修改数据包的目标 IP 地址为对应 pod 的 IP，然后将数据包发至 POSTROUTING 链.</p>
+<p>④数据包经过 POSTROUTING 链选路，将数据包通过 flannel 网卡发送出去。从 flannel 虚拟网卡获得源 IP.</p>
+<p>⑤pod 接收到请求之后，构建响应报文，改变源地址和目的地址，返回给客户端。</p>
+<p>模拟 ipvs 模式：</p>
+<p>新增 DROP 链路 将 svc 地址即 ipvs 的 vip 地址为 10.222.251.98 的包丢弃</p>
+<p>在指定的 node 节点执行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iptables -t filter -I INPUT -d 10.222.251.98 -j DROP</span><br></pre></td></tr></table></figure>
+
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210402173703214.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"></p>
+<p>当该 vip 地址进入到这个 input 的链路的时候直接 DROP 如下：</p>
+<p>查看链路是否有包</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">watch -n 0.1 &quot;iptables --line-number -nvxL INPUT&quot;</span><br></pre></td></tr></table></figure>
+
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210402173738660.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"><br>因为当我们访问 10.222.251.98 这个地址的时候，ipvs 会感知到这个 ip 是本机的 vip 地址，所以会线进入 input 的链路。所以我们在 input 增加了 desc 为 10.222.251.98 的 DROP 链路的话，会有限</p>
+<p>之后恢复的话直接删除掉指定规则</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iptables -D INPUT 1</span><br></pre></td></tr></table></figure>
+
+<p>ps： 1 代表 iptables -nL –line-number 输出的行号</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://img-blog.csdnimg.cn/20210402173802286.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpeGloYWhhbGVsZWhlaGU=,size_16,color_FFFFFF,t_70"></p>
+<ol start="8">
+<li>启动 kube-proxy 示例</li>
+</ol>
+<hr>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kube-proxy --kubeconfig=/var/lib/kubelet/kubeconfig --cluster-cidr=10.240.0.0/12 --feature-gates=ExperimentalCriticalPodAnnotation=true --proxy-mode=iptables</span><br></pre></td></tr></table></figure>
+
+<p>或者</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">KUBE_PROXY_ARGS=&quot;--bind-address=0.0.0.0 \</span><br><span class="line">  --hostname-override=node147 \</span><br><span class="line">  --kubeconfig=/etc/kubernetes/kube-proxy.conf \</span><br><span class="line">  --logtostderr=true \</span><br><span class="line">  --v=2 \</span><br><span class="line">  --feature-gates=SupportIPVSProxyMode=true \</span><br><span class="line">  --proxy-mode=ipvs&quot;</span><br></pre></td></tr></table></figure>
+
+<p>如果 kubelet 设置了<code>–hostname-override</code>选项，则 kube-proxy 也需要设置该选项，并且名字一致否则会出现找不到 Node 的情况。</p>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_36183935/article/details/90734936">kube-proxy ipvs 模式详解</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/">kubernetes kube-proxy</a></li>
+<li><a target="_blank" rel="noopener" href="https://betterprogramming.pub/k8s-a-closer-look-at-kube-proxy-372c4e8b090">K8s: A Closer Look at Kube-Proxy</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.aws.amazon.com/eks/latest/userguide/managing-kube-proxy.html">Managing the kube-proxy add-on</a></li>
+<li><a target="_blank" rel="noopener" href="https://sysdig.com/blog/monitor-kube-proxy/">How to monitor kube-proxy</a></li>
+</ul>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2023/10/03/containers/k8s%20kubeproxy%20%E8%AF%A6%E8%A7%A3/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2023/10/03/containers/k8s%20kubeproxy%20%E8%AF%A6%E8%A7%A3/')">Kubernetes proxy详解</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2023/10/03/containers/k8s%20kubeproxy%20%E8%AF%A6%E8%A7%A3/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=Kubernetes proxy详解&amp;url=https://shippomx.github.io/2023/10/03/containers/k8s%20kubeproxy%20%E8%AF%A6%E8%A7%A3/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/container/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>container<span class="tagsPageCount">27</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/10/02/linux/%E5%88%9B%E5%BB%BA%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B%E6%AD%A5%E9%AA%A4%E4%B8%8E%20setsid/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">守护进程与setsid</div></div></a></div><div class="next-post pull-right"><a href="/2023/10/04/containers/Calico%20%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86%E6%8F%AD%E7%A7%98/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Calico网络通信简略原理</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2023/10/04/containers/Calico%20%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1%E5%8E%9F%E7%90%86%E6%8F%AD%E7%A7%98/" title="Calico网络通信简略原理"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-04</div><div class="title">Calico网络通信简略原理</div></div></a></div><div><a href="/2021/12/21/containers/Docker%20%E7%9A%84%E7%BD%91%E7%BB%9C%20%E5%B0%86%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%A4%96%E9%83%A8%E4%B8%96%E7%95%8C%E8%BF%9E%E6%8E%A5/" title="docker中的网络"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-12-21</div><div class="title">docker中的网络</div></div></a></div><div><a href="/2021/12/21/containers/Docker%20%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F%E8%AF%A6%E8%A7%A3%E5%8F%8A%E5%AE%B9%E5%99%A8%E9%97%B4%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/" title="docker中的网络模式"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2021-12-21</div><div class="title">docker中的网络模式</div></div></a></div><div><a href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-07</div><div class="title">Docker与虚拟化</div></div></a></div><div><a href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-06</div><div class="title">Kubernetes CNI 网络插件</div></div></a></div><div><a href="/2020/12/20/containers/Kata%20Containers%202.0%20%E4%BB%8B%E7%BB%8D/" title="Kata Containers 2.0"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-12-20</div><div class="title">Kata Containers 2.0</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#kubernetes-kube-proxy"><span class="toc-number">1.</span> <span class="toc-text">kubernetes kube-proxy</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E7%AB%A0%E7%9B%AE%E5%BD%95"><span class="toc-number">1.0.1.</span> <span class="toc-text">文章目录</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-userspace-mode"><span class="toc-number">1.0.2.</span> <span class="toc-text">7.1 userspace mode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-Iptables-mode"><span class="toc-number">1.0.3.</span> <span class="toc-text">7.2 Iptables mode</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-3-ipvs-mode"><span class="toc-number">1.0.4.</span> <span class="toc-text">7.3 ipvs mode</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

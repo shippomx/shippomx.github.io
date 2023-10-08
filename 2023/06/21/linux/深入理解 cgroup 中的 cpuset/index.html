@@ -1,0 +1,520 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>容器安全-理解cgroup中的cpuset | 远辰</title><meta name="keywords" content="linux"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="容器安全-理解cgroup中的cpuset"><meta name="application-name" content="容器安全-理解cgroup中的cpuset"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="容器安全-理解cgroup中的cpuset"><meta property="og:url" content="https://shippomx.github.io/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="1. 查看当前 cgroup 信息有两种方法来查看系统的当前 cgroup 信息。第一种方法是通过 systemd-cgls 命令来查看，它会返回系统的整体 cgroup 层级，cgroup 树的最高层由 slice 构成，如下所示： 12345678910111213141516171819202"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="1. 查看当前 cgroup 信息有两种方法来查看系统的当前 cgroup 信息。第一种方法是通过 systemd-cgls 命令来查看，它会返回系统的整体 cgroup 层级，cgroup 树的最高层由 slice 构成，如下所示： 12345678910111213141516171819202"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: '容器安全-理解cgroup中的cpuset',
+  postAI: '',
+  pageFillDescription: '1. 查看当前 cgroup 信息, 2 cpu的绑定与隔离, 2.1 查看 CPU 配置, 2.2 NUMA 架构, 2.3 isolcpus, 2.4 创建 cgroup, 2.4 回到Docker, 脚注查看当前信息有两种方法来查看系统的当前信息第一种方法是通过命令来查看它会返回系统的整体层级树的最高层由构成如下所示可以看到系统层级的最高层由和组成因为系统中没有运行虚拟机和容器所以没有所以当繁忙时和会各获得的使用时间下面有两个子和每个子都用来命名因此我们很容易识别出哪个属于哪个用户例如从上面的输出信息中可以看出属于用户属于用户命令提供的只是层级的静态信息快照要想查看层级的动态信息可以通过命令查看提供的统计数据和控制选项与命令类似但该命令只显示那些开启了资源统计功能的和比如如果你想开启的资源统计功能可以进行如下操作该命令会在目录下创建相应的配置文件总用量月月配置完成之后再重启服务这时再重新运行命令就能看到的资源使用统计了开启资源使用量统计功能可能会增加系统的负载因为资源统计也要消耗和内存大多数情况下使用命令来查看就足够了当然了这是系统嘛一切的控制权都在你自己手里你想怎么做就怎么做分配相对使用时间通过上篇文章的学习我们知道了可以用来设置的相对使用时间接下来我们就通过实践来验证一下下面所做的实验都是在单核的系统上进行的多核与单核的情况完全不同文末会单独讨论测试对象是个和两个普通用户其中用户的是可以通过以下命令查看创建一个在系统中是一个特殊的设备文件当你读它的时候它会提供无限的空字符因此会不断地消耗资源现在我们将的改为由于系统默认的值为所以设置成后在繁忙的情况下会尽可能获取的所有使用时间现在通过启动服务并使用命令查看使用情况目前没有其他进程在消耗所以可以使用几乎的现在我们让用户也参与进来先将的设置为使用用户登录该系统然后执行命令再次查看使用情况现在是不是感到有点迷惑了的是而用户的只有难道用户不是应该只能使用的吗回忆一下我在上一节提到的当繁忙时和会各获得的使用时间而这里恰好就是这种场景同时下面只有进程比较繁忙所以会获得的使用时间最后让用户也参与进来他的是默认值使用用户登录该系统然后执行命令再次查看使用情况上面我们已经提到这种场景下和会各获得的使用时间用户的是而用户的是因此用户获得的使用时间是用户的倍分配绝对使用时间上篇文章已经提到如果想严格控制资源设置资源的使用上限即不管是否繁忙对资源的使用都不能超过这个上限可以通过参数来设置下面我们将用户的设置为这时你会看到用户的进程只能获得左右的使用时间如果此时停止关闭用户的进程你会看到用户的进程仍然只能获得左右的使用时间如果某个非核心服务很消耗资源你可以通过这种方法来严格限制它对资源的使用防止对系统中其他重要的服务产生影响动态设置相关的所有操作都是基于内核中的使用很简单挂载这个文件系统就可以了系统默认情况下都是挂载到目录下当启动时会将自己的挂载到这个目录下的子目录以为例先进入的子系统查看的目录因为没有启动所以没有挂载目录现在启动再次查看它的目录也可以查看它的和理论上我们可以在目录中动态改变的配置但我不建议你在生产环境中这么做如果你想通过实验来深入理解可以多折腾折腾这个目录如果是多核呢上面的所有实验都是在单核上进行的下面我们简单讨论一下多核的场景以个为例首先来说一下只能针对单核进行设置也就是说无论你的值有多大该最多只能获得的使用时间即核还是用本文第节的例子将的设置为启动这时你会看到仅仅获得了的使用时间并没有完全使用两个核再使用用户登录系统执行命令你会发现用户的进程和各使用个核再来说说这个上篇文章结尾已经提过了如要让一个完全使用两个核可以通过参数来设置例如至于进程最后能不能完全使用两个核就要看它自身的设计支持不支持了的绑定与隔离对于某些密集型的程序来说不仅需要获取更多的使用时间还要减少工作负载在节流时引起的上下文切换现在的多核系统中每个核心都有自己的缓存如果频繁的调度进程在不同的核心上执行势必会带来缓存失效等开销那么有没有方法针对核心进行隔离呢准确地说是把运行的进程绑定到指定的核心上运行虽然对于操作系统来说所有程序生而平等但有些程序比其他程序更平等对于那些更平等的程序来说我们需要为它分配更多的资源毕竟人都是很偏心的废话少说我们来看看如何使用限制进程使用指定的核心查看配置核心的编号一般是从开始的个核心的编号范围是我们可以通过查看的内容来确定的某些信息表示核心的编号但这不是物理的核心更确切地可以称之为逻辑核编号表示当前逻辑核所在的物理的核心也是从开始编号这里表示这个逻辑核在第个物理上如果这个值大于你就要注意了你的服务器可能开启了超线程如果启用了超线程每个物理核心会模拟出个线程也叫逻辑核和上面的逻辑核是两回事只是名字相同而已如果你想确认服务器有没有开启超线程可以通过下面的命令查看如果和皆相同的出现了两次就可以断定开启了超线程显然我的服务器没有开启架构这里需要涉及到一个概念叫即非统一内存访问架构如果主机板上插有多块那么就是架构每块独占一块面积一般都有独立风扇一个节点包含了直连在该区域的内存等硬件设备通信总线一般是由此也引入了亲和性的概念即访问同一个节点上的内存的速度大于访问另一个节点的可以通过下面的命令查看本机的架构可以看出该服务器并没有使用架构总共只有一个节点即只有一块个逻辑核心均在此上最重要的职责之一就是调度进程而进程只是程序运行过程的一种抽象它会执行一系列指令计算机会按照这些指令来完成实际工作从硬件的角度来看真正执行这些指令的是中央处理单元即默认情况下进程调度器可能会将进程调度到任何一个核心上因为它要根据负载来均衡计算资源的分配为了增加实验的明显效果可以隔离某些逻辑核心让系统默认情况下永远不会使用这些核心除非我指定某些进程使用这些核心要想做到这一点就要使用到内核参数了例如如果想让系统默认情况下不使用逻辑核心和可以将以下内容添加到内核参数列表中或者对于来说可以直接修改然后重新构建重启系统之后系统将不再使用逻辑核心和只会使用核心找个程序把跑满上篇文章用的程序使用命令查看的使用状况执行命令后在列表页按数字键就可以看到所有了可以看到系统只使用了核心下面我们来看看如何将程序绑到特定的核心上创建将程序绑到指定的核心其实很简单只需设置好控制器就行了可以管理受其控制资源的控制器但只能管理有限的控制器内存和不能管理控制器虽然不支持但是相信以后会支持的另外现在有一个略显笨拙但是可以实现同样的目标的方法后面会介绍相关的所有操作都是基于内核中的使用很简单挂载这个文件系统就可以了文件系统默认情况下都是挂载到目录下查看一下这个目录总用量月月月月月月月月月月月月月月月可以看到控制器已经默认被创建并挂载好了看一下目录下有什么总用量月月月月月月月月月月月月月月月月月月月月月该目录下只有默认的配置没有任何子系统接下来我们来创建子系统并设置相应的绑核参数首先创建了一个子系统叫然后将核心绑到该子系统即对于参数而言每个内存节点和节点一一对应如果进程的内存需求量较大可以把所有的节点都配置进去这里就用到了的概念出于性能的考虑配置的逻辑核和内存节点一般属于同一个节点可用命令获知它们的映射关系很显然我的主机没有采用架构只需将其设为节点就好了查看目录总用量月月月月月月月月月月月月月月月月月月目前文件是空的也就是说还没有进程运行在该子系统上需要想办法让指定的进程运行在该子系统上有两种方法将已经运行的进程的写入文件中使用创建一个守护进程将的设置写入文件中本质上和方法是一样的先来看看方法首先运行一个程序然后将写入目录的中查看使用情况可以看到绑核生效了为的进程被调度到了上下面再来看看方法虽然目前不支持使用去指定一个的但我们还是有一个变相的方法文件内容如下启动该服务然后查看使用情况该服务中的进程确实被调度到了上回到最后我们回到实际上就是将系统底层实现的等技术集成在一个使用镜像方式发布的工具中于是形成了这个想必大家都知道了我就不展开了对于来说有没有办法让容器始终在一个或某几个上运行呢其实还是很简单的只需要利用参数就可以做到下面就来演示一下指定运行容器的核心编号为查看主机的负载只有达到了其它的并未被容器使用如果你看过该系列的第一篇文章应该知道在新的使用实现的系统中比如系统默认创建了个顶级和其中是所有虚拟机和容器的默认位置而其实是的一个变种你可以把它当成如果系统中运行的是就变成了为了便于管理会为每一个创建一个子系统比如子系统然后再根据容器的设置将其放入相应的控制器下面这里我们关心的是控制器看看它的目录下有啥查看目录可以看到为每个容器创建了一个子目录对应的就是之前我们创建的容器我们来检验一下该目录下的配置当然你也可以将容器绑到多个核心上运行这里我就不赘述了下篇文章将会介绍如何通过来限制脚注',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/linux/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>linux</span></a></span></div></div><h1 class="post-title" itemprop="name headline">容器安全-理解cgroup中的cpuset</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2023-06-21T11:22:00.000Z" title="发表于 2023-06-21 19:22:00">2023-06-21</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/"><header><a href="/tags/linux/" tabindex="-1" itemprop="url">linux</a><h1 id="CrawlerTitle" itemprop="name headline">容器安全-理解cgroup中的cpuset</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2023-06-21T11:22:00.000Z" title="发表于 2023-06-21 19:22:00">2023-06-21</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.107Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><h1 id="1-查看当前-cgroup-信息"><a href="#1-查看当前-cgroup-信息" class="headerlink" title="1. 查看当前 cgroup 信息"></a>1. 查看当前 cgroup 信息</h1><p>有两种方法来查看系统的当前 cgroup 信息。第一种方法是通过 <code>systemd-cgls</code> 命令来查看，它会返回系统的整体 cgroup 层级，cgroup 树的最高层由 <code>slice</code> 构成，如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">$ systemd-cgls --no-page</span><br><span class="line">├─1 /usr/lib/systemd/systemd --switched-root --system --deserialize 22</span><br><span class="line">├─user.slice</span><br><span class="line">│ ├─user-1000.slice</span><br><span class="line">│ │ └─session-11.scope</span><br><span class="line">│ │   ├─9507 sshd: tom [priv]</span><br><span class="line">│ │   ├─9509 sshd: tom@pts/3</span><br><span class="line">│ │   └─9510 -bash</span><br><span class="line">│ └─user-0.slice</span><br><span class="line">│   └─session-1.scope</span><br><span class="line">│     ├─ 6239 sshd: root@pts/0</span><br><span class="line">│     ├─ 6241 -zsh</span><br><span class="line">│     └─11537 systemd-cgls --no-page</span><br><span class="line">└─system.slice</span><br><span class="line">  ├─rsyslog.service</span><br><span class="line">  │ └─5831 /usr/sbin/rsyslogd -n</span><br><span class="line">  ├─sshd.service</span><br><span class="line">  │ └─5828 /usr/sbin/sshd -D</span><br><span class="line">  ├─tuned.service</span><br><span class="line">  │ └─5827 /usr/bin/python2 -Es /usr/sbin/tuned -l -P</span><br><span class="line">  ├─crond.service</span><br><span class="line">  │ └─5546 /usr/sbin/crond -n</span><br></pre></td></tr></table></figure>
+
+<p>可以看到系统 cgroup 层级的最高层由 <code>user.slice</code> 和 <code>system.slice</code> 组成。因为系统中没有运行虚拟机和容器，所以没有 <code>machine.slice</code>，所以当 CPU 繁忙时，<code>user.slice</code> 和 <code>system.slice</code> 会各获得 <code>50%</code> 的 CPU 使用时间。</p>
+<p>user.slice 下面有两个子 slice：<code>user-1000.slice</code> 和 <code>user-0.slice</code>，每个子 slice 都用 User ID (<code>UID</code>) 来命名，因此我们很容易识别出哪个 slice 属于哪个用户。例如：从上面的输出信息中可以看出 <code>user-1000.slice</code> 属于用户 tom，<code>user-0.slice</code> 属于用户 root。</p>
+<p><code>systemd-cgls</code> 命令提供的只是 cgroup 层级的静态信息快照，要想查看 cgroup 层级的动态信息，可以通过 <code>systemd-cgtop</code> 命令查看：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">$ systemd-cgtop</span><br><span class="line">Path                                                                                                                                       Tasks   %CPU   Memory  Input/s Output/s</span><br><span class="line"></span><br><span class="line">/                                                                                                                                            161    1.2   161.0M        -        -</span><br><span class="line">/system.slice                                                                                                                                  -    0.1        -        -        -</span><br><span class="line">/system.slice/vmtoolsd.service                                                                                                                 1    0.1        -        -        -</span><br><span class="line">/system.slice/tuned.service                                                                                                                    1    0.0        -        -        -</span><br><span class="line">/system.slice/rsyslog.service                                                                                                                  1    0.0        -        -        -</span><br><span class="line">/system.slice/auditd.service                                                                                                                   1      -        -        -        -</span><br><span class="line">/system.slice/chronyd.service                                                                                                                  1      -        -        -        -</span><br><span class="line">/system.slice/crond.service                                                                                                                    1      -        -        -        -</span><br><span class="line">/system.slice/dbus.service                                                                                                                     1      -        -        -        -</span><br><span class="line">/system.slice/gssproxy.service                                                                                                                 1      -        -        -        -</span><br><span class="line">/system.slice/lvm2-lvmetad.service                                                                                                             1      -        -        -        -</span><br><span class="line">/system.slice/network.service                                                                                                                  1      -        -        -        -</span><br><span class="line">/system.slice/polkit.service                                                                                                                   1      -        -        -        -</span><br><span class="line">/system.slice/rpcbind.service                                                                                                                  1      -        -        -        -</span><br><span class="line">/system.slice/sshd.service                                                                                                                     1      -        -        -        -</span><br><span class="line">/system.slice/system-getty.slice/getty@tty1.service                                                                                            1      -        -        -        -</span><br><span class="line">/system.slice/systemd-journald.service                                                                                                         1      -        -        -        -</span><br><span class="line">/system.slice/systemd-logind.service                                                                                                           1      -        -        -        -</span><br><span class="line">/system.slice/systemd-udevd.service                                                                                                            1      -        -        -        -</span><br><span class="line">/system.slice/vgauthd.service                                                                                                                  1      -        -        -        -</span><br><span class="line">/user.slice                                                                                                                                    3      -        -        -        -</span><br><span class="line">/user.slice/user-0.slice/session-1.scope                                                                                                       3      -        -        -        -</span><br><span class="line">/user.slice/user-1000.slice                                                                                                                    3      -        -        -        -</span><br><span class="line">/user.slice/user-1000.slice/session-11.scope                                                                                                   3      -        -        -        -</span><br><span class="line">/user.slice/user-1001.slice/session-8.scope                                                                                                    3      -        -        -        -</span><br></pre></td></tr></table></figure>
+
+<p>systemd-cgtop 提供的统计数据和控制选项与 <code>top</code> 命令类似，但该命令只显示那些开启了资源统计功能的 service 和 slice。比如：如果你想开启 <code>sshd.service</code> 的资源统计功能，可以进行如下操作：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ systemctl set-property sshd.service CPUAccounting=true MemoryAccounting=true</span><br></pre></td></tr></table></figure>
+
+<p>该命令会在 <code>/etc/systemd/system/sshd.service.d/</code> 目录下创建相应的配置文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ ll /etc/systemd/system/sshd.service.d/</span><br><span class="line">总用量 8</span><br><span class="line">4 -rw-r--r-- 1 root root 28 5月  31 02:24 50-CPUAccounting.conf</span><br><span class="line">4 -rw-r--r-- 1 root root 31 5月  31 02:24 50-MemoryAccounting.conf</span><br><span class="line"></span><br><span class="line">$ cat /etc/systemd/system/sshd.service.d/50-CPUAccounting.conf</span><br><span class="line">[Service]</span><br><span class="line">CPUAccounting=yes</span><br><span class="line"></span><br><span class="line">$ cat /etc/systemd/system/sshd.service.d/50-MemoryAccounting.conf</span><br><span class="line">[Service]</span><br><span class="line">MemoryAccounting=yes</span><br></pre></td></tr></table></figure>
+
+<p>配置完成之后，再重启 <code>sshd</code> 服务：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ systemctl daemon-reload</span><br><span class="line">$ systemctl restart sshd</span><br></pre></td></tr></table></figure>
+
+<p>这时再重新运行 systemd-cgtop 命令，就能看到 sshd 的资源使用统计了：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://mmbiz.qpic.cn/mmbiz_png/qFG6mghhA4YX5zs1YbLIib3BSW91XHC0hdp3HAR71skLicfOU95vHzM8E3cYw7csNvNhlEluGUjzt2nkw8Bf4ib4A/640?wx_fmt=png"></p>
+<blockquote>
+<p>开启资源使用量统计功能可能会增加系统的负载，因为资源统计也要消耗 CPU 和内存，大多数情况下使用 <code>top</code> 命令来查看就足够了。当然了，这是 Linux 系统嘛，一切的控制权都在你自己手里，你想怎么做就怎么做。</p>
+</blockquote>
+<p>2. 分配 CPU 相对使用时间</p>
+<p>通过上篇文章的学习我们知道了 CPU <code>shares</code> 可以用来设置 CPU 的相对使用时间，接下来我们就通过实践来验证一下。</p>
+<blockquote>
+<p>下面所做的实验都是在单核 CPU 的系统上进行的，多核与单核的情况完全不同，文末会单独讨论。</p>
+</blockquote>
+<p>测试对象是 1 个 service 和两个普通用户，其中用户 <code>tom</code> 的 UID 是 1000，可以通过以下命令查看：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ cat /etc/passwd|grep tom</span><br><span class="line">tom:x:1000:1000::/home/tom:/bin/bash</span><br></pre></td></tr></table></figure>
+
+<p>创建一个 <code>foo.service</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ cat /etc/systemd/system/foo.service</span><br><span class="line">[Unit]</span><br><span class="line">Description=The foo service that does nothing useful</span><br><span class="line">After=remote-fs.target nss-lookup.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStart=/usr/bin/sha1sum /dev/zero</span><br><span class="line">ExecStop=/bin/kill -WINCH $&#123;MAINPID&#125;</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p><code>/dev/zero</code> 在 linux 系统中是一个特殊的设备文件，当你读它的时候，它会提供无限的空字符，因此 foo.service 会不断地消耗 CPU 资源。现在我们将 foo.service 的 CPU shares 改为 <code>2048</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ mkdir /etc/systemd/system/foo.service.d</span><br><span class="line">$ cat &lt;&lt; EOF &gt; /etc/systemd/system/foo.service.d/50-CPUShares.conf</span><br><span class="line">[Service]</span><br><span class="line">CPUShares=2048</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+
+<p>由于系统默认的 CPU shares 值为 <code>1024</code>，所以设置成 2048 后，在 CPU 繁忙的情况下，<code>foo.service</code> 会尽可能获取 <code>system.slice</code> 的所有 CPU 使用时间。</p>
+<p>现在通过 <code>systemctl start foo.service</code> 启动 foo 服务，并使用 <code>top</code> 命令查看 CPU 使用情况：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://mmbiz.qpic.cn/mmbiz_png/qFG6mghhA4YX5zs1YbLIib3BSW91XHC0hEdZKhbwuUBF1SIN70c2EDiaDiaAELrXia0MNfrC6HKV2XNxibG4tIjP5Fg/640?wx_fmt=png"></p>
+<p>目前没有其他进程在消耗 CPU，所以 foo.service 可以使用几乎 100% 的 CPU。</p>
+<p>现在我们让用户 <code>tom</code> 也参与进来，先将 <code>user-1000.slice</code> 的 CPU shares 设置为 <code>256</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ systemctl set-property user-1000.slice CPUShares=256</span><br></pre></td></tr></table></figure>
+
+<p>使用用户 <code>tom</code> 登录该系统，然后执行命令 <code>sha1sum /dev/zero</code>，再次查看 CPU 使用情况：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://mmbiz.qpic.cn/mmbiz_png/qFG6mghhA4YX5zs1YbLIib3BSW91XHC0hVw9wYxIdbzkQjkMNlNsrPZ9xoZ1Yu8qYQIhZuHhEMJzzj6LOhh1MCw/640?wx_fmt=png"></p>
+<p>现在是不是感到有点迷惑了？foo.service 的 CPU shares 是 <code>2048</code>，而用户 tom 的 CPU shares 只有 <code>256</code>，难道用户 <code>tom</code> 不是应该只能使用 10% 的 CPU 吗？回忆一下我在上一节提到的，当 CPU 繁忙时，<code>user.slice</code> 和 <code>system.slice</code> 会各获得 <code>50%</code> 的 CPU 使用时间。而这里恰好就是这种场景，同时 <code>user.slice</code> 下面只有 sha1sum 进程比较繁忙，所以会获得 50% 的 CPU 使用时间。</p>
+<p>最后让用户 <code>jack</code> 也参与进来，他的 CPU shares 是默认值 1024。使用用户 <code>jack</code> 登录该系统，然后执行命令 <code>sha1sum /dev/zero</code>，再次查看 CPU 使用情况：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://mmbiz.qpic.cn/mmbiz_png/qFG6mghhA4YX5zs1YbLIib3BSW91XHC0hk4SKNV513vNVcYtlbIFB8hyfAnLaKWofS1vBMLFm8Mx39MOvJqUoUA/640?wx_fmt=png"></p>
+<p>上面我们已经提到，这种场景下 <code>user.slice</code> 和 <code>system.slice</code> 会各获得 <code>50%</code> 的 CPU 使用时间。用户 tom 的 CPU shares 是 <code>256</code>，而用户 jack 的 CPU shares 是 <code>1024</code>，因此用户 jack 获得的 CPU 使用时间是用户 tom 的 <code>4</code> 倍。</p>
+<p>3. 分配 CPU 绝对使用时间</p>
+<p>上篇文章已经提到，如果想严格控制 CPU 资源，设置 CPU 资源的使用上限，即不管 CPU 是否繁忙，对 CPU 资源的使用都不能超过这个上限，可以通过 <code>CPUQuota</code> 参数来设置。下面我们将用户 tom 的 CPUQuota 设置为 <code>5%</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ systemctl set-property user-1000.slice CPUQuota=5%</span><br></pre></td></tr></table></figure>
+
+<p>这时你会看到用户 tom 的 sha1sum 进程只能获得 5% 左右的 CPU 使用时间。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://mmbiz.qpic.cn/mmbiz_png/qFG6mghhA4YX5zs1YbLIib3BSW91XHC0hQ2NBe7qOQ2mIIFoqvVYfVnr2ic562zL9nVmkbiaUPskSJWzrhs8Onvcw/640?wx_fmt=png"></p>
+<p>如果此时停止 <code>foo.service</code>，关闭用户 jack 的 sha1sum 进程，你会看到用户 tom 的 sha1sum 进程仍然只能获得 <code>5%</code>左右的 CPU 使用时间。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://mmbiz.qpic.cn/mmbiz_png/qFG6mghhA4YX5zs1YbLIib3BSW91XHC0hL0Jus7F3AGAwa6jzNpWOdAsBJ5f8XKND1NkXoKgcVXxWZjWUNOQTAA/640?wx_fmt=png"></p>
+<p>如果某个非核心服务很消耗 CPU 资源，你可以通过这种方法来严格限制它对 CPU 资源的使用，防止对系统中其他重要的服务产生影响。</p>
+<p>4. 动态设置 cgroup</p>
+<p>cgroup 相关的所有操作都是基于内核中的 cgroup virtual filesystem，使用 cgroup 很简单，挂载这个文件系统就可以了。系统默认情况下都是挂载到 <code>/sys/fs/cgroup</code> 目录下，当 service 启动时，会将自己的 cgroup 挂载到这个目录下的子目录。以 <code>foo.service</code> 为例：</p>
+<p>先进入 <code>system.slice</code> 的 CPU 子系统：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ cd /sys/fs/cgroup/cpu,cpuacct/system.slice</span><br></pre></td></tr></table></figure>
+
+<p>查看 foo.service 的 cgroup 目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ ls foo.*</span><br><span class="line">zsh: no matches found: foo.*</span><br></pre></td></tr></table></figure>
+
+<p>因为 foo.service 没有启动，所以没有挂载 cgroup 目录，现在启动 foo.service，再次查看它的 cgroup 目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ls foo.serice</span><br><span class="line">cgroup.clone_children  cgroup.procs  cpuacct.usage         cpu.cfs_period_us  cpu.rt_period_us   cpu.shares  notify_on_release</span><br><span class="line">cgroup.event_control   cpuacct.stat  cpuacct.usage_percpu  cpu.cfs_quota_us   cpu.rt_runtime_us  cpu.stat    tasks</span><br></pre></td></tr></table></figure>
+
+<p>也可以查看它的 PID 和 CPU shares：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ cat foo.service/tasks</span><br><span class="line">20225</span><br><span class="line"></span><br><span class="line">$ cat foo.service/cpu.shares</span><br><span class="line">2048</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>理论上我们可以在 <code>/sys/fs/cgroup</code> 目录中动态改变 cgroup 的配置，但我不建议你在生产环境中这么做。如果你想通过实验来深入理解 cgroup，可以多折腾折腾这个目录。</p>
+</blockquote>
+<p>5. 如果是多核 CPU 呢？</p>
+<p>上面的所有实验都是在单核 CPU 上进行的，下面我们简单讨论一下多核的场景，以 2 个 CPU 为例。</p>
+<p>首先来说一下 CPU shares，shares 只能针对单核 CPU 进行设置，也就是说，无论你的 shares 值有多大，该 cgroup 最多只能获得 100% 的 CPU 使用时间（即 1 核 CPU）。还是用本文第 2 节的例子，将 foo.service 的 CPU shares 设置为 2048，启动 foo.service，这时你会看到 foo.service 仅仅获得了 100% 的 CPU 使用时间，并没有完全使用两个 CPU 核：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://mmbiz.qpic.cn/mmbiz_png/qFG6mghhA4YX5zs1YbLIib3BSW91XHC0hGh07XJhTr3bORg524Hsl2V0V8tz533iaVSGgEspBQAujd6eTFIkRMBw/640?wx_fmt=png"></p>
+<p>再使用用户 <code>tom</code> 登录系统，执行命令 <code>sha1sum /dev/zero</code>，你会发现用户 tom 的 sha1sum 进程和 foo.service 各使用 1 个 CPU 核：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://mmbiz.qpic.cn/mmbiz_png/qFG6mghhA4YX5zs1YbLIib3BSW91XHC0hqfpVyNgkllDDSB0Hrk7hfsgYC4ofCS3TDlibMLUbghb2vNKrhgOcVmA/640?wx_fmt=png"></p>
+<p>再来说说 CPUQuota，这个上篇文章结尾已经提过了，如要让一个 cgroup 完全使用两个 CPU 核，可以通过 CPUQuota 参数来设置。例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ systemctl set-property foo.service CPUQuota=200%</span><br></pre></td></tr></table></figure>
+
+<p>至于进程最后能不能完全使用两个 CPU 核，就要看它自身的设计支持不支持了。</p>
+<h1 id="2-cpu的绑定与隔离"><a href="#2-cpu的绑定与隔离" class="headerlink" title="2 cpu的绑定与隔离"></a>2 cpu的绑定与隔离</h1><p>对于某些 CPU 密集型的程序来说，不仅需要获取更多的 CPU 使用时间，还要减少工作负载在节流时引起的上下文切换。现在的多核系统中每个核心都有自己的缓存，如果频繁的调度进程在不同的核心上执行势必会带来缓存失效等开销。那么有没有方法针对 CPU 核心进行隔离呢？准确地说是把运行的进程绑定到指定的核心上运行。虽然对于操作系统来说，所有程序生而平等，<strong>但有些程序比其他程序更平等。</strong></p>
+<p>对于那些更平等的程序来说，我们需要为它分配更多的 CPU 资源，毕竟人都是很偏心的。废话少说，我们来看看如何使用 <code>cgroup</code> 限制进程使用指定的 CPU 核心</p>
+<h2 id="2-1-查看-CPU-配置"><a href="#2-1-查看-CPU-配置" class="headerlink" title="2.1 查看 CPU 配置"></a>2.1 查看 CPU 配置</h2><p>CPU 核心的编号一般是从 0 开始的，4 个核心的编号范围是 <code>0-3</code>。我们可以通过查看 <code>/proc/cpuinfo</code> 的内容来确定 CPU 的某些信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">$ cat /proc/cpuinfo</span><br><span class="line">...</span><br><span class="line">processor    : 3</span><br><span class="line">vendor_id    : GenuineIntel</span><br><span class="line">cpu family    : 6</span><br><span class="line">model        : 26</span><br><span class="line">model name    : Intel(R) Xeon(R) CPU           X5650  @ 2.67GHz</span><br><span class="line">stepping    : 4</span><br><span class="line">microcode    : 0x1f</span><br><span class="line">cpu MHz        : 2666.761</span><br><span class="line">cache size    : 12288 KB</span><br><span class="line">physical id    : 6</span><br><span class="line">siblings    : 1</span><br><span class="line">core id        : 0</span><br><span class="line">cpu cores    : 1</span><br><span class="line">apicid        : 6</span><br><span class="line">initial apicid    : 6</span><br><span class="line">fpu        : yes</span><br><span class="line">fpu_exception    : yes</span><br><span class="line">cpuid level    : 11</span><br><span class="line">wp        : yes</span><br><span class="line">flags        : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx rdtscp lm constant_tsc arch_perfmon nopl xtopology tsc_reliable nonstop_tsc eagerfpu pni ssse3 cx16 sse4_1 sse4_2 x2apic popcnt tsc_deadline_timer hypervisor lahf_lm ssbd ibrs ibpb stibp tsc_adjust arat spec_ctrl intel_stibp flush_l1d arch_capabilities</span><br><span class="line">bogomips    : 5333.52</span><br><span class="line">clflush size    : 64</span><br><span class="line">cache_alignment    : 64</span><br><span class="line">address sizes    : 43 bits physical, 48 bits virtual</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>processor</code> : 表示核心的编号，但这不是物理 CPU 的核心，更确切地可以称之为 ** 逻辑核编号。</li>
+<li><code>physical id</code> : 表示当前逻辑核所在的物理 CPU 的核心，也是从 0 开始编号，这里表示这个逻辑核在第 7 个 物理 CPU 上。</li>
+<li><code>core id</code> : 如果这个值大于 0，你就要注意了，你的<a target="_blank" rel="noopener" href="https://cloud.tencent.com/product/cvm?from=10680">服务器</a>可能开启了超线程。如果启用了超线程，每个物理 CPU 核心会模拟出 2 个线程，也叫逻辑核（和上面的逻辑核是两回事，只是名字相同而已）。如果你想确认服务器有没有开启超线程，可以通过下面的命令查看：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ cat /proc/cpuinfo | grep -e &quot;core id&quot; -e &quot;physical id&quot;</span><br><span class="line"></span><br><span class="line">physical id    : 0</span><br><span class="line">core id        : 0</span><br><span class="line">physical id    : 2</span><br><span class="line">core id        : 0</span><br><span class="line">physical id    : 4</span><br><span class="line">core id        : 0</span><br><span class="line">physical id    : 6</span><br><span class="line">core id        : 0</span><br></pre></td></tr></table></figure>
+
+<p>如果 <code>physical id</code> 和 <code>core id</code> 皆相同的 <code>processor</code> 出现了两次，就可以断定开启了超线程。显然我的服务器没有开启。</p>
+<h2 id="2-2-NUMA-架构"><a href="#2-2-NUMA-架构" class="headerlink" title="2.2 NUMA 架构"></a>2.2 NUMA 架构</h2><p>这里需要涉及到一个概念叫 <strong>NUMA（Non-uniform memory access）[1]<strong>，即</strong>非统一内存访问架构</strong>。如果主机板上插有多块 CPU，那么就是 <code>NUMA</code> 架构。每块 CPU 独占一块面积，一般都有独立风扇。</p>
+<p>一个 <code>NUMA</code> 节点包含了直连在该区域的 CPU、内存等硬件设备，通信总线一般是 <code>PCI-E</code>。由此也引入了 CPU 亲和性的概念，即 CPU 访问同一个 <code>NUMA</code> 节点上的内存的速度大于访问另一个节点的。</p>
+<p>可以通过下面的命令查看本机的 NUMA 架构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ numactl --hardware</span><br><span class="line"></span><br><span class="line">available: 1 nodes (0)</span><br><span class="line">node 0 cpus: 0 1 2 3</span><br><span class="line">node 0 size: 2047 MB</span><br><span class="line">node 0 free: 1335 MB</span><br><span class="line">node distances:</span><br><span class="line">node   0</span><br><span class="line">  0:  10</span><br></pre></td></tr></table></figure>
+
+<p>可以看出该服务器并没有使用 <code>NUMA</code> 架构，总共只有一个 <code>NUMA</code> 节点，即只有一块 CPU，4 个逻辑核心均在此 CPU 上。</p>
+<h2 id="2-3-isolcpus"><a href="#2-3-isolcpus" class="headerlink" title="2.3 isolcpus"></a>2.3 isolcpus</h2><p>Linux 最重要的职责之一就是调度进程，而进程只是程序运行过程的一种抽象，它会执行一系列指令，计算机会按照这些指令来完成实际工作。从硬件的角度来看，真正执行这些指令的是中央处理单元，即 CPU。默认情况下，进程调度器可能会将进程调度到任何一个 CPU 核心上，因为它要根据负载来均衡计算资源的分配。</p>
+<p>为了增加实验的明显效果，可以隔离某些逻辑核心，让系统默认情况下永远不会使用这些核心，除非我指定某些进程使用这些核心。要想做到这一点，就要使用到内核参数 <code>isolcpus</code> 了，例如：如果想让系统默认情况下不使用逻辑核心 2，3 和 4，可以将以下内容添加到内核参数列表中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">isolcpus=1,2,3</span><br><span class="line"># 或者</span><br><span class="line">isolcpus=1-3</span><br></pre></td></tr></table></figure>
+
+<p>对于 CentOS 7 来说，可以直接修改 <code>/etc/default/grub</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$ cat /etc/default/grub</span><br><span class="line"></span><br><span class="line">GRUB_TIMEOUT=5</span><br><span class="line">GRUB_DISTRIBUTOR=&quot;$(sed &#x27;s, release .*$,,g&#x27; /etc/system-release)&quot;</span><br><span class="line">GRUB_DEFAULT=saved</span><br><span class="line">GRUB_DISABLE_SUBMENU=true</span><br><span class="line">GRUB_TERMINAL_OUTPUT=&quot;console&quot;</span><br><span class="line">GRUB_CMDLINE_LINUX=&quot;crashkernel=auto rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet isolcpus=1,2,3&quot;</span><br><span class="line">GRUB_DISABLE_RECOVERY=&quot;true&quot;</span><br></pre></td></tr></table></figure>
+
+<p>然后重新构建 <code>grub.conf</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ grub2-mkconfig -o /boot/grub2/grub.cfg</span><br></pre></td></tr></table></figure>
+
+<p>重启系统之后，系统将不再使用逻辑核心 2，3 和 4，只会使用核心 1。找个程序把 CPU 跑满（<a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MzU1MzY4NzQ1OA==&mid=2247484160&idx=1&sn=d593f4693a07a2a5f958fe2e0f489edd&chksm=fbee43cdcc99cadbd2df86c57d051c9742b2f4864071f6269156ec405662037c1bb9eea4c89d&token=1393898211&lang=zh_CN&scene=21#wechat_redirect">上篇文章</a>用的程序），使用命令 top 查看 CPU 的使用状况：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://ask.qcloudimg.com/http-save/yehe-2002950/jyeijdi8yr.png"></p>
+<blockquote>
+<p>执行 <code>top</code> 命令后，在列表页按数字 1 键，就可以看到所有 CPU 了。</p>
+</blockquote>
+<p>可以看到系统只使用了核心 1，下面我们来看看如何将程序绑到特定的 CPU 核心上。</p>
+<h2 id="2-4-创建-cgroup"><a href="#2-4-创建-cgroup" class="headerlink" title="2.4 创建 cgroup"></a>2.4 创建 cgroup</h2><p>将程序绑到指定的核心其实很简单，只需设置好 <code>cpuset</code> 控制器就行了。<code>systemctl</code> 可以管理受其控制资源的 <code>cgroup</code> 控制器，但只能管理有限的控制器（CPU、内存和 BlockIO），不能管理 <code>cpuset</code> 控制器。虽然 <code>systemd</code> 不支持 cpuset，但是相信以后会支持的，另外，现在有一个略显笨拙，但是可以实现同样的目标的方法，后面会介绍。</p>
+<p>cgroup 相关的所有操作都是基于内核中的 cgroup virtual filesystem，使用 cgroup 很简单，挂载这个文件系统就可以了。文件系统默认情况下都是挂载到 <code>/sys/fs/cgroup</code> 目录下，查看一下这个目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">$ ll /sys/fs/cgroup</span><br><span class="line"></span><br><span class="line">总用量 0</span><br><span class="line">drwxr-xr-x 2 root root  0 3月  28 2020 blkio</span><br><span class="line">lrwxrwxrwx 1 root root 11 3月  28 2020 cpu -&gt; cpu,cpuacct</span><br><span class="line">lrwxrwxrwx 1 root root 11 3月  28 2020 cpuacct -&gt; cpu,cpuacct</span><br><span class="line">drwxr-xr-x 2 root root  0 3月  28 2020 cpu,cpuacct</span><br><span class="line">drwxr-xr-x 2 root root  0 3月  28 2020 cpuset</span><br><span class="line">drwxr-xr-x 4 root root  0 3月  28 2020 devices</span><br><span class="line">drwxr-xr-x 2 root root  0 3月  28 2020 freezer</span><br><span class="line">drwxr-xr-x 2 root root  0 3月  28 2020 hugetlb</span><br><span class="line">drwxr-xr-x 2 root root  0 3月  28 2020 memory</span><br><span class="line">lrwxrwxrwx 1 root root 16 3月  28 2020 net_cls -&gt; net_cls,net_prio</span><br><span class="line">drwxr-xr-x 2 root root  0 3月  28 2020 net_cls,net_prio</span><br><span class="line">lrwxrwxrwx 1 root root 16 3月  28 2020 net_prio -&gt; net_cls,net_prio</span><br><span class="line">drwxr-xr-x 2 root root  0 3月  28 2020 perf_event</span><br><span class="line">drwxr-xr-x 2 root root  0 3月  28 2020 pids</span><br><span class="line">drwxr-xr-x 4 root root  0 3月  28 2020 systemd</span><br></pre></td></tr></table></figure>
+
+<p>可以看到 <code>cpuset</code> 控制器已经默认被创建并挂载好了。看一下 <code>cpuset</code> 目录下有什么：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">$ ll /sys/fs/cgroup/cpuset</span><br><span class="line"></span><br><span class="line">总用量 0</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cgroup.clone_children</span><br><span class="line">--w--w--w- 1 root root 0 3月  28 2020 cgroup.event_control</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cgroup.procs</span><br><span class="line">-r--r--r-- 1 root root 0 3月  28 2020 cgroup.sane_behavior</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.cpu_exclusive</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.cpus</span><br><span class="line">-r--r--r-- 1 root root 0 3月  28 2020 cpuset.effective_cpus</span><br><span class="line">-r--r--r-- 1 root root 0 3月  28 2020 cpuset.effective_mems</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.mem_exclusive</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.mem_hardwall</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.memory_migrate</span><br><span class="line">-r--r--r-- 1 root root 0 3月  28 2020 cpuset.memory_pressure</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.memory_pressure_enabled</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.memory_spread_page</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.memory_spread_slab</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.mems</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.sched_load_balance</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 cpuset.sched_relax_domain_level</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 notify_on_release</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 release_agent</span><br><span class="line">-rw-r--r-- 1 root root 0 3月  28 2020 tasks</span><br></pre></td></tr></table></figure>
+
+<p>该目录下只有默认的配置，没有任何 cgroup 子系统。接下来我们来创建 <code>cpuset</code> 子系统并设置相应的绑核参数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ mkdir -p /sys/fs/cgroup/cpuset/test</span><br><span class="line">$ echo &quot;3&quot; &gt; /sys/fs/cgroup/cpuset/test/cpuset.cpus</span><br><span class="line">$ echo &quot;0&quot; &gt; /sys/fs/cgroup/cpuset/test/cpuset.mems</span><br></pre></td></tr></table></figure>
+
+<p>首先创建了一个 cpuset 子系统叫 <code>test</code>，然后将核心 4 绑到该子系统，即 <code>cpu3</code>。对于 <code>cpuset.mems</code> 参数而言，每个内存节点和 <code>NUMA</code> 节点一一对应。如果进程的内存需求量较大，可以把所有的 <code>NUMA</code> 节点都配置进去。这里就用到了 <code>NUMA</code> 的概念。出于性能的考虑，配置的逻辑核和内存节点一般属于同一个 <code>NUMA</code> 节点，可用 <code>numactl --hardware</code> 命令获知它们的映射关系。很显然，我的主机没有采用 <code>NUMA</code> 架构，只需将其设为节点 0 就好了。</p>
+<p>查看 <code>test</code> 目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">$ cd /sys/fs/cgroup/cpuset/test</span><br><span class="line">$ ll</span><br><span class="line">总用量 0</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cgroup.clone_children</span><br><span class="line">--w--w---- 1 root root 0 3月  28 17:07 cgroup.event_control</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cgroup.procs</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.cpu_exclusive</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.cpus</span><br><span class="line">-r--r--r-- 1 root root 0 3月  28 17:07 cpuset.effective_cpus</span><br><span class="line">-r--r--r-- 1 root root 0 3月  28 17:07 cpuset.effective_mems</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.mem_exclusive</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.mem_hardwall</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.memory_migrate</span><br><span class="line">-r--r--r-- 1 root root 0 3月  28 17:07 cpuset.memory_pressure</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.memory_spread_page</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.memory_spread_slab</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.mems</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.sched_load_balance</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 cpuset.sched_relax_domain_level</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 notify_on_release</span><br><span class="line">-rw-rw-r-- 1 root root 0 3月  28 17:07 tasks</span><br><span class="line"></span><br><span class="line">$ cat cpuset.cpus</span><br><span class="line">3</span><br><span class="line"></span><br><span class="line">$ cat cpuset.mems</span><br><span class="line">0</span><br></pre></td></tr></table></figure>
+
+<p>目前 tasks 文件是空的，也就是说，还没有进程运行在该 cpuset 子系统上。需要想办法让指定的进程运行在该子系统上，有两种方法：</p>
+<ol>
+<li>将已经运行的进程的 <code>PID</code> 写入 <code>tasks</code> 文件中；</li>
+<li>使用 <code>systemd</code> 创建一个守护进程，将 cgroup 的设置写入 <code>service</code> 文件中（本质上和方法 1 是一样的）。</li>
+</ol>
+<p>先来看看方法 1，首先运行一个程序：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ nohup sha1sum /dev/zero &amp;</span><br><span class="line">[1] 3767</span><br></pre></td></tr></table></figure>
+
+<p>然后将 <code>PID</code> 写入 test 目录的 <code>tasks</code> 中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ echo &quot;3767&quot; &gt; /sys/fs/cgroup/cpuset/test/tasks</span><br></pre></td></tr></table></figure>
+
+<p>查看 CPU 使用情况：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://ask.qcloudimg.com/http-save/yehe-2002950/0y2fzeegkz.png"></p>
+<p>可以看到绑核生效了，<code>PID</code> 为 3767 的进程被调度到了 <code>cpu3</code> 上。</p>
+<p>下面再来看看方法 2，虽然目前 <code>systemd</code> 不支持使用 <code>cpuset</code> 去指定一个 Service 的 CPU，但我们还是有一个变相的方法，Service 文件内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ cat /etc/systemd/system/foo.service</span><br><span class="line"></span><br><span class="line">[Unit]</span><br><span class="line">Description=foo</span><br><span class="line">After=syslog.target network.target auditd.service</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">ExecStartPre=/usr/bin/mkdir -p /sys/fs/cgroup/cpuset/testset</span><br><span class="line">ExecStartPre=/bin/bash -c &#x27;/usr/bin/echo &quot;2&quot; &gt; /sys/fs/cgroup/cpuset/testset/cpuset.cpus&#x27;</span><br><span class="line">ExecStartPre=/bin/bash -c &#x27;/usr/bin/echo &quot;0&quot; &gt; /sys/fs/cgroup/cpuset/testset/cpuset.mems&#x27;</span><br><span class="line">ExecStart=/bin/bash -c &quot;/usr/bin/sha1sum /dev/zero&quot;</span><br><span class="line">ExecStartPost=/bin/bash -c &#x27;/usr/bin/echo $MAINPID &gt; /sys/fs/cgroup/cpuset/testset/tasks&#x27;</span><br><span class="line">ExecStopPost=/usr/bin/rmdir /sys/fs/cgroup/cpuset/testset</span><br><span class="line">Restart=on-failure</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p>启动该服务，然后查看 CPU 使用情况：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://ask.qcloudimg.com/http-save/yehe-2002950/ekk8ov2k61.png"></p>
+<p>该服务中的进程确实被调度到了 <code>cpu2</code> 上。</p>
+<h2 id="2-4-回到Docker"><a href="#2-4-回到Docker" class="headerlink" title="2.4 回到Docker"></a>2.4 回到Docker</h2><p>最后我们回到 <code>Docker</code>，<code>Docker</code> 实际上就是将系统底层实现的 <code>cgroup</code> 、 <code>namespace</code> 等技术集成在一个使用镜像方式发布的工具中，于是形成了 <code>Docker</code>，这个想必大家都知道了，我就不展开了。对于 Docker 来说，有没有办法让<a target="_blank" rel="noopener" href="https://cloud.tencent.com/product/tke?from=10680">容器</a>始终在一个或某几个 <code>CPU</code> 上运行呢？其实还是很简单的，只需要利用 <code>--cpuset-cpus</code> 参数就可以做到！</p>
+<p>下面就来演示一下，指定运行容器的 <code>CPU</code> 核心编号为 1：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">? → docker run -d --name stress --cpuset-cpus=&quot;1&quot; progrium/stress -c 4</span><br></pre></td></tr></table></figure>
+
+<p>查看主机 CPU 的负载：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://ask.qcloudimg.com/http-save/yehe-2002950/ur9dtcspoe.png"></p>
+<p>只有 <code>Cpu1</code> 达到了 <code>100%</code>，其它的 CPU 并未被容器使用。</p>
+<p>如果你看过该系列的<a target="_blank" rel="noopener" href="http://mp.weixin.qq.com/s?__biz=MzU1MzY4NzQ1OA==&mid=2247484140&idx=1&sn=c18a86d6a2d426f4d627dafd85f5ae3a&chksm=fbee4221cc99cb370fd50af1c21d504b547b8f1e052fb16dc1755df5695b4acc34c48abd825e&token=1393898211&lang=zh_CN&scene=21#wechat_redirect">第一篇文章</a>，应该知道，在新的使用 <code>systemd</code> 实现 <code>init</code> 的系统中（比如 <code>ConetOS 7</code>），系统默认创建了 3 个顶级 <code>slice</code>：<code>System</code>, <code>User</code> 和 <code>Machine</code>，其中 <code>machine.slice</code> 是所有虚拟机和 Linux 容器的默认位置，而 Docker 其实是 <code>machine.slice</code> 的一个变种，你可以把它当成 <code>machine.slice</code> 。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://ask.qcloudimg.com/http-save/yehe-2002950/rbrnshgdye.png"></p>
+<p>如果系统中运行的是 Kubernetes，<code>machine.slice</code> 就变成了 <code>kubepods</code>：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://ask.qcloudimg.com/http-save/yehe-2002950/fycrq5uotu.png"></p>
+<p>为了便于管理 cgroup，<code>systemd</code> 会为每一个 <code>slice</code> 创建一个子系统，比如 docker 子系统：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://ask.qcloudimg.com/http-save/yehe-2002950/0v2mf6yv8y.png"></p>
+<p>然后再根据容器的设置，将其放入相应的控制器下面，这里我们关心的是 <code>cpuset</code> 控制器，看看它的目录下有啥：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://ask.qcloudimg.com/http-save/yehe-2002950/ij6no6mu32.png"></p>
+<p>查看 docker 目录：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://ask.qcloudimg.com/http-save/yehe-2002950/gu1dy1kgwd.png"></p>
+<p>可以看到 Docker 为每个容器创建了一个子目录，<code>7766..</code> 对应的就是之前我们创建的容器：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">? → docker ps|grep stress</span><br><span class="line"></span><br><span class="line">7766580dd0d7        progrium/stress     &quot;/usr/bin/stress --v…&quot;   36 minutes ago      Up 36 minutes                           stress</span><br></pre></td></tr></table></figure>
+
+<p>我们来检验一下该目录下的配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">$ cd /sys/fs/cgroup/cpuset/docker/7766580dd0d7d9728f3b603ed470b04d0cac1dd923f7a142fec614b12a4ba3be</span><br><span class="line"></span><br><span class="line">$ cat cpuset.cpus</span><br><span class="line">1</span><br><span class="line"></span><br><span class="line">$ cat cpuset.mems</span><br><span class="line">0</span><br><span class="line"></span><br><span class="line">$ cat tasks</span><br><span class="line">6536</span><br><span class="line">6562</span><br><span class="line">6563</span><br><span class="line">6564</span><br><span class="line">6565</span><br><span class="line"></span><br><span class="line">$ ps -ef|grep stress</span><br><span class="line">root      6536  6520  0 10:08 ?        00:00:00 /usr/bin/stress --verbose -c 4</span><br><span class="line">root      6562  6536 24 10:08 ?        00:09:50 /usr/bin/stress --verbose -c 4</span><br><span class="line">root      6563  6536 24 10:08 ?        00:09:50 /usr/bin/stress --verbose -c 4</span><br><span class="line">root      6564  6536 24 10:08 ?        00:09:50 /usr/bin/stress --verbose -c 4</span><br><span class="line">root      6565  6536 24 10:08 ?        00:09:50 /usr/bin/stress --verbose -c 4</span><br></pre></td></tr></table></figure>
+
+<p>当然，你也可以将容器绑到多个 CPU 核心上运行，这里我就不赘述了。下篇文章将会介绍如何通过 cgroup 来限制 <code>BlockIO</code>。</p>
+<h3 id="脚注"><a href="#脚注" class="headerlink" title="脚注"></a><strong>脚注</strong></h3><p>[1]<strong>NUMA（Non-uniform memory access）: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Non-uniform_memory_access">https://en.wikipedia.org/wiki/Non-uniform_memory_access</a></strong></p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/')">容器安全-理解cgroup中的cpuset</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=容器安全-理解cgroup中的cpuset&amp;url=https://shippomx.github.io/2023/06/21/linux/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%20cgroup%20%E4%B8%AD%E7%9A%84%20cpuset/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/linux/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>linux<span class="tagsPageCount">16</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2023/06/21/linux/systemtap/systemtap_%E5%B5%8C%E5%85%A5c/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">systemtap 嵌入C代码</div></div></a></div><div class="next-post pull-right"><a href="/2023/06/29/debug%20c%20project%20with%20vscode/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">debug c project with vscode</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2017/06/08/Nginx%20%E9%85%8D%E7%BD%AE%20HTTPS%20%E6%9C%8D%E5%8A%A1%E5%99%A8/" title="Nginx 配置 HTTPS 服务器"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2017-06-08</div><div class="title">Nginx 配置 HTTPS 服务器</div></div></a></div><div><a href="/2023/02/14/linux%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" title="简易环境配置"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-02-14</div><div class="title">简易环境配置</div></div></a></div><div><a href="/2023/03/11/linux/Linux%20%E8%BF%9B%E7%A8%8B%E7%8A%B6%E6%80%81%E8%A7%A3%E6%9E%90%20/" title="进程状态简述"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-03-11</div><div class="title">进程状态简述</div></div></a></div><div><a href="/2023/10/02/linux/%E5%88%9B%E5%BB%BA%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B%E6%AD%A5%E9%AA%A4%E4%B8%8E%20setsid/" title="守护进程与setsid"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-02</div><div class="title">守护进程与setsid</div></div></a></div><div><a href="/2023/10/01/linux/%E5%BC%80%E6%BA%90%E6%97%A5%E5%BF%97%E5%BA%93log_c%E7%9A%84%E7%AE%80%E5%8D%95%E4%BD%BF%E7%94%A8/" title="开源日志库log_c的简单使用"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2023-10-01</div><div class="title">开源日志库log_c的简单使用</div></div></a></div><div><a href="/2020/09/01/linux/%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1%EF%BC%88IPC%EF%BC%89%E4%BB%8B%E7%BB%8D/" title="进程间通信IPC简介"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-09-01</div><div class="title">进程间通信IPC简介</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-%E6%9F%A5%E7%9C%8B%E5%BD%93%E5%89%8D-cgroup-%E4%BF%A1%E6%81%AF"><span class="toc-number">1.</span> <span class="toc-text">1. 查看当前 cgroup 信息</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-cpu%E7%9A%84%E7%BB%91%E5%AE%9A%E4%B8%8E%E9%9A%94%E7%A6%BB"><span class="toc-number">2.</span> <span class="toc-text">2 cpu的绑定与隔离</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-%E6%9F%A5%E7%9C%8B-CPU-%E9%85%8D%E7%BD%AE"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 查看 CPU 配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-NUMA-%E6%9E%B6%E6%9E%84"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 NUMA 架构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-isolcpus"><span class="toc-number">2.3.</span> <span class="toc-text">2.3 isolcpus</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-%E5%88%9B%E5%BB%BA-cgroup"><span class="toc-number">2.4.</span> <span class="toc-text">2.4 创建 cgroup</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-%E5%9B%9E%E5%88%B0Docker"><span class="toc-number">2.5.</span> <span class="toc-text">2.4 回到Docker</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%84%9A%E6%B3%A8"><span class="toc-number">2.5.1.</span> <span class="toc-text">脚注</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>

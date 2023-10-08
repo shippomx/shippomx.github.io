@@ -1,0 +1,744 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>分布式文件系统 IPFS 与 FileCoin | 远辰</title><meta name="keywords" content="blockchain"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="分布式文件系统 IPFS 与 FileCoin"><meta name="application-name" content="分布式文件系统 IPFS 与 FileCoin"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="分布式文件系统 IPFS 与 FileCoin"><meta property="og:url" content="https://shippomx.github.io/2019/07/08/blockchain/IPFS%E7%99%BD%E7%9A%AE%E4%B9%A6/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="分布式文件系统 IPFS 与 FileCoin在这篇文章中，我想聊一聊最近比较热门的 IPFS（InterPlanetary File System），一个点对点的分布式文件系统；从 HTTP 协议出现到今天已经过去了半个多世纪，很少有一些设计能够增强整个 HTTP 网络或者为它带来新的功能。 使用"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="分布式文件系统 IPFS 与 FileCoin在这篇文章中，我想聊一聊最近比较热门的 IPFS（InterPlanetary File System），一个点对点的分布式文件系统；从 HTTP 协议出现到今天已经过去了半个多世纪，很少有一些设计能够增强整个 HTTP 网络或者为它带来新的功能。 使用"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2019/07/08/blockchain/IPFS%E7%99%BD%E7%9A%AE%E4%B9%A6/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: '分布式文件系统 IPFS 与 FileCoin',
+  postAI: '',
+  pageFillDescription: '分布式文件系统 IPFS 与 FileCoin, 架构设计, 身份, 网络, 路由, 数据交换, 文件系统, 命名系统, 激励, 节点, 共识算法, Filecoin共识机制, 摘要, 介绍, 背景, 分布式哈希表 (DHT), KADEMLIA DHT, CORAL DSHT, Sx2FKADEMLIA DHT, 块交换 - BitTorrent, 版本控制系统 - Git, 自我认证认文件系统 - SFS, 设计, 身份, 网络, 对等节点寻址注意事项：, 路由, 块交换 - BitSwap 协议, BITSWAP 信用, BITSWAP 的策略, BITSWAP 账本, BITSWAP 详解, Merkle DAG 对象, 路经, 本地对象, 对象锁定, 发布对象, 对象级别的加密, 文件, 文件对象：BLOB, 文件对象 LIST, 文件对象：TREE, 文件对象：COMMIT, 版本控制, 文件系统路径, 将文件分隔成 LISTS 和 BLOBS, 路径查找性能, IPNS：命名以及易变状态, 自我认证名称, 人类友好名称, 使用 IPFS, 引用, 引用论文, 引用备忘录分布式文件系统与在这篇文章中我想聊一聊最近比较热门的一个点对点的分布式文件系统从协议出现到今天已经过去了半个多世纪很少有一些设计能够增强整个网络或者为它带来新的功能使用协议传递相对小的文件其实是非常廉价和方便的但是随着计算资源和存储空间的指数增长我们面临了需要随时获取大量数据的问题而就是为了解决这一问题出现的架构设计作为一个分布式的文件系统提供了一个支持部署和写入的平台同时能够支持大文件的分发和版本管理为了达到上述的目的协议被分成如下的几个子协议上述的七个子协议分别负责中的不同功能我们将在接下来的章节中分别介绍各个协议分别做了哪些工作以及是如何实现的身份在网络中所有的节点都通过唯一的进行标识与的地址有一些相似它其实是一个公钥的哈希然而为了增加攻击者的成本使用中提到的算法增加创建新身份的成本每一个节点在代码中都由结构体来表示其中只包含以及一个公私钥对总之身份系统的主要作用就是表示网络中的每一个节点代表每一个使用的用户网络作为一个分布式的存储系统节点之间的通信和信息传递都需要通过网络进行同时能够使用多种传输层协议并保证可靠性连通性信息的完整性以及真实性可以使用任意的网络进行通信它并没有假设自己一定运行在协议上而是通过的格式来表示目标地址和使用的协议以此来兼容和扩展未来可能出现的其他网络协议路由在一个分布式系统中检索或者访问其他节点中存储的资源就需要通过一个路由系统使用了基于和中的实现了路由系统我们能够在中找到路由系统的接口从这里我们可以看到中的路由需要实现三种基本的功能内容路由节点路由以及数据存储实现了这几些接口的路由器就可以在底层进行替换不会影响系统其他部分的工作目前使用全局和来解析路由记录而有以下的优点在批量节点中快速找到目标地址时间复杂度是也就是说在节点中只需要次查询优化了节点之间的控制消息长度降低了信息协调的开销通过优先选择长期节点抵御多种网络攻击在点对点的应用中被广泛应用例如和技术也比较成熟数据交换在中数据的分发和交换使用协议负责两件事情向其他节点请求需要的以及为其他节点提供当我们需要向其他节点请求或者为其他节点提供时都会发送消息其中主要包含了两部分内容发送者的以及数据块整个消息都是使用进行编码的在系统中有两个非常重要的模块需求管理器和决定引擎前者会在节点请求时在本地返回相应的或者发出合适的请求而后者决定如何为其他节点分配资源当节点接收到包含的消息时消息会被转发至决定引擎引擎会根据该节点的决定如何处理请求想要了解跟多的实现细节以及的读者可以阅读其他内容除了定义节点之间互相发送的消息之外还引入了激励和惩罚来保证整个网络中不会有恶意的节点通过来存储两个节点之间的数据来往决定引擎会通过两个节点之间的计算出一个负债比率负债比率是用来衡量节点之间信任的它不仅能够阻止攻击者创建大量的节点还能在节点短时间不可用时保护已有的交易关系并且在节点关系恶化之前终止交易使用创建了一个具有激励和惩罚的网络保证了网络中的大部分节点能够交换数据并且正常运行文件系统和允许构建一个用于存储和分发数据块的大型点对点系统在这之上构建了一个每一个对象都可能包含一组链接和当前节点中的数据我们可以使用如下的命令列出该对象下的全部链接原始数据加上通用的链接是在上构造任意数据结构的基础键值存储传统的关系型数据库加密区块链都可以在的上进行存储和分发在这之上定义了一系列的对象构建了支持版本控制的文件系统它与的对象模型非常类似并且所有文件对象其实都通过进行了二进制编码文件可以通过和进行表示其中不包含任何的链接只包含数据但是却包含了一个和的有序队列而文件对象与中的非常相似它表示一个从名字到哈希的文件目录最后的表示任意对象的快照在上述文件对象图中最顶层的就表示历史的某一次快照对比两次以及子节点构成的树就能得到两次快照之间的差别我们可以认为和文件对象构成了整个中的文件系统命名系统到目前为止技术栈已经提供了一个点对点的数据交换系统能够在节点之间发送对象并且可以推送和取回不可变的对象但是可变的命名系统也是网络不可缺少的一部分我们终究需要使用同一个地址获取不同的状态因为不能因为网站的更新而改变域名所以需要提供一种域名服务解决这一问题在中可以使用如下的可变命名空间来解决这些问题用户可以发布一个对象其他节点就可以通过加上该用户的节点地址访问到这些发布到网络中的对象当然我们也可以在现有的系统中添加记录这样就能通过域名访问网络中发布的文件对象了在不仅能够使用哈希访问可变对象也能嵌入现有的服务中很好的运行解决了底层服务无缝切换的问题激励在今天当我们讨论这种底层的区块链技术时就不得不提构建在上的它提供了一个给宿主和上传者交易的市场通过市场可以调节存储的成本上传者能够根据价格选择速度冗余和成本节点大多数的区块链网络中都只具有单一类型的标准节点但是中却有两种不同的节点存储节点和检索节点所有人都可以成为存储节点将自己磁盘上额外的存储空间租赁出去会使用这些磁盘存储一些较小的加密文件的一部分而检索节点则需要尽可能靠近更多的存储节点也需要更高的带宽和更低的延迟用户会支付最快返回文件的检索节点当我们想要上传文件时需要支付一定的存储费用存储节点会为存储文件的权利给出报价会选择价格最低的存储节点保存文件存储的文件会被加密并分割成多个部分并发送给多个节点文件的位置会存储在全局的表中在这之后只有拥有私钥的节点才能查询组装并且解密上传的文件共识算法我们可以说所有的区块链应用都需要共识算法保证多个节点对某一结果达成共识并在发生冲突时进行解决和目前都使用了作为共识算法而使用解决其网络内部存在的问题允许证明者提交存储个的不同副本然后说服验证人确实保存了这些副本在一文中能够找到更多与等用于验证磁盘空间提供方确实存储资源的共识算法在这里就不展开介绍了共识机制对共识机制的探索无疑更具有前瞻性和突破性创新的采用了一种混合共识机制复制证明时空证明预期共识其中复制证明是共识机制中的核心因素尽管的网络协议共识其他算法都基本定型但是复制证明仍然处于不断完善的方案中复制证明是一个交互式证明系统在这个系统中存储的提供者需要提供可公开验证的证明来表明其为一个数据文件副本分配了独有的空间资源而且所存储的数据是可检索的复制证明是新的存储证明必须能够防范以下三种常见的攻击方式女巫攻击外源攻击和生成攻击他们的共同特点是攻击矿工实际存储的数据大小要比声称存储的数据小这样攻击矿工就能获得本不该他获得的报酬女巫攻击利用个身份承诺存储份数据而实际上存储小于份比如份但是却提供了份存储证明攻击成功外部数据源攻击当攻击者矿工收到检验者要求提供数据的证明的时候攻击者矿工从别的矿工那里生成证明证明自己一直存储了数据而实际上没有存储攻击成功生成攻击攻击者可以使用某种方式生成数据当检验者验证的时候攻击者就可以重新生成数据来完成存储证明攻击成功防范生成攻击比较困难所有的协议都会遇到这样的问题如何保证矿工真正的存储了这些数据需要解决这个问题因此协议采用一种叫做的游戏来一起解决这三种攻击方式还在此基础上引入了时限性协议的实现可能有很多种方式不管哪种实现方式都必须能够防止上面的三种攻击方式并且要能够通过游戏的测试时空证明提出了证明链的数据结构证明链把一些的挑战和证明链接起来形成在证明链的基础上添加上时间段这样就得到了一段时间内的矿工存储数据的证明这就是时空证明可以证明在该段时间内矿工存储了特定的数据并且利用时间戳锚定这些证明链这样即使验证者不在线也可以在未来的某个时间内利用时空证明去验证该矿工生成了证明链会被提交到链上用来产生新的新的区块矿工赢得选举的可能性跟矿工当前的有效存储算力成正比把矿工在网络中的当前存储数据相对于整个网络的存储比例转化为矿工投票权无论在该周期里选举出来的是一名还是多名矿工被选举出来的矿工都需要创建新的区块并把新的区块对网络进行广播尽管链中的区块是线性的但是的区块数据结构采用的有向无环图可以在同一时间产生多个区块所以的交易要比的有效的多这也是为什么把叫做可能的的原因首创的混合共识机制从根本上定义了是一个合理高效去中心化的系统并体现出的公平性保密性和公开可验证性摘要星际文件系统是一种点对点的分布式文件系统旨在连接所有有相同的文件系统的计算机设备在某些方面类似于但是中心化的而是一个单一的群集用仓库分布式存储换句话说提供了高吞吐量的内容寻址块存储模型具有内容寻址的超链接这形成了一个广义的数据结构可以用这个数据结构构建版本文件系统区块链甚至是永久性网站结合了分布式哈希表带有激励机制的块交换和自我认证命名空间没有单故障点节点不需要相互信任介绍在全球分布式文件系统这领域已经有许多人的尝试一些系统已经取得了重大的成功而很多却完全失败了在学术尝试中就是成功的例子如今已经得到广泛的应用然而其他的却没有得到相同的结果在学术界之外应用最广泛的是面向音视频媒体的点对点文件共享系统最值得注意的是和部署的文件分发系统支持亿用户的同时在线即使在今天也维持着每天千万节点的活跃数基于这些学术文件系统理论而实现的应用程序有很多的用户量然而这些系统理论是在应用层而没有放在基础层以致没有出现通用的文件系统基础框架给全球提供低延迟的分发也许是因为这样足够好的系统已经存在到目前为止已经作为分布式文件系统的协议并且已经大量部署再与浏览器相结合具有巨大的技术和社会影响力在现在它已经成为互联网传输文件的事实标准然而他没有采用最近年的发明的数十种先进的文件分发技术从一方面讲由于向后兼容的限制和当前新模式的投入不断发展的基础设施几乎是不可能的但从一个角度看从出现以来已经有许多新协议出现并被广泛使用升级协议虽然能引入新功能和加强当前协议但会降低用户的体验有些行业已经摆脱使用这么久因为移动小文件相对便宜即使对拥有大流量的小组织也是如此但是随着新的挑战我们正在进入数据分发的新纪元托管和分发级数据集跨组织的大数据计算大批量的高清晰度按需或实时媒体流大规模数据集的版本化和链接防止意外丢失重要文件等其中许多可以归结为大量数据无处不在由于关键功能和带宽问题我们已经为不同的数据放弃了分销协议下一步是使它们成为自己的一部分正交于有效的数据分发版本控制系统已经设法开发重要的数据协作工作流程是分布式源代码版本控制系统开发了许多有用的方法来建模和实现分布式数据操作工具链提供了灵活的版本控制功能这正是大量的文件分发系统所严重缺乏的由启发的新解决方案正在出现如个人文件存储系统数据协作工具链和数据集包管理器已经影响了分布式文件系统设计因为其内容涉及到数据模型能够实现强大的文件分发策略还有待探讨的是这种数据结构如何影响面向高吞吐量的文件系统的设计以及如何升级本身本文介绍了一种新颖的对等版本控制的文件系统旨在调和这些问题综合了许多以前成功的系统的优点产生了突出的效果甚至比参考的这些系统的总和还要好的核心原则是将所有数据建模为同一的一部分背景本节回顾了所采用成功的点对点系统技术的重要属性分布式哈希表分布式散列表被广泛用于协调和维护关于对等系统的元数据比如是一个去中心化哈希表他可追踪查找所有的对等节点是受欢迎的它提供通过大量网络进行高效查询查询平均联系人节点例如跳万个节点的网络低协调开销优化数量的控制消息发送到其他节点抵抗各种攻击喜欢长寿节点在对等应用中广泛使用包括和形成了超过万个节点的网络虽然一些对等文件系统直接在中存储数据块这种数据存储在不需要的节点会乱费存储和带宽扩展了三个特别重要的方式在为最近使用的关键节点中存储值这不考虑应用程序数据的局部性忽略远可能已经拥有数据的节点并强制最近节点存储它无论它们是否需要这浪费了大量的存储和带宽相反存储了地址该地址的对等节点可以提供相应的数据块将从换成了中的中这仍然是因为用户只需要一个工作的对等体而不是完整的列表作为回报可以仅将子集分配到最近的节点避免热点当密钥变得流行时重载所有最近的节点另外根据区域和大小组织了一个称为群集的独立层次结构这使得节点首先查询其区域中的对等体查找附近的数据而不查询远程节点并大大减少查找的延迟扩展了用于防止恶意的攻击有如下两方面的方法提供了方案来保证的生成已经防止攻击它需要节点产生公私钥对从中导出他们的身份并彼此间签名一个方案使用工作量证明使得生成成本高昂节点在不相交的路径上查找直即使网络中存在大量的不诚实节点也能确保诚实节点可以互相链接即使网络中存在一半的不诚实节点也能达到的成功率块交换是一个广泛成功应用的点对点共享文件系统它可以在存在不信任的对等节点群集的协作网络中分发各自的文件数据片从和它的生态系统的关键特征得到启示如下的数据交换协议使用了一种的激励策略可以奖励对其他方面做贡献的节点惩罚只榨取对方资源的节点对等体跟踪文件的可用性优先发送稀有片段这减轻了节点的负担让节点有能力互相交易对于一些剥削带宽共享策略的标准策略是非常脆弱的然而是一种不同的对等带宽分配策略可以更好的抵制剥削战略提高群集的表现版本控制系统版本控制系统提供了对随时间变化的文件进行建模的设施并有效地分发不同的版本流行版本控制系统提供了强大的对象模型以分布式友好的方式捕获对文件系统树的更改不可更改的对象表示文件目录树和更改提交通过加密对象的内容让对象可寻址链接到其他对象是嵌入的形成一个这提供了很多有用的完整和属性很多版本元数据分支标示等等都只是指针引用因此创建和更新的代价都小版本改变只是更新引用或者添加对象分布式版本改变对其他用户而言只是转移对象和更新远程引用自我认证认文件系统提出了两个引人注目的实现分布式信任链和平等共享的全局命名空间引入了一种自我建构技术注册文件寻址远程文件系统使用以下格式代表的是服务网络地方因此文件系统的名字认证了它的服务用户可以通过服务提供的公钥来验证协商一个共享的私钥保证所有的通信所有的实例都共享了一个全局的命名空间这个命名空间的名称分配是加密的不被任何中心化的控制设计是一个分布式文件系统它综合了以前的对等系统的成功想法包括和的贡献是简化发展和将成熟的技术连接成一个单一的内聚系统大于其部分的总和提供了编写和部署应用程序的新平台以及一个新的分发系统版本化大数据甚至可以演进网络本身是点对点的没有节点是特权的节点将对象存储在本地存储中节点彼此连接并传输对象这些对象表示文件和其他数据结构协议分为一组负责不同功能的子协议身份管理节点身份生成和验证描述在节网络管理与其他对等体的连接使用各种底层网络协议可配置的详见节路由维护信息以定位特定的对等体和对象响应本地和远程查询默认为但可更换在节描述交换一种支持有效块分配的新型块交换协议模拟市场弱化数据复制贸易策略可替换描述在节对象具有链接的内容寻址不可更改对象的用于表示任意数据结构例如文件层次和通信系统详见第节文件由启发的版本化文件系统层次结构详见节命名自我认证的可变名称系统详见节这些子系统不是独立的它们是集成在一起互相利用各自的属性但是分开描述它们是有用的从下到上构建协议栈符号语言中指定了以下数据结构和功能身份节点由标识这是使用的静态加密难题创建的公钥的密码散列节点存储其公私钥用密码加密用户可以在每次启动时自由地设置一个新节点身份尽管这会损失积累的网络利益激励节点保持不变自描述加密哈希摘要自描述的私钥基于的身份生成首次连接时对等体交换公钥并检查等于如果没有则连接被终止关于加密函数的注意事项不是将系统锁定到一组特定的功能选择而是支持自我描述的值哈希摘要值以多重哈希格式存储其包括指定使用的哈希函数的头和以字节为单位的摘要长度例如这允许系统选择最佳功能用例例如更强的安全性与更快的性能随着功能选择的变化而演变自描述值允许兼容使用不同的参数选择网络节点与数百个其他节点进行定期通信网络中的节点可能跨越广域网络网络堆栈功能传输层可以使用任何传输协议并且最适合用于浏览器连接或可靠性如果底层网络不提供可靠性可使用或来提供可靠性可连接性还可以使用穿墙打洞技术完整性可以使用哈希校验和来检查邮件的完整性可验证性可以使用发送者的公钥使用来检查消息的真实性对等节点寻址注意事项可以使用任何网络但它不承担对的获取以及不直接依赖于层这允许在覆盖网络中使用将地址存储为多层地址这个多层地址是由字节字符串组成的以便于给底层网络使用多层地址提供了一种方式来表示地址及其协议可以封装成好解析的格式例如路由节点需要一个路由系统这个路由系统可用于查找其他同伴的网络地址专门用于服务特定对象的对等节点使用基于和的在节中具体介绍过在对象大小和使用模式方面类似于和因此根据其大小对存储的值进行区分小的值等于或小于直接存储在上对于更大的值只存储值索引这个索引就是一个对等节点的该对等节点可以提供對该类型的值的具体服务的接口如下获取特定的网络地址往存储一个小的元数据从获取元数据声明这个节点可一个提供一个大的数据获取服务于该大数据的节点注意不同的用例将要求基本不同的路由系统例如广域网中使用局域网中使用静态因此路由系统可以根据用户的需求替换的只要使用上面的接口就可以了系统都能继续正常运行块交换协议中的协议受到的启发通过对等节点间交换数据块来分发数据的像一样每个对等节点在下载的同时不断向其他对等节点上传已下载的数据和协议不同的是不局限于一个文件中的数据块协议中存在一个永久的市场这个市场包括各个节点想要获取的所有块数据而不管这些块是哪些如文件中的一部分这些快数据可能来自文件系统中完全不相关的文件这个市场是由所有的节点组成的虽然易货系统的概念意味着可以创建虚拟货币但这将需要一个全局分类账本来跟踪货币的所有权和转移这可以实施为策略并将在未来的论文中探讨在基本情况下节点必须以块的形式彼此提供直接的值只有当跨节点的块的分布是互补的时候各取所需的时候这才会工作的很好通常情况并非如此在某些情况下节点必须为自己的块而工作在节点没有其对等节点所需的或根本没有的情况下它会更低的优先级去寻找对等节点想要的块这会激励节点去缓存和传播稀有片段即使节点对这些片段不感兴趣信用这个协议必须带有激励机制去激励节点去其他节点所需要的块而它们本身是不需要这些块的因此的节点很积极去给对端节点发送块期待获得报酬但必须防止水蛭攻击空负载节点从不共享块一个简单的类似信用的系统解决了这些问题对等节点间会追踪他们的平衡通过字节认证的方式随着债务增加而概率降低对等者概率的向债务人发送块注意的是如果节点决定不发送到对等体节点随后忽略对等体的超时这样可以防止发送者尝试多次发送洪水攻击默认是秒的策略对等节点采用很多不同的策略这些策略对整个数据块的交换执行力产生了不同的巨大影响在中标准策略是明确规定的其他不同的策略也已经被实施从尽可能分享到利用一个漏洞从不共享到按比例分享对等体可以类似地实现一系列的策略良好和恶意对于功能的选择应该瞄准为整个交易和节点最大化交易能力为了防止空负载节点利用和损害交易高效抵制未知策略对可信任的对等节点更宽容探索这些策略的空白是未来的事情在实践中使用的一个选择性功能是根据负债比例进行缩放让负债比例在一个节点和它对等节点之间根据发送到负债节点的概率为正如你看到的图片当节点负债比例超过节点已建立信贷的两倍发送到负债节点的概率就会急速下降负债比是信任的衡量标准对于之前成功的互换过很多数据的节点会宽容债务而对不信任不了解的节点会严格很多这个给与那些创造很多节点的攻击者攻击一个障碍保护了之前成功交易节点之间的关系即使这个节点暂时无法提供数据最终阻塞那些关系已经恶化的节点之间的通信直到他们被再次证明账本节点保存了一个记录与所有其他节点之间交易的账本这个可以让节点追踪历史记录以及避免被篡改当激活了一个链接节点就会互换它们账本信息如果这些账本信息并不完全相同分类账本将会重新初始化那些应计信贷和债务会丢失恶意节点会有意去失去这些账本从而期望清除自己的债务节点是不太可能在失去了应计信托的情况下还能累积足够的债务去授权认证伙伴节点可以自由的将其视为不当行为拒绝交易节点可以自由的保留分布式账本历史这不需要正确的操作因为只有当前的分类账本条目是有用的节点也可以根据需要自由收集分布式帐本从不太有用的分布式帐开始老其他对等节点可能不存在和小详解节点有以下简单的协议对等连接的生命周期草图对等节点间发送直到他们同意对等节点间交换和对等节点断开链接特殊对等体被忽略等待时间的超时如果节点采用防止发送策略当发生链接的时候节点会初始化链接的账本要么保存一个份链接过去的账本要么创建一个新的被清零的账本然后发送一个携带账本的信息给对等节点接收到一个信息之后对等节点可以选择是否接受此链接如果根据接收者的账本发送者是一个不可信的代理传输低于零或者有很大的未偿还的债务接收者可能会选择忽略这个请求忽略请求是超时来概率性实现的为了让错误能够有时间改正和攻击者被挫败如果链接成功接收者用本地账本来初始化一个对象以及设置时间戳然后它会将接受到的账本与自己的账本进行比较如果两个账本完全一样那么这个链接就被如果账本并不完全一致那么此节点会创建一个新的被清零的账本并且会发送此账本当链接已经的时候节点会广发它们的给所有已经链接的对等节点这个是在链接后随机间歇超时后改变后接收到一个新的块之后完成的当接收到一个之后节点会存储它然后会检查自己是否拥有任何它想要的块如果有会根据上面提到的策略来将所需要的块发送出去发送一个块是直接了当的节点只是传输数据块当接收到了所有数据的时候接收者会计算多重校验和来验证它是否是自己所需数据然后发送确认信息在完成一个正确的块传输之后接受者会将此块从一到最后接收者和发送者都会更新它们的账本来反映出传输的额外数据字节数如果一个传输验证失败了发送者要么会出故障要么会攻击接收者接收者可以选择拒绝后面的交易注意是期望能够在一个可靠的传输通道上进行操作的所以传输错误可能会引起一个对诚实发送者错误的惩罚是期望在数据发送给之前能够被捕捉到传给最后的一个参数代表链接是否是发送者的意愿如果参数值为接收者可能会立即重新链接这避免链过早的链接一个对等节点链接发生在下面两种情况下超时已经过期并且没有接收到来自于对等节点的任何信息默认使用秒节点会发送在节点退出和关闭的时候节点会发送接收到消息之后接收者和发送者会断开链接清除所有被存储的状态账本可能会被保存下来为了以后的便利当然只有在被认为账本以后会有用时才会被保存下来注意点非信息在一个不活跃的连接上应该是被忽略的在发送信息时接收者应该检查这个块看它是否是自己所需的并且是否是正确的如果是就使用此块总之所有不规则的信息都会让接收者触发一个信息并且强制性的重初始化此链接对象和允许构造一个庞大的点对点系统用来快速稳定的分发和存储最主要的是建造了一个一个无回路有向图对象之间的都是加密嵌入在源目标中这是数据结构的一种推广给提供了很多有用的属性包括内容可寻址所有内容都是被多重校验和来唯一识别的包括防止篡改所有的内容都用它的校验和来验证如果数据被篡改或损坏会检测到重复数据删除所有的对象都拥有相同的内容并只存储一次这对于索引对象非常有用比如的和或者数据的公共部分对象的格式是此的别名目标的加密目标总大小数组不透明内容数据是存储数据非常灵活的一种方式只要求对象引用是内容可寻址的用上面的格式编码允许应用完全的掌控数据域应用可以使用任何自定义格式的数据即使数据都无法理解单独的内部对象表允许做用对象的形式列出所有对象引用例如解决字符串路经查找例如给出一个对象会解析第一个路经成分进行放入到对象的表中再获取路径的第二个组成部分一直如此重复下去因此任何数据格式的字符串路经都可以在中使用递归性的解决所有对象引用原始数据结构公共结构是构建任意数据结构的必要组成部分可以很容易看出的对象模型是如何套用的一些其他潜在的数据结构键值存储传统关系型数据数据三倍存储文档发布系统通信平台加密货币区块这些系统都可以套用这使这些系统更复杂的应用可以使用作为传输协议路经对象可以遍历一个字符串路经路经格式与传统文件系统以及一致的使遍历变得很容易全称路经在中的格式是格式例子前缀允许只要在挂载点不冲突挂载点名称当然是可配置的的情况下挂载到一个已存在的系统上第二个路经组成部分第一个是是一个对象的通常都是这种情况因为没有全局的根一个根对象可能会有一个不可能完成的任务就是在分布式环境可能还断开链接中处理百万对象的一致性因此我们用地址可寻址来模拟根通过的所有的对象都是可访问的这意思是说给一个路经对象最后一个对象可以可以被所有的访问的本地对象客户端需要一个本地存储器一个外部系统可以为管理的对象存储以及检索本地原始数据存储器的类型根据节点使用案例不同而不同在大多数情况下这个存储器只是硬盘空间的一部分不是被本地的文件系统使用键值存储如来管理就是直接被客户端管理在其他的情况下例如非持久性缓存存储器就是的一部分最终所有的块在中都是能够获取的到的块都存储在了一些节点的本地存储器中当用户请求一个对象时这个对象会被查找到并下载下来存储到本地至少也是暂时的存储在本地这为一些可配置时间量提供了快速的查找对象锁定希望确保特定对象生存的节点可以锁定此对象这保证此特定对象被保存在了节点的本地存储器上也可以递归的进行锁定所有相关的派生对象这使所有被指定的对象都保存在本地存储器上这对长久保存文件特别有用包括引用这也同样让成为一个是永久的且对象可以确保其他被指定对象的生存发布对象是全球分布的它设计为允许成千上万的用户文件可以共同的存在的使用内容哈希寻址技术使发布对象是公平的安全的完全分布式的任何人都可以发布对象只需要将对象的加入到中并且以对象是对等节点的方式加入进去然后把路径给其他的用户要注意的是对象本质上是不可改变的就像在中一样新版本的哈希值不同因此是新对象跟踪版本则是额外版本对象的工作对象级别的加密是具备可以处理对象级别加密操作的一个已加密的或者已签名的对象包装在一个特殊的框架里此框架允许加密和验证原始字节已加密的原始对象数据可选择的加密标识已签名的原始对象数据签名多重哈希身份键值加密操作改变了对象的哈希值定义一个不同的新的对象自动的验证签名以及使用用户指定的钥匙链解密数据加密数据的也同样的被保护着没有解密秘钥就无法遍历对象也存在着一种现象可能父对象使用了一个秘钥进行了加密而子对象使用了另一个秘钥进行加密或者根本没有加密这可以保证共享对象安全文件在上还为模型化版本文件系统定义了一组对象这个对象模型与比较相似一个可变大小的数据块块或者其他链表的集合块链表或者其他树的集合树在版本历史记录中的一个快照我原本希望使用与对象格式一致的模型但那就必须要分开来引进在分布式文件系统中有用的某些特征如快速大小查找总字节大小已经加入到对象中大文件的重复删除添加到对象嵌入到中不过文件对象与还是非常相近的两者之间进行交流都是有可能的而且的一个系列的对象可以被引进过来转换都不会丢失任何的信息文件权限等等标记下面的文件对象格式使用注意虽然包含了的互相转换但是文件对象的结构体还是使用的二进制编码文件对象对象代表一个文件且包含一个可寻址的数据单元的就像的或者文件系统数据块它们存储用户的数据需要留意的是文件可以使用或者来表示没有无文件对象对象代表着由几个的连接成的大文件或者重复数据删除文件包含着有序的序列或对象从某种程度上而言的函数就像一个间接块的文件系统由于可以包含其他的那么包含的链表和平衡树的拓扑结构是有可能的有向图中相同的节点出现在多个不同地方允许在文件中重复数据删除当然循环是不可以能的因为是被哈希寻址强制实行的有一个对象类型的数组作为数据在中是没有名字的文件对象中的对象与中相似它代表着一个目录一个名字到哈希值的映射哈希值则表示着其他的或者注意传统路径的命名早已经被实现了有一个对象类型的数组作为数据是有名字的文件对象中的对象代表任何对象在版本历史记录中的一个快照与中类似但是它能够表示任何类型的对象它同样着发起对象版本控制对象代表着一个对象在历史版本中的一个特定快照在两个不同的中比较对象和子对象可以揭露出两个不同版本文件系统的区别只要和它所有子对象的引用是能够被访问的所有前版本是可获取的所有文件系统改变的全部历史是可访问的这就与对象模型脱离开来了版本控制工具的所有功能对于的用户是可用的对象模型不完全一致但也是可兼容的这可能构建一个工具版本改造成使用对象图构建一个挂载文件系统挂载一个的作为的仓库把文件系统的读写转换为的格式文件系统路径如我们在中看到的一样对象可以使用字符串路径来遍历文件对象是特意设计的为了让挂载到文件系统更加简单文件对象限制没有数据为了使它们可以表示目录可以以代表目录的形式出现也可以完全的隐藏在文件系统中将文件分隔成和版本控制和分发大文件其中一个最主要的挑战是找到一个正确的方法来将它们分隔成独立的块与其认为可以为每个不同类型的文件提供正确的分隔方法不如说提供了以下的几个可选选择就像在中一样使用来选择一个比较合适的块边界使用算法来检测块在版本之间的改变允许用户指定专为特定文件而调整的快分隔函数路径查找性能基于路径的访问需要遍历对象图获取每个对象要求在中查找它们的连接到对等节点然后获取它的块这造成相当大的开销特别是查找的路径由很多子路径组成时下面的方法可以减缓开销缓存由于所有的对象都是哈希寻址的它们可以被无限的缓存另外一般比较小所以比起会优先缓存对于任何一个特殊的可以构建一个链表所有对象都可以从这个中访问得到在中名字就是一个从原始分离的路径用斜线分隔例如对于上面的的如下命名以及易变状态目前为止桟形成了一个对等块交换组成一个内容可寻址的对象这提供了发布和获取不可改变的对象这甚至可以跟踪这些对象的版本历史记录但是这里有一个关键成分遗漏了易变的命名没有这个发送的所有新内容的通信肯定都会有所偏差现在所需就是能有某些方法可以获取相同路径的的易变状态这值得详述原因如果最终易变数据是必须的我们费了很大的力气构建了一个不可改变的就当做脱离了的特征对象可以通过哈希值可以获取完整性的检查其他的对象无限缓存从某种意义上说对象就是永恒的这些就是一个高性能分布式系统的关键特征在此系统上跨网络之间移动文件是非常昂贵的对象内容可寻址构建了一个具有以下特点的优秀的宽带优化不受信任的内容服务永恒的能够永久备任何对象以及它的引用不可变的内容可寻址对象和命名的可变指针指向实例化了一个出现在很多成功分布式系统中的二分法这些系统包括的版本控制系统使用不可变的对象和可变的引用还有分布式的继承者文件系统使用可变的和不可变的同样使用可变的索引以及不可变的块自我认证名称使用中的命名方案给我们提供了一个种可以构建自我认证名称的方法在一个加密指定的全局命名空间中这是可变的的方案如下回想一下在中我们给每个用户分配一个可变的命名空间在此路径下一个用户可以在此路径下发布一个用自己私钥签名的对象比如说当其他用户获取对象时他们可以检测签名是否与公钥和匹配这个验证了用户发布对象的真实性达到了可变状态的获取注意下面的细节的命名空间分开前缀是在可变和不可变的路径之间建立一个很容易辨认的区别为了程序也为了人类阅读的便利因为这不是一个内容可寻址的对象所以发布它就要依靠中的唯一的可变状态分配制度路由系统过程是首先把此对象做一个常规的不可变的对象来发布将此对象的哈希值作为元数据的值发布到路由系统上发布的对象中任何在命令空间中充当子名称一般建议发布一个对象或者其他对象的时候要使用历史版本记录因为这样就用户就可以找到之前使用过的名字不过由于这并不总是需要的所以留个用户自己选择注意当用户发布一个对象的时候他不能使用相同的方式来发布对象人类友好名称的确是一个分配和在分配名称的好方法但是对用户却不是十分友好的因为它使用很长的哈希值作为名称众所周知这样的名称很难被记住足够应付但对于很多线下的传输工作就没有这么好用了因此使用下面的技术来增加的用户友好度对等节点被所鼓舞用户可以直接将其他用户的对象到自己的对象上命令空间家目录等等这有一个好处就是创建了一个可信任的也支持老的真实性认证模型到上到上也可以访问访问认证域记录如果是一个有效的域名称会在记录中查找关键的会将查找到的值翻译为一个对象的哈希值或者另一个的路径记录表现为符号链接可读的标识符总是会有将二进制编码翻译成可读文件的方法则支持如下语句分解为相应的下面形式缩短名称服务会涌现出很多服务器提供缩短名称的服务向用户提供他们的命名空间就像我们现在看到的和的用户可以从下面获取一个然后放到自己的命名空间使用设计为可以使用多种不同的方法来使用的下面就是一些我将会继续追求的使用方式作为一个挂载的全局文件系统挂载在和下作为一个挂载的个人同步文件夹自动的进行版本管理发布以及备份任何的写入作为一个加密的文件或者数据共享系统作为所有软件的版本包管理者作为虚拟机器的根文件系统作为的启动文件系统在管理程序下作为一个数据库应用可以直接将数据写入数据模型中获取所有的版本缓冲以及提供的分配作为一个和加密的通信平台作为一个为大文件的完整性检查不使用的情况下作为一个加密的在网页上作为一个作为一个永远存在新的永恒的实现的目标一个库可以导出到你自己应用中使用命令行工具可以直接操作对象使用或者内核的模型挂载文件系统引用引用论文一个安全的基于秘钥路由的可行方法年国际会议第卷页在并发和分布式系统中年和软件超过亿万用户里程碑激励机制在中建立了健壮性在对等系统经济研讨会中第卷页年一个快速和轻量级键值存储数据库谷歌提供年民主内容发布在中第卷页年以及分布式文件系统的规模和性能电脑系统上的交易年引用备忘录分布式一致性与共识算法替代的分布式网络协议官网',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-09-28 16:22:11',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">9</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/09/"><span class="card-archive-list-date">September 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">5</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/02/"><span class="card-archive-list-date">February 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/blockchain/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>blockchain</span></a></span></div></div><h1 class="post-title" itemprop="name headline">分布式文件系统 IPFS 与 FileCoin</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2019-07-08T05:14:56.000Z" title="发表于 2019-07-08 13:14:56">2019-07-08</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.039Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2019/07/08/blockchain/IPFS%E7%99%BD%E7%9A%AE%E4%B9%A6/"><header><a href="/tags/blockchain/" tabindex="-1" itemprop="url">blockchain</a><h1 id="CrawlerTitle" itemprop="name headline">分布式文件系统 IPFS 与 FileCoin</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2019-07-08T05:14:56.000Z" title="发表于 2019-07-08 13:14:56">2019-07-08</time><time itemprop="dateCreated datePublished" datetime="2023-09-28T08:22:11.039Z" title="更新于 2023-09-28 16:22:11">2023-09-28</time></header><h1 id="分布式文件系统-IPFS-与-FileCoin"><a href="#分布式文件系统-IPFS-与-FileCoin" class="headerlink" title="分布式文件系统 IPFS 与 FileCoin"></a>分布式文件系统 IPFS 与 FileCoin</h1><p>在这篇文章中，我想聊一聊最近比较热门的 IPFS（InterPlanetary File System），一个点对点的分布式文件系统；从 HTTP 协议出现到今天已经过去了半个多世纪，很少有一些设计能够增强整个 HTTP 网络或者为它带来新的功能。</p>
+<p>使用 HTTP 协议传递相对小的文件其实是非常廉价和方便的，但是随着计算资源和存储空间的指数增长，我们面临了需要随时获取大量数据的问题，而 IPFS 就是为了解决这一问题出现的。</p>
+<h2 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h2><p>作为一个分布式的文件系统，IPFS 提供了一个支持部署和写入的平台，同时能够支持大文件的分发和版本管理；为了达到上述的目的，IPFS 协议被分成如下的几个子协议：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://s1.ax1x.com/2020/07/08/UViyOP.png" alt="ipfs-protocol-stack"></p>
+<p>上述的七个子协议分别负责 IPFS 中的不同功能，我们将在接下来的章节中分别介绍各个协议分别做了哪些工作以及 IPFS 是如何实现的。</p>
+<h3 id="身份"><a href="#身份" class="headerlink" title="身份"></a>身份</h3><p>在 IPFS 网络中，所有的节点都通过唯一的 <code>NodeId</code> 进行标识，与 Bitcoin 的地址有一些相似， 它其实是一个公钥的哈希，然而为了增加攻击者的成本，IPFS 使用 <a target="_blank" rel="noopener" href="http://www.spovnet.de/files/publications/SKademlia2007.pdf">S&#x2F;Kademlia</a> 中提到的算法增加创建新身份的成本：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">difficulty = &lt;integer parameter&gt;</span><br><span class="line">n = Node&#123;&#125;</span><br><span class="line">do &#123;</span><br><span class="line">  n.PubKey, n.PrivKey = PKI.genKeyPair()</span><br><span class="line">  n.NodeId = hash(n.PubKey)</span><br><span class="line">  p = count_preceding_zero_bits(hash(n.NodeId))</span><br><span class="line">&#125; while (p &lt; difficulty)</span><br></pre></td></tr></table></figure>
+
+<p>每一个节点在 IPFS 代码中都由 <code>Node</code> 结构体来表示，其中只包含 <code>NodeId</code> 以及一个公私钥对：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> NodeId Multihash</span><br><span class="line"><span class="keyword">type</span> Multihash []<span class="type">byte</span></span><br><span class="line"><span class="keyword">type</span> PublicKey []<span class="type">byte</span></span><br><span class="line"><span class="keyword">type</span> PrivateKey []<span class="type">byte</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Node <span class="keyword">struct</span> &#123;</span><br><span class="line">  NodeId NodeId</span><br><span class="line">  PubKey PublicKey</span><br><span class="line">  PriKey PrivateKey</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>总之，身份系统的主要作用就是表示 IPFS 网络中的每一个节点，代表每一个使用 IPFS 的『用户』。</p>
+<h3 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h3><p>作为一个分布式的存储系统，节点之间的通信和信息传递都需要通过网络进行，同时能够使用多种传输层协议并保证可靠性、连通性、信息的完整性以及真实性。</p>
+<p>IPFS 可以使用任意的网络进行通信，它并没有假设自己一定运行在 IP 协议上，而是通过 <code>multiaddr</code> 的格式来表示目标地址和使用的协议，以此来兼容和扩展未来可能出现的其他网络协议：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/ip4/10.20.30/40/sctp/1234/</span><br><span class="line">/ip4/5.6.7.8/tcp/5678/ip4/1.2.3.4/sctp/1234/</span><br></pre></td></tr></table></figure>
+
+<h3 id="路由"><a href="#路由" class="headerlink" title="路由"></a>路由</h3><p>在一个分布式系统中，检索或者访问其他节点中存储的资源就需要通过一个路由系统，IPFS 使用了基于 S&#x2F;Kademlia 和 Coral 中的 DSHT 实现了路由系统，我们能够在 <a target="_blank" rel="noopener" href="https://github.com/libp2p/go-libp2p-routing/blob/a5abeac4bc668bc194588a7f118c0eaf2f6894f4/routing.go#L19-L74">libp2p&#x2F;go-libp2p-routing&#x2F;routing.go</a> 中找到 IPFS 路由系统的接口：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> IpfsRouting <span class="keyword">interface</span> &#123;</span><br><span class="line">	ContentRouting</span><br><span class="line">	PeerRouting</span><br><span class="line">	ValueStore</span><br><span class="line"></span><br><span class="line">	Bootstrap(context.Context) <span class="type">error</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ContentRouting <span class="keyword">interface</span> &#123;</span><br><span class="line">	Provide(context.Context, *cid.Cid, <span class="type">bool</span>) <span class="type">error</span></span><br><span class="line">	FindProvidersAsync(context.Context, *cid.Cid, <span class="type">int</span>) &lt;-<span class="keyword">chan</span> pstore.PeerInfo</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> PeerRouting <span class="keyword">interface</span> &#123;</span><br><span class="line">	FindPeer(context.Context, peer.ID) (pstore.PeerInfo, <span class="type">error</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> ValueStore <span class="keyword">interface</span> &#123;</span><br><span class="line">	PutValue(context.Context, <span class="type">string</span>, []<span class="type">byte</span>) <span class="type">error</span></span><br><span class="line">	GetValue(context.Context, <span class="type">string</span>) ([]<span class="type">byte</span>, <span class="type">error</span>)</span><br><span class="line">	GetValues(c context.Context, k <span class="type">string</span>, count <span class="type">int</span>) ([]RecvdVal, <span class="type">error</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>从这里我们可以看到 IPFS 中的路由需要实现三种基本的功能，内容路由、节点路由以及数据存储。实现了这几些接口的『路由器』就可以在底层进行替换，不会影响系统其他部分的工作。目前 IPFS 使用全局 DHT 和 DNS 来解析路由记录，而 Kademlia DHT 有以下的优点：</p>
+<ol>
+<li>在批量节点中快速找到目标地址，时间复杂度是 𝑙𝑜𝑔2(𝑛)log2(n)，也就是说，在 10,000,000 节点中只需要 20 次查询；</li>
+<li>优化了节点之间的控制消息长度，降低了信息协调的开销；</li>
+<li>通过优先选择长期节点抵御多种网络攻击；</li>
+<li>在点对点的应用中被广泛应用，例如 BitTorrent 和 Gnutella，技术也比较成熟；</li>
+</ol>
+<h3 id="数据交换"><a href="#数据交换" class="headerlink" title="数据交换"></a>数据交换</h3><p>在 IPFS 中，数据的分发和交换使用 BitSwap 协议，BitSwap 负责两件事情：向其他节点请求需要的 Block 以及为其他节点提供 Block。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://s1.ax1x.com/2020/07/08/UVigw8.png" alt="BitSwap-api"></p>
+<p>当我们需要向其他节点请求 Block 或者为其他节点提供 Block 时，都会发送 BitSwap 消息，其中主要包含了两部分内容：发送者的 <code>wantlist</code> 以及数据块，整个消息都是使用 Protobuf 进行编码的：</p>
+<figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">message </span><span class="title class_">Message</span> &#123;</span><br><span class="line">  <span class="keyword">message </span><span class="title class_">Wantlist</span> &#123;</span><br><span class="line">    <span class="keyword">message </span><span class="title class_">Entry</span> &#123;</span><br><span class="line">      <span class="keyword">optional</span> <span class="type">string</span> block = <span class="number">1</span>; <span class="comment">// the block key</span></span><br><span class="line">      <span class="keyword">optional</span> <span class="type">int32</span> priority = <span class="number">2</span>; <span class="comment">// the priority (normalized). default to 1</span></span><br><span class="line">      <span class="keyword">optional</span> <span class="type">bool</span> cancel = <span class="number">3</span>;  <span class="comment">// whether this revokes an entry</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">repeated</span> Entry entries = <span class="number">1</span>; <span class="comment">// a list of wantlist entries</span></span><br><span class="line">    <span class="keyword">optional</span> <span class="type">bool</span> full = <span class="number">2</span>;     <span class="comment">// whether this is the full wantlist. default to false</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">optional</span> Wantlist wantlist = <span class="number">1</span>;</span><br><span class="line">  <span class="keyword">repeated</span> <span class="type">bytes</span> blocks = <span class="number">2</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 BitSwap 系统中，有两个非常重要的模块需求管理器（Want-Manager）和决定引擎（Decision-Engine）；前者会在节点请求 Block 时在本地返回相应的 Block 或者发出合适的请求，而后者决定如何为其他节点分配资源，当节点接收到包含 <code>Wantlist</code> 的消息时，消息会被转发至决定引擎，引擎会根据该节点的 <code>Ledger</code> 决定如何处理请求。</p>
+<blockquote>
+<p>想要了解跟多 BitSwap 的实现细节以及 Spec 的读者可以阅读 <a target="_blank" rel="noopener" href="https://github.com/ipfs/specs/tree/master/BitSwap">BitSwap Spec</a> 其他内容。</p>
+</blockquote>
+<p>IPFS 除了定义节点之间互相发送的消息之外，还引入了激励和惩罚来保证整个网络中不会有『恶意』的节点，通过 <code>Ledger</code> 来存储两个节点之间的数据来往：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Ledger <span class="keyword">struct</span> &#123;</span><br><span class="line">    owner      NodeId</span><br><span class="line">    partner    NodeId</span><br><span class="line">    bytes_sent <span class="type">int</span></span><br><span class="line">    bytes_recv <span class="type">int</span></span><br><span class="line">    timestamp  Timestamp</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>决定引擎会通过两个节点之间的 <code>Ledger</code> 计算出一个<em>负债比率（debt ratio）</em>：</p>
+<p>𝑟&#x3D;𝑏𝑦𝑡𝑒𝑠𝑠𝑒𝑛𝑡𝑏𝑦𝑡𝑒𝑠𝑟𝑒𝑐𝑣+1r&#x3D;bytessentbytesrecv+1</p>
+<p>负债比率是用来衡量节点之间信任的，它不仅能够阻止攻击者创建大量的节点、还能在节点短时间不可用时保护已有的交易关系并且在节点关系恶化之前终止交易。</p>
+<p>IPFS 使用 <code>Ledger</code> 创建了一个具有激励和惩罚的网络，保证了网络中的大部分节点能够交换数据并且正常运行。</p>
+<h3 id="文件系统"><a href="#文件系统" class="headerlink" title="文件系统"></a>文件系统</h3><p>DHT 和 BitSwap 允许 IPFS 构建一个用于存储和分发数据块的大型点对点系统；在这之上，IPFS 构建了一个 Merkle DAG，每一个 IPFS 对象都可能包含一组链接和当前节点中的数据：</p>
+<figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> IPFSLink <span class="keyword">struct</span> &#123;</span><br><span class="line">    Name <span class="type">string</span></span><br><span class="line">    Hash Multihash</span><br><span class="line">    Size <span class="type">int</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> IPFSObject <span class="keyword">struct</span> &#123;</span><br><span class="line">    links []IPFSLink</span><br><span class="line">    data []<span class="type">byte</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们可以使用如下的命令列出该对象下的全部链接：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ipfs <span class="built_in">ls</span> QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG</span></span><br><span class="line">QmZTR5bcpQD7cFgTorqxZDYaew1Wqgfbd2ud9QqGPAkK2V 1688 about</span><br><span class="line">QmYCvbfNbCwFR45HiNP45rwJgvatpiW38D961L5qAhUM5Y 200  contact</span><br><span class="line">QmY5heUM5qgRubMDD1og9fhCPA6QdkMp3QCwd4s7gJsyE7 322  help</span><br><span class="line">QmdncfsVm2h5Kqq9hPmU7oAVX2zTSVP3L869tgTbPYnsha 1728 quick-start</span><br><span class="line">QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB 1102 readme</span><br><span class="line">QmTumTjvcYCAvRRwQ8sDRxh8ezmrcr88YFU7iYNroGGTBZ 1027 security-notes</span><br></pre></td></tr></table></figure>
+
+<p>原始数据加上通用的链接是在 IPFS 上构造任意数据结构的基础，键值存储、传统的关系型数据库、加密区块链都可以在 IPFS 的 Merkle DAG 上进行存储和分发。</p>
+<p>在这之上，IPFS 定义了一系列的对象构建了支持版本控制的文件系统，它与 Git 的对象模型非常类似，并且所有文件对象其实都通过 Protobuf 进行了二进制编码：</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://s1.ax1x.com/2020/07/08/UVicef.png" alt="ipfs-file-object-model"></p>
+<p>IPFS 文件可以通过 <code>list</code> 和 <code>blob</code> 进行表示：</p>
+<ul>
+<li>其中 <code>blob</code> 不包含任何的链接，只包含数据；</li>
+<li>但是 <code>list</code> 却包含了一个 <code>blob</code> 和 <code>list</code> 的有序队列</li>
+<li>而 <code>tree</code> 文件对象与 Git 中的 <code>tree</code> 非常相似，它表示一个从名字到哈希的文件目录；</li>
+<li>最后的 <code>commit</code> 表示任意对象的快照；</li>
+</ul>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://s1.ax1x.com/2020/07/08/UVi2TS.png" alt="ipfs-file-object-graph"></p>
+<p>在上述文件对象图中，最顶层的 <code>commit</code> 就表示历史的某一次快照，对比两次 <code>commit</code> 以及子节点构成的树就能得到两次快照之间的差别，我们可以认为 Merkle DAG 和文件对象构成了整个 IPFS 中的文件系统。</p>
+<h3 id="命名系统"><a href="#命名系统" class="headerlink" title="命名系统"></a>命名系统</h3><p>到目前为止，IPFS 技术栈已经提供了一个点对点的数据交换系统，能够在节点之间发送 DAG 对象，并且可以推送和取回不可变的对象，但是可变的命名系统也是网络不可缺少的一部分，我们终究需要使用同一个地址获取不同的状态，因为不能因为网站的更新而改变域名，所以 IPFS 需要提供一种『域名服务』解决这一问题。</p>
+<p>在 IPFS 中可以使用如下的可变命名空间来解决这些问题，用户可以发布一个对象，其他节点就可以通过 ipns 加上该用户的节点地址访问到这些发布到网络中的对象：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm/</span><br></pre></td></tr></table></figure>
+
+<p>当然，我们也可以在现有的 DNS 系统中添加 <code>TXT</code> 记录，这样就能通过域名访问 IPFS 网络中发布的文件对象了：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ipfs.benet.ai. TXT &quot;ipfs=XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm&quot;</span><br><span class="line"></span><br><span class="line">/ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm</span><br><span class="line">/ipns/ipfs.benet.ai</span><br></pre></td></tr></table></figure>
+
+<p>在 IPFS 不仅能够使用哈希访问可变对象，也能嵌入现有的 DNS 服务中很好的运行，解决了底层服务无缝切换的问题。</p>
+<h2 id="激励"><a href="#激励" class="headerlink" title="激励"></a>激励</h2><p>在今天，当我们讨论 IPFS 这种底层的区块链技术时，就不得不提构建在 IPFS 上的 FileCoin，它提供了一个给宿主和上传者交易的市场，通过市场可以调节存储的成本，上传者能够根据价格选择速度、冗余和成本。</p>
+<h3 id="节点"><a href="#节点" class="headerlink" title="节点"></a>节点</h3><p>大多数的区块链网络中都只具有单一类型的标准节点，但是 FileCoin 中却有两种不同的节点：<em>存储节点</em>和<em>检索节点</em>。</p>
+<p>所有人都可以成为存储节点，将自己磁盘上额外的存储空间租赁出去，FileCoin 会使用这些磁盘存储一些较小的加密文件的一部分；而检索节点则需要尽可能靠近更多的存储节点，也需要更高的带宽和更低的延迟，用户会支付最快返回文件的检索节点。</p>
+<p>当我们想要上传文件时，需要支付一定的存储费用，存储节点会为存储文件的权利给出报价，FileCoin 会选择价格最低的存储节点保存文件；存储的文件会被加密并分割成多个部分并发送给多个节点，文件的位置会存储在全局的表中，在这之后只有拥有私钥的节点才能查询、组装并且解密上传的文件。</p>
+<h3 id="共识算法"><a href="#共识算法" class="headerlink" title="共识算法"></a>共识算法</h3><p>我们可以说所有的区块链应用都需要 <a target="_blank" rel="noopener" href="https://draveness.me/consensus">共识算法</a> 保证多个节点对某一结果达成共识，并在发生冲突时进行解决，Bitcoin 和 Ethereum 目前都使用了 Proof-of-Work 作为共识算法，而 FileCoin 使用 Proof-of-Replication(PoRep) 解决其网络内部存在的问题。</p>
+<blockquote>
+<p>We introduce Proof-of-Replication (PoRep) schemes, which allow a prover P to (a) commit to store n distinct replicas (physically independent copies) of D, and then (b) convince a verifier V that P is indeed storing each of the replicas.</p>
+<p>PoRep 允许证明者 P 提交存储 n 个 D 的不同副本，然后说服验证人 V，P 确实保存了这些副本。</p>
+</blockquote>
+<p>在 <a target="_blank" rel="noopener" href="https://filecoin.io/proof-of-replication.pdf">Proof of Replication</a> 一文中能够找到更多与 PoRep、PoS(Proof-of-Storage) 等用于验证磁盘空间提供方确实存储资源的共识算法，在这里就不展开介绍了。</p>
+<h1 id="Filecoin共识机制"><a href="#Filecoin共识机制" class="headerlink" title="Filecoin共识机制"></a>Filecoin共识机制</h1><p>对共识机制的探索，Filecoin无疑更具有前瞻性和突破性。<strong>Filecoin创新的采用了一种混合共识机制——复制证明（PoRep）+时空证明（PoSt）+ 预期共识(EC)，</strong>其中复制证明是共识机制中的核心因素，尽管Filecoin的网络协议、共识、其他算法都基本定型，但是复制证明仍然处于不断完善的方案中。</p>
+<p><strong>复制证明（PoRep）</strong>是一个交互式证明系统。在这个系统中，存储的提供者需要提供可公开验证的证明，来表明其为一个数据文件副本分配了独有的空间资源，而且所存储的数据是可检索的。</p>
+<p>复制证明是新的 PoS存储证明（Proof-of-Storage），PoRep必须能够防范以下三种常见的攻击方式：女巫攻击，外源攻击和生成攻击，他们的共同特点是攻击矿工实际存储的数据大小要比声称存储的数据小，这样攻击矿工就能获得本不该他获得的报酬。</p>
+<ul>
+<li><strong>女巫攻击（Sybil Attack）</strong>：利用n个身份，承诺存储n份数据D，而实际上存储小于n份（比如1份），但是却提供了n份存储证明，攻击成功。</li>
+<li><strong>外部数据源攻击（Outsourcing Attack）</strong>：当攻击者矿工收到检验者要求提供数据D的证明的时候，攻击者矿工从别的矿工那里生成证明，证明自己一直存储了数据D，而实际上没有存储，攻击成功。</li>
+<li><strong>生成攻击（Generation Attack）</strong>：攻击者A可以使用某种方式生成数据D，当检验者验证的时候，攻击者A就可以重新生成数据D来完成存储证明，攻击成功。</li>
+</ul>
+<p>防范生成攻击比较困难，所有的PoS协议都会遇到这样的问题，如何保证矿工真正的存储了这些数据，PoRep需要解决这个问题。</p>
+<p>因此，Filecoin协议采用一种叫做 RepGame 的游戏来一起解决这三种攻击方式，PoRes还在此基础上引入了时限性（Time Bounded），PoRes协议的实现可能有很多种方式，不管哪种实现方式都必须能够防止上面的三种攻击方式，并且要能够通过RepGame游戏的测试。</p>
+<p>**时空证明（PoSt)**提出了证明链（proof-chain）的数据结构，证明链把一些的挑战（challenge）和证明（proof）链接起来形成。在证明链的基础上添加上时间段，这样就得到了一段时间内的矿工存储数据的证明，这就是时空证明（Proof of Spacetime，PoSt）。</p>
+<p>PoSt可以证明在该段时间内矿工存储了特定的数据，并且利用时间戳锚定这些证明链，这样即使验证者（verifier）不在线，也可以在未来的某个时间内利用时空证明去验证该矿工生成了证明链，PoSt会被提交到链上用来产生新的Block。</p>
+<p>新的区块，矿工赢得选举的可能性跟矿工当前的有效存储（算力）成正比。Filecoin把矿工在网络中的当前存储数据相对于整个网络的存储比例转化为矿工投票权（voting power of the miner）。</p>
+<p>无论在该周期里，选举出来的是一名还是多名矿工，被选举出来的矿工都需要创建新的区块，并把新的区块对网络进行广播。</p>
+<p>尽管链中的区块是线性的，但是Filecoin的区块数据结构采用的DAG（有向无环图），可以在同一时间产生多个区块（所以Filecoin的交易要比BTC的有效的多，这也是为什么<strong>把Filecoin叫做“可能的blockchain 3.0”</strong>的原因）。</p>
+<p><strong>Filecoin首创的混合共识机制，从根本上定义了Filecoin是一个合理高效、去中心化的系统，并体现出Filecoin的公平性、保密性和公开可验证性。</strong></p>
+<h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>星际文件系统是一种点对点的分布式文件系统， 旨在连接所有有相同的文件系统的计算机设备。在某些方面， IPFS 类似于 web, 但 web 是中心化的，而 IPFS 是一个单一的 Bittorrent 群集， 用 git 仓库分布式存储。换句话说， IPFS 提供了高吞吐量的内容寻址块存储模型， 具有内容寻址的超链接。这形成了一个广义的 Merkle DAG 数据结构，可以用这个数据结构构建版本文件系统，区块链，甚至是永久性网站。。IPFS 结合了分布式哈希表， 带有激励机制的块交换和自我认证命名空间。IPFS 没有单故障点， 节点不需要相互信任。</p>
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>在全球分布式文件系统这领域， 已经有许多人的尝试。一些系统已经取得了重大的成功， 而很多却完全失败了。在学术尝试中， AFS【6】就是成功的例子，如今已经得到广泛的应用， 然而，其他的【7， ？】却没有得到相同的结果。在学术界之外，应用最广泛的是面向音视频媒体的点对点文件共享系统。 最值得注意的是， Napster, KaZaA 和 BitTorrent[2] 部署的文件分发系统支持 1 亿用户的同时在线。即使在今天， BitTorrent 也维持着每天千万节点的活跃数。 基于这些学术文件系统理论而实现的应用程序有很多的用户量， 然而，这些系统理论是在应用层，而没有放在基础层。以致没有出现通用的文件系统基础框架， 给全球提供低延迟的分发。<br>也许是因为 HTTP 这样 “足够好 “的系统已经存在。到目前为止，HTTP 已经作为 “分布式文件系统 “的协议，并且已经大量部署，再与浏览器相结合，具有巨大的技术和社会影响力。在现在， 它已经成为互联网传输文件的事实标准。然而，他没有采用最近 15 年的发明的数十种先进的文件分发技术。 从一方面讲， 由于向后兼容的限制 和 当前新模式的投入， 不断发展 http web 的基础设施几乎是不可能的。但从一个角度看， 从 http 出现以来， 已经有许多新协议出现并被广泛使用。升级 http 协议虽然能引入新功能和加强当前 http 协议，但会降低用户的体验。<br>有些行业已经摆脱使用 HTTP 这么久， 因为移动小文件相对便宜，即使对拥有大流量的小组织也是如此。但是，随着新的挑战，我们正在进入数据分发的新纪元。</p>
+<ul>
+<li>托管和分发 PB 级数据集，</li>
+<li>跨组织的大数据计算，</li>
+<li>大批量的高清晰度按需或实时媒体流，</li>
+<li>大规模数据集的版本化和链接，</li>
+<li>防止意外丢失重要文件等。其中许多可以归结为 “大量数据，无处不在”。由于关键功能和带宽问题，我们已经为不同的数据放弃了 HTTP 分销协议。下一步是使它们成为 web 自己的一部分。</li>
+</ul>
+<p>正交于有效的数据分发，版本控制系统，已经设法开发重要的数据协作工作流程。Git 是分布式源代码版本控制系统，开发了许多有用的方法来建模和实现分布式数据操作。Git 工具链提供了灵活的版本控制功能，这正是大量的文件分发系统所严重缺乏的。由 Git 启发的新解决方案正在出现，如 Camlistore [？]，个人文件存储系统，Dat [？] 数据协作工具链和数据集包管理器。Git 已经影响了分布式文件系统设计 [9]，因为其内容涉及到 Merkle DAG 数据模型，能够实现强大的文件分发策略。还有待探讨的是，这种数据结构如何影响面向高吞吐量的文件系统的设计，以及如何升级 Web 本身。</p>
+<p>本文介绍了 IPFS，一种新颖的对等版本控制的文件系统，旨在调和这些问题。 IPFS 综合了许多以前成功的系统的优点。 IPFS 产生了突出的效果， 甚至比参考的这些系统的总和还要好。IPFS 的核心原则是将所有数据建模为同一 Merkle DAG 的一部分。</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>本节回顾了 IPFS 所采用成功的点对点系统技术的重要属性。</p>
+<h3 id="分布式哈希表-DHT"><a href="#分布式哈希表-DHT" class="headerlink" title="分布式哈希表 (DHT)"></a>分布式哈希表 (DHT)</h3><p>分布式散列表（DHT）被广泛用于协调和维护关于对等系统的元数据。比如，MainlineDHT 是一个去中心化哈希表，他可追踪查找所有的对等节点。</p>
+<h3 id="KADEMLIA-DHT"><a href="#KADEMLIA-DHT" class="headerlink" title="KADEMLIA DHT"></a>KADEMLIA DHT</h3><p>Kademlia[10] 是受欢迎的 DHT, 它提供：</p>
+<ul>
+<li>通过大量网络进行高效查询：查询平均联系人 O(log2N) 节点。 （例如，20 跳 10 万个节点的网络）</li>
+<li>低协调开销：优化数量的控制消息发送到其他节点。</li>
+<li>抵抗各种攻击，喜欢长寿节点。</li>
+<li>在对等应用中广泛使用，包括 Gnutella 和 BitTorrent，形成了超过 2000 万个节点的网络 [16]。</li>
+</ul>
+<h3 id="CORAL-DSHT"><a href="#CORAL-DSHT" class="headerlink" title="CORAL DSHT"></a>CORAL DSHT</h3><p>虽然一些对等文件系统直接在 DHT 中存储数据块，这种 “数据存储在不需要的节点会乱费存储和带宽”[5]。Coral DSHT 扩展了 Kademlia 三个特别重要的方式：</p>
+<ul>
+<li>Kademlia 在 ids 为 “最近”（使用 XOR-distance）的关键节点中存储值。这不考 虑应用程序数据的局部性，忽略“远” 可能已经拥有数据的节点，并强制 “最近” 节点存储它，无论它们是否需要。这浪费了大量的存储和带宽。相反，Coral 存储了地址， 该地址的对等节点可以提供相应的数据块。</li>
+<li>Coral 将 DHT API 从 get_value(key)换成了 get_any_values(key)（DSHT 中的 “sloppy”）中。这仍然是因为 Coral 用户只需要一个（工作）的对等体，而不是完整的列表。作为回报，Coral 可以仅将子集分配到“最近” 的节点，避免热点（当密钥变得流行时，重载所有最近的节点）。</li>
+<li>另外，Coral 根据区域和大小组织了一个称为群集的独立 DSHT 层次结构。这使得节点首先查询其区域中的对等体，“查找附近的数据而不查询远程节点”[5] 并大大减少查找的延迟。</li>
+</ul>
+<h3 id="S-x2F-KADEMLIA-DHT"><a href="#S-x2F-KADEMLIA-DHT" class="headerlink" title="S&#x2F;KADEMLIA DHT"></a>S&#x2F;KADEMLIA DHT</h3><p>S&#x2F;Kademlia[1] 扩展了 Kademlia, 用于防止恶意的攻击。有如下两方面的方法：</p>
+<ul>
+<li>S&#x2F;Kad 提供了方案来保证 NodeId 的生成已经防止 Sybill 攻击。它需要节点产生 PKI 公私钥对。从中导出他们的身份，并彼此间签名。一个方案使用 POW 工作量证明，使得生成 Sybills 成本高昂。</li>
+<li>S&#x2F;Kad 节点在不相交的路径上查找直， 即使网络中存在大量的不诚实节点，也能确保诚实节点可以互相链接。即使网络中存在一半的不诚实节点，S&#x2F;Kad 也能达到 85% 的成功率。</li>
+</ul>
+<h3 id="块交换-BitTorrent"><a href="#块交换-BitTorrent" class="headerlink" title="块交换 - BitTorrent"></a>块交换 - BitTorrent</h3><p>BitTorrent[3] 是一个广泛成功应用的点对点共享文件系统，它可以在存在不信任的对等节点（群集）的协作网络中分发各自的文件数据片。从 BitTorrent 和它的生态系统的关键特征， IPFS 得到启示如下：</p>
+<ul>
+<li>BitTorrent 的数据交换协议使用了一种 bit-for-tat 的激励策略， 可以奖励对其他方面做贡献的节点，惩罚只榨取对方资源的节点。</li>
+<li>BitTorrent 对等体跟踪文件的可用性，优先发送稀有片段。这减轻了 seeds 节点的负担， 让 non-seeds 节点有能力互相交易。</li>
+<li>对于一些剥削带宽共享策略， BitTorrent 的标准 tit-for-tat 策略是非常脆弱的。 然而，PropShare[8] 是一种不同的对等带宽分配策略， 可以更好的抵制剥削战略， 提高群集的表现。</li>
+</ul>
+<h3 id="版本控制系统-Git"><a href="#版本控制系统-Git" class="headerlink" title="版本控制系统 - Git"></a>版本控制系统 - Git</h3><p>版本控制系统提供了对随时间变化的文件进行建模的设施，并有效地分发不同的版本。流行版本控制系统 Git 提供了强大的 Merkle DAG 对象模型，以分布式友好的方式捕获对文件系统树的更改。</p>
+<ul>
+<li>不可更改的对象表示文件（blob），目录（树）和更改（提交）。</li>
+<li>通过加密 hash 对象的内容，让对象可寻址。</li>
+<li>链接到其他对象是嵌入的，形成一个 Merkle DAG。这提供了很多有用的完整和 work-flow 属性。</li>
+<li>很多版本元数据（分支，标示等等）都只是指针引用，因此创建和更新的代价都小。</li>
+<li>版本改变只是更新引用或者添加对象。</li>
+<li>分布式版本改变对其他用户而言只是转移对象和更新远程引用。</li>
+</ul>
+<h3 id="自我认证认文件系统-SFS"><a href="#自我认证认文件系统-SFS" class="headerlink" title="自我认证认文件系统 - SFS"></a>自我认证认文件系统 - SFS</h3><p>SFS [12，11] 提出了两个引人注目的实现（a）分布式信任链，和（b）平等共享的全局命名空间。SFS 引入了一种自我建构技术—注册文件：寻址远程文件系统使用以下格式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/sfs/&lt;Location&gt;:&lt;HostID&gt;</span><br><span class="line">Location:代表的是服务网络地方</span><br><span class="line">HostID = hash(public_key || Location)</span><br></pre></td></tr></table></figure>
+
+<p>因此 SFS 文件系统的名字认证了它的服务，用户可以通过服务提供的公钥来验证，协商一个共享的私钥，保证所有的通信。所有的 SFS 实例都共享了一个全局的命名空间，这个命名空间的名称分配是加密的，不被任何中心化的 body 控制。</p>
+<h2 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h2><p>IPFS 是一个分布式文件系统，它综合了以前的对等系统的成功想法，包括 DHT，BitTorrent，Git 和 SFS。 IPFS 的贡献是简化，发展和将成熟的技术连接成一个单一的内聚系统，大于其部分的总和。 IPFS 提供了编写和部署应用程序的新平台，以及一个新的分发系统版本化大数据。 IPFS 甚至可以演进网络本身。<br>IPFS 是点对点的; 没有节点是特权的。 IPFS 节点将 IPFS 对象存储在本地存储中。节点彼此连接并传输对象。这些对象表示文件和其他数据结构。 IPFS 协议分为一组负责不同功能的子协议：</p>
+<ul>
+<li>身份 - 管理节点身份生成和验证。描述在 3.1 节。</li>
+<li>网络 - 管理与其他对等体的连接，使用各种底层网络协议。可配置的。详见 3.2 节。</li>
+<li>路由 - 维护信息以定位特定的对等体和对象。响应本地和远程查询。默认为 DH​​T，但可更换。在 3.3 节描述。</li>
+<li>交换 - 一种支持有效块分配的新型块交换协议（BitSwap）。模拟市场，弱化数据复制。贸易策略可替换。描述在 3.4 节。</li>
+<li>对象 - 具有链接的内容寻址不可更改对象的 Merkle DAG。用于表示任意数据结构，例如文件层次和通信系统。详见第 3.5 节。</li>
+<li>文件 - 由 Git 启发的版本化文件系统层次结构。详见 3.6 节。</li>
+<li>命名 - 自我认证的可变名称系统。详见 3.7 节。<br>这些子系统不是独立的; 它们是集成在一起，互相利用各自的属性。但是，分开描述它们是有用的，从下到上构建协议栈。符号：Go 语言中指定了以下数据结构和功能</li>
+</ul>
+<h3 id="身份-1"><a href="#身份-1" class="headerlink" title="身份"></a>身份</h3><p>节点由 NodeId 标识，这是使用 S &#x2F; Kademlia 的静态加密难题 [1] 创建的公钥的密码散列。节点存储其公私钥（用密码加密）。用户可以在每次启动时自由地设置一个 “新” 节点身份，尽管这会损失积累的网络利益。激励节点保持不变。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> NodeId Multihash</span><br><span class="line"><span class="keyword">type</span> Multihash []<span class="type">byte</span> <span class="comment">// 自描述加密哈希摘要</span></span><br><span class="line"><span class="keyword">type</span> PublicKey []<span class="type">byte</span></span><br><span class="line"><span class="keyword">type</span> PrivateKey []<span class="type">byte</span> <span class="comment">// 自描述的私钥</span></span><br><span class="line"><span class="keyword">type</span> Node <span class="keyword">struct</span> &#123;</span><br><span class="line">NodeId NodeID</span><br><span class="line">	PubKey PublicKey</span><br><span class="line">	PriKey PrivateKey</span><br><span class="line">&#125;</span><br><span class="line"> <span class="comment">// 基于SKademlia的IPFS身份生成：</span></span><br><span class="line">difficulty = &lt;integer parameter&gt;</span><br><span class="line">n = Node&#123;&#125;</span><br><span class="line">do &#123;</span><br><span class="line">	n.PubKey, n.PrivKey = PKI.genKeyPair()</span><br><span class="line">	n.NodeId = hash(n.PubKey)</span><br><span class="line">	p = count_preceding_zero_bits(hash(n.NodeId))</span><br><span class="line">&#125; while (p &lt; difficulty)</span><br></pre></td></tr></table></figure>
+
+<p>首次连接时，对等体交换公钥，并检查：hash（other.PublicKey）等于 other.NodeId。如果没有，则连接被终止<br>关于加密函数的注意事项：<br>IPFS 不是将系统锁定到一组特定的功能选择，而是支持自我描述的值。哈希摘要值以多重哈希格式存储，其包括指定使用的哈希函数的头和以字节为单位的摘要长度。例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;function code&gt;&lt;digest length&gt;&lt;digest bytes&gt;</span><br></pre></td></tr></table></figure>
+
+
+<p>这允许系统</p>
+<ul>
+<li>（a）选择最佳功能用例（例如，更强的安全性与更快的性能），</li>
+<li>（b）随着功能选择的变化而演变。自描述值允许兼容使用不同的参数选择。</li>
+</ul>
+<h3 id="网络-1"><a href="#网络-1" class="headerlink" title="网络"></a>网络</h3><p>IPFS 节点与数百个其他节点进行定期通信网络中的节点，可能跨越广域网络。IPFS 网络堆栈功能：</p>
+<ul>
+<li>传输层： IPFS 可以使用任何传输协议，并且最适合 WebRTC DataChannels [？]（用于浏览器连接）或 uTP（LEDBAT [14]）。</li>
+<li>可靠性： 如果底层网络不提供可靠性，IPFS 可使用 uTP（LEDBAT [14]）或 SCTP [15] 来提供可靠性。</li>
+<li>可连接性：IPFS 还可以使用 ICE NAT 穿墙打洞技术 [13]。</li>
+<li>完整性：可以使用哈希校验和来检查邮件的完整性。</li>
+<li>可验证性：可以使用发送者的公钥使用 HMAC 来检查消息的真实性。</li>
+</ul>
+<h3 id="对等节点寻址注意事项："><a href="#对等节点寻址注意事项：" class="headerlink" title="对等节点寻址注意事项："></a>对等节点寻址注意事项：</h3><p>IPFS 可以使用任何网络; 但它不承担对 IP 的获取以及不直接依赖于 ip 层。这允许在覆盖网络中使用 IPFS。</p>
+<p>IPFS 将地址存储为多层地址，这个多层地址是由字节字符串组成的， 以便于给底层网络使用。多层地址提供了一种方式来表示地址及其协议，可以封装成好解析的格式。例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># an SCTP/IPv4 connection</span><br><span class="line">/ip4/10.20.30.40/sctp/1234/</span><br><span class="line"># an SCTP/IPv4 connection proxied over TCP/IPv4</span><br><span class="line">/ip4/5.6.7.8/tcp/5678/ip4/1.2.3.4/sctp/1234/</span><br></pre></td></tr></table></figure>
+
+<h3 id="路由-1"><a href="#路由-1" class="headerlink" title="路由"></a>路由</h3><p>IPFS 节点需要一个路由系统， 这个路由系统可用于查找：</p>
+<ul>
+<li><p>（a）其他同伴的网络地址，</p>
+</li>
+<li><p>（b）专门用于服务特定对象的对等节点。</p>
+<p>IPFS 使用基于 S &#x2F; Kademlia 和 Coral 的 DSHT，在 2.1 节中具体介绍过。在对象大小和使用模式方面， IPFS 类似于 Coral[5] 和 Mainline[16], 因此，IPFS DHT 根据其大小对存储的值进行区分。小的值（等于或小于 1KB）直接存储在 DHT 上。对于更大的值，DHT 只存储值索引，这个索引就是一个对等节点的 NodeId, 该对等节点可以提供對该类型的值的具体服务。</p>
+<p>DSHT 的接口如下：</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> IPFSRouting <span class="keyword">interface</span> &#123;</span><br><span class="line">	FindPeer(node NodeId) <span class="comment">// 获取特定NodeId的网络地址。</span></span><br><span class="line">	SetValue(key []bytes, value []bytes) <span class="comment">// 往DHT存储一个小的元数据。</span></span><br><span class="line">	GetValue(key []bytes) <span class="comment">// 从DHT获取元数据。</span></span><br><span class="line">	ProvideValue(key Multihash) <span class="comment">// 声明这个节点可一个提供一个大的数据。</span></span><br><span class="line">	FindValuePeers(key Multihash, min <span class="type">int</span>) <span class="comment">// 获取服务于该大数据的节点。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意：不同的用例将要求基本不同的路由系统（例如广域网中使用 DHT，局域网中使用静态 HT）。因此，IPFS 路由系统可以根据用户的需求替换的。只要使用上面的接口就可以了，系统都能继续正常运行。</p>
+<h2 id="块交换-BitSwap-协议"><a href="#块交换-BitSwap-协议" class="headerlink" title="块交换 - BitSwap 协议"></a>块交换 - BitSwap 协议</h2><p>IPFS 中的 BitSwap 协议受到 BitTorrent 的启发，通过对等节点间交换数据块来分发数据的。像 BT 一样， 每个对等节点在下载的同时不断向其他对等节点上传已下载的数据。和 BT 协议不同的是， BitSwap 不局限于一个 torrent 文件中的数据块。BitSwap 协议中存在一个永久的市场。 这个市场包括各个节点想要获取的所有块数据。而不管这些块是哪些如. torrent 文件中的一部分。这些快数据可能来自文件系统中完全不相关的文件。 这个市场是由所有的节点组成的。<br>虽然易货系统的概念意味着可以创建虚拟货币，但这将需要一个全局分类账本来跟踪货币的所有权和转移。这可以实施为 BitSwap 策略，并将在未来的论文中探讨。<br>在基本情况下，BitSwap 节点必须以块的形式彼此提供直接的值。只有当跨节点的块的分布是互补的时候，各取所需的时候，这才会工作的很好。 通常情况并非如此，在某些情况下，节点必须为自己的块而工作。 在节点没有其对等节点所需的（或根本没有的）情况下，它会更低的优先级去寻找对等节点想要的块。这会激励节点去缓存和传播稀有片段， 即使节点对这些片段不感兴趣。</p>
+<h3 id="BITSWAP-信用"><a href="#BITSWAP-信用" class="headerlink" title="BITSWAP 信用"></a>BITSWAP 信用</h3><p>这个协议必须带有激励机制， 去激励节点去 seed 其他节点所需要的块，而它们本身是不需要这些块的。 因此， BitSwap 的节点很积极去给对端节点发送块，期待获得报酬。但必须防止水蛭攻击（空负载节点从不共享块），一个简单的类似信用的系统解决了这些问题：</p>
+<ul>
+<li><p>对等节点间会追踪他们的平衡（通过字节认证的方式）。</p>
+</li>
+<li><p>随着债务增加而概率降低，对等者概率的向债务人发送块。</p>
+<p>注意的是，如果节点决定不发送到对等体，节点随后忽略对等体的 ignore_cooldown 超时。 这样可以防止发送者尝试多次发送（洪水攻击） （BitSwap 默认是 10 秒）。</p>
+</li>
+</ul>
+<h3 id="BITSWAP-的策略"><a href="#BITSWAP-的策略" class="headerlink" title="BITSWAP 的策略"></a>BITSWAP 的策略</h3><p>BitSwap 对等节点采用很多不同的策略，这些策略对整个数据块的交换执行力产生了不同的巨大影响。在 BT 中， 标准策略是明确规定的（tit-for-tat），其他不同的策略也已经被实施，从 BitTyrant [8]（尽可能分享）到 BitThief [8]（利用一个漏洞，从不共享），到 PropShare [8]（按比例分享）。BitSwap 对等体可以类似地实现一系列的策略（良好和恶意）。对于功能的选择，应该瞄准：</p>
+<ul>
+<li><p>为整个交易和节点最大化交易能力。</p>
+</li>
+<li><p>为了防止空负载节点利用和损害交易。</p>
+</li>
+<li><p>高效抵制未知策略。</p>
+</li>
+<li><p>对可信任的对等节点更宽容。</p>
+<p>探索这些策略的空白是未来的事情。在实践中使用的一个选择性功能是 sigmoid，根据负债比例进行缩放：</p>
+<p>让负债比例在一个节点和它对等节点之间：</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">r = bytes_sent / bytes_recv + <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>  根据 r，发送到负债节点的概率为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">P(send | r ) = 1 − ( 1/ ( 1 + exp(6 − 3r) ) )</span><br></pre></td></tr></table></figure>
+
+<p>正如你看到的图片 1，当节点负债比例超过节点已建立信贷的两倍，发送到负债节点的概率就会急速下降。</p>
+<p>负债比是信任的衡量标准：对于之前成功的互换过很多数据的节点会宽容债务，而对不信任不了解的节点会严格很多。这个 (a) 给与那些创造很多节点的攻击者（sybill 攻击）一个障碍。(b)保护了之前成功交易节点之间的关系，即使这个节点暂时无法提供数据。(c)最终阻塞那些关系已经恶化的节点之间的通信，直到他们被再次证明。</p>
+<h3 id="BITSWAP-账本"><a href="#BITSWAP-账本" class="headerlink" title="BITSWAP 账本"></a>BITSWAP 账本</h3><p>BitSwap 节点保存了一个记录与所有其他节点之间交易的账本。这个可以让节点追踪历史记录以及避免被篡改。当激活了一个链接，BitSwap 节点就会互换它们账本信息。如果这些账本信息并不完全相同，分类账本将会重新初始化， 那些应计信贷和债务会丢失。 恶意节点会有意去失去 “这些 “账本， 从而期望清除自己的债务。节点是不太可能在失去了应计信托的情况下还能累积足够的债务去授权认证。伙伴节点可以自由的将其视为不当行为， 拒绝交易。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ype Ledger <span class="keyword">struct</span> &#123;</span><br><span class="line">	owner NodeId</span><br><span class="line">	partner NodeId</span><br><span class="line">	bytes_sent <span class="type">int</span></span><br><span class="line">	bytes_recv <span class="type">int</span></span><br><span class="line">	timestamp Timestamp</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>节点可以自由的保留分布式账本历史，这不需要正确的操作，因为只有当前的分类账本条目是有用的。节点也可以根据需要自由收集分布式帐本，从不太有用的分布式帐开始：老（其他对等节点可能不存在）和小。</p>
+<h3 id="BITSWAP-详解"><a href="#BITSWAP-详解" class="headerlink" title="BITSWAP 详解"></a>BITSWAP 详解</h3><p>BitSwap 节点有以下简单的协议。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Additional state kept</span></span><br><span class="line"><span class="keyword">type</span> BitSwap <span class="keyword">struct</span> &#123;</span><br><span class="line">	ledgers <span class="keyword">map</span>[NodeId]Ledger <span class="comment">// Ledgers known to this node, inc inactive</span></span><br><span class="line">	active <span class="keyword">map</span>[NodeId]Peer <span class="comment">// currently open connections to other nodes</span></span><br><span class="line">	need_list []Multihash <span class="comment">// checksums of blocks this node needs</span></span><br><span class="line">	have_list []Multihash <span class="comment">// checksums of blocks this node has</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> Peer <span class="keyword">struct</span> &#123;</span><br><span class="line">	nodeid NodeId</span><br><span class="line">	ledger Ledger <span class="comment">// Ledger between the node and this peer</span></span><br><span class="line">	last_seen Timestamp <span class="comment">// timestamp of last received message</span></span><br><span class="line">	want_list []Multihash <span class="comment">// checksums of all blocks wanted by peer</span></span><br><span class="line"><span class="comment">// includes blocks wanted by peer&#x27;s peers</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Protocol interface:</span></span><br><span class="line"><span class="keyword">interface</span> Peer &#123;</span><br><span class="line">	open (nodeid : NodeId, ledger : Ledger);</span><br><span class="line">	send_want_list (want_list : WantList);</span><br><span class="line">	send_block(block: Block) -&gt; (complete:Bool);</span><br><span class="line">	<span class="built_in">close</span>(final: Bool);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对等连接的生命周期草图：</p>
+<ul>
+<li><p>1.Open: 对等节点间发送 ledgers 直到他们同意。</p>
+</li>
+<li><p>2.Sending: 对等节点间交换 want_lists 和 blocks。</p>
+</li>
+<li><p>3.Close: 对等节点断开链接。</p>
+</li>
+<li><p>4.Ignored: （特殊）对等体被忽略（等待时间的超时）如果节点采用防止发送策略。<br><em>Peer.open(NodeId, Ledger).</em><br>当发生链接的时候，节点会初始化链接的账本，要么保存一个份链接过去的账本，要么创建一个新的被清零的账本。然后，发送一个携带账本的 open 信息给对等节点。<br>接收到一个 open 信息之后，对等节点可以选择是否接受此链接。如果，根据接收者的账本，发送者是一个不可信的代理（传输低于零或者有很大的未偿还的债务），接收者可能会选择忽略这个请求。忽略请求是 ignore_cooldown 超时来概率性实现的，为了让错误能够有时间改正和攻击者被挫败。<br>如果链接成功，接收者用本地账本来初始化一个 Peer 对象以及设置 last_seen 时间戳。然后，它会将接受到的账本与自己的账本进行比较。如果两个账本完全一样，那么这个链接就被 Open，如果账本并不完全一致，那么此节点会创建一个新的被清零的账本并且会发送此账本。<br><em>Peer.send_want_list(WantList)</em><br>当链接已经 Open 的时候，节点会广发它们的 want_list 给所有已经链接的对等节点。这个是在 (a)open 链接后(b) 随机间歇超时后 (c)want_list 改变后(d) 接收到一个新的块之后完成的。<br>当接收到一个 want_list 之后，节点会存储它。然后，会检查自己是否拥有任何它想要的块。如果有，会根据上面提到的 BitSwap 策略来将 want_list 所需要的块发送出去。<br><em>Peer.send_block(Block)</em><br>发送一个块是直接了当的。节点只是传输数据块。当接收到了所有数据的时候，接收者会计算多重 hash 校验和来验证它是否是自己所需数据，然后发送确认信息。<br>在完成一个正确的块传输之后，接受者会将此块从 need_list 一到 have_list, 最后接收者和发送者都会更新它们的账本来反映出传输的额外数据字节数。<br>如果一个传输验证失败了，发送者要么会出故障要么会攻击接收者，接收者可以选择拒绝后面的交易。注意，BitSwap 是期望能够在一个可靠的传输通道上进行操作的，所以传输错误（可能会引起一个对诚实发送者错误的惩罚）是期望在数据发送给 BitSwap 之前能够被捕捉到。<br><em>Peer.close(Bool)</em><br>传给 close 最后的一个参数，代表 close 链接是否是发送者的意愿。如果参数值为 false, 接收者可能会立即重新 open 链接，这避免链过早的 close 链接。<br>一个对等节点 close 链接发生在下面两种情况下：</p>
+</li>
+<li><p>silence_wait 超时已经过期，并且没有接收到来自于对等节点的任何信息（BitSwap 默认使用 30 秒），节点会发送 Peer.close(false)。</p>
+</li>
+<li><p>在节点退出和 BitSwap 关闭的时候，节点会发送 Peer.close(true).</p>
+<p>接收到 close 消息之后，接收者和发送者会断开链接，清除所有被存储的状态。账本可能会被保存下来为了以后的便利，当然，只有在被认为账本以后会有用时才会被保存下来。</p>
+<p>注意点：</p>
+<p>非 open 信息在一个不活跃的连接上应该是被忽略的。在发送 send_block 信息时，接收者应该检查这个块，看它是否是自己所需的，并且是否是正确的，如果是，就使用此块。总之，所有不规则的信息都会让接收者触发一个 close(false) 信息并且强制性的重初始化此链接。</p>
+</li>
+</ul>
+<h2 id="Merkle-DAG-对象"><a href="#Merkle-DAG-对象" class="headerlink" title="Merkle DAG 对象"></a>Merkle DAG 对象</h2><p>DHT 和 BitSwap 允许 IPFS 构造一个庞大的点对点系统用来快速稳定的分发和存储。最主要的是，IPFS 建造了一个 Merkle DAG, 一个无回路有向图，对象之间的 links 都是 hash 加密嵌入在源目标中。这是 Git 数据结构的一种推广。Merkle DAGS 给 IPFS 提供了很多有用的属性，包括：</p>
+<ul>
+<li>内容可寻址：所有内容都是被多重 hash 校验和来唯一识别的，包括 links。</li>
+<li>防止篡改：所有的内容都用它的校验和来验证。如果数据被篡改或损坏，IPFS 会检测到。</li>
+<li>重复数据删除：所有的对象都拥有相同的内容并只存储一次。这对于索引对象非常有用，比如 git 的 tree 和 commits，或者数据的公共部分。</li>
+</ul>
+<p>IPFS 对象的格式是：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> IPFSLink <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name <span class="type">string</span> <span class="comment">// 此link的别名</span></span><br><span class="line">	Hash Multihash <span class="comment">// 目标的加密hash</span></span><br><span class="line">	Size <span class="type">int</span> <span class="comment">// 目标总大小</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> IPFSObject <span class="keyword">struct</span> &#123;</span><br><span class="line">	links []IPFSLink <span class="comment">//links数组</span></span><br><span class="line">	data []<span class="type">byte</span> <span class="comment">//不透明内容数据</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>IPFS Merkle DAG 是存储数据非常灵活的一种方式。只要求对象引用是 (a）内容可寻址的，(b) 用上面的格式编码。IPFS 允许应用完全的掌控数据域；应用可以使用任何自定义格式的数据，即使数据 IPFS 都无法理解。单独的内部对象 link 表允许 IPFS 做：</p>
+<ul>
+<li>用对象的形式列出所有对象引用，例如：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt; ipfs ls /XLZ1625Jjn7SubMDgEyeaynFuR84ginqvzb</span><br><span class="line">XLYkgq61DYaQ8NhkcqyU7rLcnSa7dSHQ16x 189458 less</span><br><span class="line">XLHBNmRQ5sJJrdMPuu48pzeyTtRo39tNDR5 19441 script</span><br><span class="line">XLF4hwVHsVuZ78FZK6fozf8Jj9WEURMbCX4 5286 template</span><br><span class="line">&lt;object multihash&gt; &lt;object size&gt; &lt;link name&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>解决字符串路经查找，例如 foo&#x2F;bar&#x2F;baz。给出一个对象，IPFS 会解析第一个路经成分进行 hash 放入到对象的 link 表中，再获取路径的第二个组成部分，一直如此重复下去。因此，任何数据格式的字符串路经都可以在 Merkle DAG 中使用。</p>
+<p>* 递归性的解决所有对象引用：</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt; ipfs refs --recursive XLZ1625Jjn7SubMDgEyeaynFuR84ginqvzb</span><br><span class="line">XLLxhdgJcXzLbtsLRL1twCHA2NrURp4H38s</span><br><span class="line">XLYkgq61DYaQ8NhkcqyU7rLcnSa7dSHQ16x</span><br><span class="line">XLHBNmRQ5sJJrdMPuu48pzeyTtRo39tNDR5</span><br><span class="line">XLWVQDqxo9Km9zLyquoC9gAP8CL1gWnHZ7z</span><br></pre></td></tr></table></figure>
+
+<p>原始数据结构公共 link 结构是 IPFS 构建任意数据结构的必要组成部分。可以很容易看出 Git 的对象模型是如何套用 DAG 的。一些其他潜在的数据结构：</p>
+<ul>
+<li>键值存储</li>
+<li>传统关系型数据</li>
+<li>数据三倍存储</li>
+<li>文档发布系统</li>
+<li>通信平台</li>
+<li>加密货币区块。<br>这些系统都可以套用 IPFS Merkle DAG，这使这些系统更复杂的应用可以使用 IPFS 作为传输协议。</li>
+</ul>
+<h3 id="路经"><a href="#路经" class="headerlink" title="路经"></a>路经</h3><p>IPFS 对象可以遍历一个字符串路经。路经格式与传统 UNIX 文件系统以及 Web 一致。Merkle DAG 的 links 使遍历变得很容易。全称路经在 IPFS 中的格式是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">*# 格式</span><br><span class="line">/ipfs/&lt;hash-of-object&gt;/&lt;name-path-to-object&gt;</span><br><span class="line">*# 例子</span><br><span class="line">/ipfs/XLYkgq61DYaQ8NhkcqyU7rLcnSa7dSHQ16x/foo.txt</span><br></pre></td></tr></table></figure>
+
+<p>&#x2F;ipfs 前缀允许只要在挂载点不冲突 (挂载点名称当然是可配置的) 的情况下挂载到一个已存在的系统上。第二个路经组成部分 (第一个是 IPFS) 是一个对象的 hash。通常都是这种情况，因为没有全局的根。一个根对象可能会有一个不可能完成的任务，就是在分布式环境 (可能还断开链接) 中处理百万对象的一致性。因此，我们用地址可寻址来模拟根。通过的 hash 所有的对象都是可访问的。这意思是说，给一个路经对象 &#x2F; bar&#x2F;baz，最后一个对象可以可以被所有的访问的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/ipfs/&lt;hash-of-foo&gt;/bar/baz</span><br><span class="line">/ipfs/&lt;hash-of-bar&gt;/baz</span><br><span class="line">/ipfs/&lt;hash-of-baz&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="本地对象"><a href="#本地对象" class="headerlink" title="本地对象"></a>本地对象</h3><p>IPFS 客户端需要一个本地存储器，一个外部系统可以为 IPFS 管理的对象存储以及检索本地原始数据。存储器的类型根据节点使用案例不同而不同。在大多数情况下，这个存储器只是硬盘空间的一部分（不是被本地的文件系统使用键值存储如 leveldb 来管理，就是直接被 IPFS 客户端管理），在其他的情况下，例如非持久性缓存，存储器就是 RAM 的一部分。<br>最终，所有的块在 IPFS 中都是能够获取的到的，块都存储在了一些节点的本地存储器中。当用户请求一个对象时，这个对象会被查找到并下载下来存储到本地，至少也是暂时的存储在本地。这为一些可配置时间量提供了快速的查找。</p>
+<h3 id="对象锁定"><a href="#对象锁定" class="headerlink" title="对象锁定"></a>对象锁定</h3><p>希望确保特定对象生存的节点可以锁定此对象。这保证此特定对象被保存在了节点的本地存储器上。也可以递归的进行锁定所有相关的派生对象。这使所有被指定的对象都保存在本地存储器上。这对长久保存文件特别有用，包括引用。这也同样让 IPFS 成为一个 links 是永久的 Web，且对象可以确保其他被指定对象的生存。</p>
+<h3 id="发布对象"><a href="#发布对象" class="headerlink" title="发布对象"></a>发布对象</h3><p>IPFS 是全球分布的。它设计为允许成千上万的用户文件可以共同的存在的。DHT 使用内容哈希寻址技术，使发布对象是公平的，安全的，完全分布式的。任何人都可以发布对象，只需要将对象的 key 加入到 DHT 中，并且以对象是对等节点的方式加入进去，然后把路径给其他的用户。要注意的是，对象本质上是不可改变的，就像在 Git 中一样。新版本的哈希值不同，因此是新对象。跟踪版本则是额外版本对象的工作。</p>
+<h3 id="对象级别的加密"><a href="#对象级别的加密" class="headerlink" title="对象级别的加密"></a>对象级别的加密</h3><p>IPFS 是具备可以处理对象级别加密操作的。一个已加密的或者已签名的对象包装在一个特殊的框架里，此框架允许加密和验证原始字节。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> EncryptedObject <span class="keyword">struct</span> &#123;</span><br><span class="line">	Object []bytes <span class="comment">// 已加密的原始对象数据</span></span><br><span class="line">	Tag []bytes <span class="comment">// 可选择的加密标识</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">type</span> SignedObject <span class="keyword">struct</span> &#123;</span><br><span class="line">	Object []bytes <span class="comment">// 已签名的原始对象数据</span></span><br><span class="line">	Signature []bytes <span class="comment">// HMAC签名</span></span><br><span class="line">	PublicKey []multihash <span class="comment">// 多重哈希身份键值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>加密操作改变了对象的哈希值，定义一个不同的新的对象。IPFS 自动的验证签名以及使用用户指定的钥匙链解密数据。加密数据的 links 也同样的被保护着，没有解密秘钥就无法遍历对象。也存在着一种现象，可能父对象使用了一个秘钥进行了加密，而子对象使用了另一个秘钥进行加密或者根本没有加密。这可以保证 links 共享对象安全。</p>
+<h2 id="文件"><a href="#文件" class="headerlink" title="文件"></a>文件</h2><p>IPFS 在 Merkle DAG 上还为模型化版本文件系统定义了一组对象。这个对象模型与 Git 比较相似：<br>Block：一个可变大小的数据块<br>List：块或者其他链表的集合<br>Tree：块，链表，或者其他树的集合<br>Commit：树在版本历史记录中的一个快照<br>我原本希望使用与 Git 对象格式一致的模型，但那就必须要分开来引进在分布式文件系统中有用的某些特征，如</p>
+<ul>
+<li>快速大小查找 (总字节大小已经加入到对象中)</li>
+<li>大文件的重复删除 (添加到 list 对象)</li>
+<li>commits 嵌入到 trees 中。不过，IPFS 文件对象与 Git 还是非常相近的，两者之间进行交流都是有可能的。而且，Git 的一个系列的对象可以被引进过来转换都不会丢失任何的信息。（UNIX 文件权限等等）。</li>
+</ul>
+<p>标记：下面的文件对象格式使用 JSON。注意，虽然 IPFS 包含了 JSON 的互相转换，但是文件对象的结构体还是使用 protobufs 的二进制编码。</p>
+<h3 id="文件对象：BLOB"><a href="#文件对象：BLOB" class="headerlink" title="文件对象：BLOB"></a>文件对象：BLOB</h3><p>blob 对象代表一个文件且包含一个可寻址的数据单元，IPFS 的 blobs 就像 Git 的 blobs 或者文件系统数据块。它们存储用户的数据。需要留意的是 IPFS 文件可以使用 lists 或者 blobs 来表示。Blobs 没有 links。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	&quot;data&quot;: &quot;some data here&quot;, // blobs无links</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="文件对象-LIST"><a href="#文件对象-LIST" class="headerlink" title="文件对象: LIST"></a>文件对象: LIST</h3><p>List 对象代表着由几个 IPFS 的 blobs 连接成的大文件或者重复数据删除文件。Lists 包含着有序的 blob 序列或 list 对象。从某种程度上而言，IPFS 的 list 函数就像一个间接块的文件系统。由于 lists 可以包含其他的 lists，那么包含 linked 的链表和平衡树的拓扑结构是有可能的。有向图中相同的节点出现在多个不同地方允许在文件中重复数据删除。当然，循环是不可以能的，因为是被哈希寻址强制实行的。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	<span class="string">&quot;data&quot;</span>: [<span class="string">&quot;blob&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;blob&quot;</span>], <span class="comment">//lists有一个对象类型的数组作为数据</span></span><br><span class="line">	<span class="string">&quot;links&quot;</span>: [</span><br><span class="line">	 	<span class="comment">//在links中lists是没有名字的</span></span><br><span class="line">		&#123; <span class="string">&quot;hash&quot;</span>: <span class="string">&quot;XLYkgq61DYaQ8NhkcqyU7rLcnSa7dSHQ16x&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">189458</span> &#125;,</span><br><span class="line">		&#123; <span class="string">&quot;hash&quot;</span>: <span class="string">&quot;XLHBNmRQ5sJJrdMPuu48pzeyTtRo39tNDR5&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">19441</span> &#125;,</span><br><span class="line">		&#123; <span class="string">&quot;hash&quot;</span>: <span class="string">&quot;XLWVQDqxo9Km9zLyquoC9gAP8CL1gWnHZ7z&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">5286</span> &#125;</span><br><span class="line">]&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="文件对象：TREE"><a href="#文件对象：TREE" class="headerlink" title="文件对象：TREE"></a>文件对象：TREE</h3><p>IPFS 中的 tree 对象与 Git 中相似，它代表着一个目录，一个名字到哈希值的映射。哈希值则表示着 blobs，lists，其他的 trees，或者 commits。注意，传统路径的命名早已经被 Merkle DAG 实现了。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	<span class="string">&quot;data&quot;</span>: [<span class="string">&quot;blob&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;blob&quot;</span>],<span class="comment">//trees有一个对象类型的数组作为数据</span></span><br><span class="line">	<span class="string">&quot;links&quot;</span>: [</span><br><span class="line">		<span class="comment">//trees是有名字的</span></span><br><span class="line">		&#123;<span class="string">&quot;hash&quot;</span>: <span class="string">&quot;XLYkgq61DYaQ8NhkcqyU7rLcnSa7dSHQ16x&quot;</span>, <span class="string">&quot;name&quot;</span>: <span class="string">&quot;less&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">189458</span> &#125;,</span><br><span class="line">		&#123;<span class="string">&quot;hash&quot;</span>: <span class="string">&quot;XLHBNmRQ5sJJrdMPuu48pzeyTtRo39tNDR5&quot;</span>, <span class="string">&quot;name&quot;</span>: <span class="string">&quot;script&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">19441</span> &#125;,</span><br><span class="line">		&#123;<span class="string">&quot;hash&quot;</span>: <span class="string">&quot;XLWVQDqxo9Km9zLyquoC9gAP8CL1gWnHZ7z&quot;</span>, <span class="string">&quot;name&quot;</span>: <span class="string">&quot;template&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">5286</span>&#125;</span><br><span class="line">]&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="文件对象：COMMIT"><a href="#文件对象：COMMIT" class="headerlink" title="文件对象：COMMIT"></a>文件对象：COMMIT</h3><p>IPFS 中的 commit 对象代表任何对象在版本历史记录中的一个快照。与 Git 中类似，但是它能够表示任何类型的对象。它同样 link 着发起对象。</p>
+<h3 id="版本控制"><a href="#版本控制" class="headerlink" title="版本控制"></a>版本控制</h3><p>Commit 对象代表着一个对象在历史版本中的一个特定快照。在两个不同的 commit 中比较对象（和子对象）可以揭露出两个不同版本文件系统的区别。只要 commit 和它所有子对象的引用是能够被访问的，所有前版本是可获取的，所有文件系统改变的全部历史是可访问的，这就与 Merkle DAG 对象模型脱离开来了。</p>
+<p>Git 版本控制工具的所有功能对于 IPFS 的用户是可用的。对象模型不完全一致，但也是可兼容的。这可能</p>
+<ul>
+<li><p>(a) 构建一个 Git 工具版本改造成使用 IPFS 对象图，</p>
+</li>
+<li><p>(b) 构建一个挂载 FUSE 文件系统，挂载一个 IPFS 的 tree 作为 Git 的仓库，把 Git 文件系统的读 &#x2F; 写转换为 IPFS 的格式。</p>
+</li>
+</ul>
+<h2 id="文件系统路径"><a href="#文件系统路径" class="headerlink" title="文件系统路径"></a>文件系统路径</h2><p>如我们在 Merkle DAG 中看到的一样，IPFS 对象可以使用字符串路径 API 来遍历。IPFS 文件对象是特意设计的，为了让挂载 IPFS 到 UNIX 文件系统更加简单。文件对象限制 trees 没有数据，为了使它们可以表示目录。Commits 可以以代表目录的形式出现，也可以完全的隐藏在文件系统中。</p>
+<h3 id="将文件分隔成-LISTS-和-BLOBS"><a href="#将文件分隔成-LISTS-和-BLOBS" class="headerlink" title="将文件分隔成 LISTS 和 BLOBS"></a>将文件分隔成 LISTS 和 BLOBS</h3><p>版本控制和分发大文件其中一个最主要的挑战是：找到一个正确的方法来将它们分隔成独立的块。与其认为 IPFS 可以为每个不同类型的文件提供正确的分隔方法，不如说 IPFS 提供了以下的几个可选选择：<br>就像在 LIBFS[?] 中一样使用 Rabin Fingerprints [?] 来选择一个比较合适的块边界。<br>使用 rsync[?] rolling-checksum 算法，来检测块在版本之间的改变。<br>允许用户指定专为特定文件而调整的’快分隔’函数。</p>
+<h3 id="路径查找性能"><a href="#路径查找性能" class="headerlink" title="路径查找性能"></a>路径查找性能</h3><p>基于路径的访问需要遍历对象图。获取每个对象要求在 DHT 中查找它们的 key，连接到对等节点，然后获取它的块。这造成相当大的开销，特别是查找的路径由很多子路径组成时。下面的方法可以减缓开销：</p>
+<ul>
+<li><p>tree 缓存：由于所有的对象都是哈希寻址的，它们可以被无限的缓存。另外，trees 一般比较小，所以比起 blobs，IPFS 会优先缓存 trees。</p>
+</li>
+<li><p>flattened trees：对于任何 tree，一个特殊的 flattened tree 可以构建一个链表，所有对象都可以从这个 tree 中访问得到。在 flattened tree 中名字就是一个从原始 tree 分离的路径，用斜线分隔。</p>
+<p>例如，对于上面的 ttt111 的 flattened tree 如下：</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">	<span class="string">&quot;data&quot;</span>: [<span class="string">&quot;tree&quot;</span>, <span class="string">&quot;blob&quot;</span>, <span class="string">&quot;tree&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;blob&quot;</span> <span class="string">&quot;blob&quot;</span>],</span><br><span class="line">	<span class="string">&quot;links&quot;</span>: [</span><br><span class="line">		&#123;<span class="string">&quot;hash&quot;</span>: <span class="string">&quot;&lt;ttt222-hash&gt;&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">1234</span>, <span class="string">&quot;name&quot;</span>: <span class="string">&quot;ttt222-name&quot;</span>&#125;,</span><br><span class="line">		&#123;<span class="string">&quot;hash&quot;</span>: <span class="string">&quot;&lt;bbb111-hash&gt;&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">123</span>, <span class="string">&quot;name&quot;</span>: <span class="string">&quot;ttt222-name/bbb111-name&quot;</span>&#125;,</span><br><span class="line">		&#123;<span class="string">&quot;hash&quot;</span>: <span class="string">&quot;&lt;ttt333-hash&gt;&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">3456</span>, <span class="string">&quot;name&quot;</span>: <span class="string">&quot;ttt333-name&quot;</span> &#125;,</span><br><span class="line">		&#123;<span class="string">&quot;hash&quot;</span>: <span class="string">&quot;&lt;lll111-hash&gt;&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">587</span>, <span class="string">&quot;name&quot;</span>: <span class="string">&quot;ttt333-name/lll111-name&quot;</span>&#125;,</span><br><span class="line">		&#123;<span class="string">&quot;hash&quot;</span>: <span class="string">&quot;&lt;bbb222-hash&gt;&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">22</span>, <span class="string">&quot;name&quot;</span>: <span class="string">&quot;ttt333-name/lll111-name/bbb222-name&quot;</span>&#125;,</span><br><span class="line">		&#123;<span class="string">&quot;hash&quot;</span>: <span class="string">&quot;&lt;bbb222-hash&gt;&quot;</span>, <span class="string">&quot;size&quot;</span>: <span class="number">22</span>, <span class="string">&quot;name&quot;</span>: <span class="string">&quot;bbb222-name&quot;</span>&#125;</span><br><span class="line">	]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="IPNS：命名以及易变状态"><a href="#IPNS：命名以及易变状态" class="headerlink" title="IPNS：命名以及易变状态"></a>IPNS：命名以及易变状态</h2><p>目前为止，IPFS 桟形成了一个对等块交换组成一个内容可寻址的 DAG 对象。这提供了发布和获取不可改变的对象。这甚至可以跟踪这些对象的版本历史记录。但是，这里有一个关键成分遗漏了：易变的命名。没有这个，发送 IPFS 的 links，所有新内容的通信肯定都会有所偏差。现在所需就是能有某些方法可以获取相同路径的的易变状态。<br>这值得详述原因—如果最终易变数据是必须的—我们费了很大的力气构建了一个不可改变的 Merkle DAG。就当做 IPFS 脱离了 Merkle DAG 的特征：对象可以</p>
+<ul>
+<li>(a) 通过哈希值可以获取</li>
+<li>(b) 完整性的检查</li>
+<li>(c)link 其他的对象</li>
+<li>(d) 无限缓存。从某种意义上说：<br>对象就是永恒的<br>这些就是一个高性能分布式系统的关键特征，在此系统上跨网络 links 之间移动文件是非常昂贵的。对象内容可寻址构建了一个具有以下特点的 Web，(a)优秀的宽带优化 (b) 不受信任的内容服务 (c) 永恒的 links(d)能够永久备任何对象以及它的引用。</li>
+</ul>
+<p>不可变的内容可寻址对象和命名的 Merkle DAG， 可变指针指向 Merkle DAG，实例化了一个出现在很多成功分布式系统中的二分法。这些系统包括 Git 的版本控制系统，使用不可变的对象和可变的引用；还有 UNIX 分布式的继承者 Plan9[?] 文件系统，使用可变的 Fossil 和不可变的 Venti[?]。LBFS[?] 同样使用可变的索引以及不可变的块。</p>
+<h3 id="自我认证名称"><a href="#自我认证名称" class="headerlink" title="自我认证名称"></a>自我认证名称</h3><p>使用 SFS[12,11] 中的命名方案，给我们提供了一个种可以构建自我认证名称的方法，<br>在一个加密指定的全局命名空间中，这是可变的。IPFS 的方案如下：</p>
+<ul>
+<li>\1. 回想一下在 IPFS 中：NodeId &#x3D; hash(node.PubKey)</li>
+<li>\2. 我们给每个用户分配一个可变的命名空间，在此路径下：&#x2F;ipns&#x2F;</li>
+<li>\3. 一个用户可以在此路径下发布一个用自己私钥签名的对象，比如说：&#x2F;ipns&#x2F;XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm&#x2F;</li>
+<li>\4. 当其他用户获取对象时，他们可以检测签名是否与公钥和 NodeId 匹配。这个验证了用户发布对象的真实性，达到了可变状态的获取。</li>
+</ul>
+<p>注意下面的细节：</p>
+<ul>
+<li><p>IPNS(InterPlanetary 的命名空间) 分开前缀是在可变和不可变的路径之间建立一个很容易辨认的区别，为了程序也为了人类阅读的便利。</p>
+</li>
+<li><p>因为这不是一个内容可寻址的对象，所以发布它就要依靠 IPFS 中的唯一的可变状态分配制度，路由系统。过程是 (a) 首先把此对象做一个常规的不可变 IPFS 的对象来发布 (b) 将此对象的哈希值作为元数据的值发布到路由系统上：</p>
+</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">routing.setValue(NodeId, &lt;ns-object-hash&gt;)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>发布的对象中任何 links 在命令空间中充当子名称：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm/</span><br><span class="line">/ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm/docs</span><br><span class="line">/ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm/docs/ipfs</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>一般建议发布一个 commit 对象或者其他对象的时候，要使用历史版本记录，因为这样就用户就可以找到之前使用过的名字。不过由于这并不总是需要的，所以留个用户自己选择。<br>注意当用户发布一个对象的时候，他不能使用相同的方式来发布对象。</li>
+</ul>
+<h3 id="人类友好名称"><a href="#人类友好名称" class="headerlink" title="人类友好名称"></a>人类友好名称</h3><p>IPNS 的确是一个分配和在分配名称的好方法，但是对用户却不是十分友好的，因为它使用很长的哈希值作为名称，众所周知这样的名称很难被记住。IPNS 足够应付 URLs，但对于很多线下的传输工作就没有这么好用了。因此，IPFS 使用下面的技术来增加 IPNS 的用户友好度。<br>对等节点 Links<br>被 SFS 所鼓舞，用户可以直接将其他用户的对象 link 到自己的对象上（命令空间，家目录等等）。这有一个好处就是创建了一个可信任的 Web（也支持老的真实性认证模型）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Alice links 到Bob上</span><br><span class="line">ipfs link /&lt;alice-pk-hash&gt;/friends/bob /&lt;bob-pk-hash&gt;</span><br><span class="line"># Eve links 到Alice上</span><br><span class="line">ipfs link /&lt;eve-pk-hash/friends/alice /&lt;alice-pk-hash&gt;</span><br><span class="line"># Eve 也可以访问Bob</span><br><span class="line">/&lt;eve-pk-hash/friends/alice/friends/bob</span><br><span class="line"># 访问Verisign 认证域</span><br><span class="line">/&lt;verisign-pk-hash&gt;/foo.com</span><br></pre></td></tr></table></figure>
+
+<p>DNS TXT IPNS 记录<br>如果 &#x2F; ipns &#x2F; 是一个有效的域名称，IPFS 会在 DNS TXT 记录中查找关键的 ipns。IPFS 会将查找到的值翻译为一个对象的哈希值或者另一个 ipns 的路径：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># DNS TXT 记录</span><br><span class="line">ipfs.benet.ai. TXT &quot;ipfs=XLF2ipQ4jD3U ...&quot;</span><br><span class="line"># 表现为符号链接</span><br><span class="line">ln -s /ipns/XLF2ipQ4jD3U /ipns/fs.benet.ai</span><br></pre></td></tr></table></figure>
+
+<p>Proquint 可读的标识符<br>总是会有将二进制编码翻译成可读文件的方法。IPNS 则支持 Proquint[?].。如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># proquint语句</span><br><span class="line">/ipns/dahih-dolij-sozuk-vosah-luvar-fuluh</span><br><span class="line"># 分解为相应的下面形式</span><br><span class="line">/ipns/KhAwNprxYVxKqpDZ</span><br></pre></td></tr></table></figure>
+
+<p>缩短名称服务<br>会涌现出很多服务器提供缩短名称的服务，向用户提供他们的命名空间。就像我们现在看到的 DNS 和 Web 的 URLs：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># 用户可以从下面获取一个link</span><br><span class="line">/ipns/shorten.er/foobar</span><br><span class="line"># 然后放到自己的命名空间</span><br><span class="line">/ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用-IPFS"><a href="#使用-IPFS" class="headerlink" title="使用 IPFS"></a>使用 IPFS</h2><p>IPFS 设计为可以使用多种不同的方法来使用的，下面就是一些我将会继续追求的使用方式：</p>
+<ul>
+<li>作为一个挂载的全局文件系统，挂载在 &#x2F; ipfs 和 &#x2F; ipns 下</li>
+<li>作为一个挂载的个人同步文件夹，自动的进行版本管理，发布，以及备份任何的写入</li>
+<li>作为一个加密的文件或者数据共享系统</li>
+<li>作为所有软件的版本包管理者</li>
+<li>作为虚拟机器的根文件系统</li>
+<li>作为 VM 的启动文件系统 (在管理程序下)</li>
+<li>作为一个数据库：应用可以直接将数据写入 Merkle DAG 数据模型中，获取所有的版本，缓冲，以及 IPFS 提供的分配</li>
+<li>作为一个 linked（和加密的）通信平台</li>
+<li>作为一个为大文件的完整性检查 CDN（不使用 SSL 的情况下）</li>
+<li>作为一个加密的 CDN</li>
+<li>在网页上，作为一个 web CDN</li>
+<li>作为一个 links 永远存在新的永恒的 Web<br>IPFS 实现的目标：</li>
+<li>一个 IPFS 库可以导出到你自己应用中使用</li>
+<li>命令行工具可以直接操作对象</li>
+<li>使用 FUSE[?] 或者内核的模型挂载文件系统</li>
+</ul>
+<h1 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h1><h2 id="引用论文"><a href="#引用论文" class="headerlink" title="引用论文"></a>引用论文</h2><p>[1].I. Baumgart and S. Mies. S&#x2F;kademlia: 一个安全的基于秘钥路由的可行方法。2007 年国际会议，第 2 卷，1-8 页，在《并发和分布式系统》中。IEEE，2007 年。</p>
+<p>[2].I. BitTorrent.Bittorrent 和 Attorrent 软件超过 1 亿 5000 万用户～里程碑，Jan。2012</p>
+<p>[3].B. Cohen. 激励机制在 bittorrent 中建立了健壮性。在《对等系统经济研讨会》中，第 6 卷，68-72 页，2003 年。</p>
+<p>[4].J. Dean and S. Ghemawat. Leveldb - 一个快速和轻量级键值存储数据库，谷歌提供，2011 年。</p>
+<p>[5].M. J. Freedman, E. Freudenthal, and D. Mazieres. Coral 民主内容发布。在 NSDI 中，第 4 卷，18-18 页，2004 年。</p>
+<p>[6].J. H. Howard, M. L. Kazar, S. G. Menees, D. A,Nichols, M. Satyanarayanan, R. N. Sidebotham, 以及 M. J. West. 分布式文件系统的规模和性能。“ACM 电脑系统上的交易 （TOCS）” 6(1):51-81, 1988 年</p>
+<h2 id="引用备忘录"><a href="#引用备忘录" class="headerlink" title="引用备忘录"></a>引用备忘录</h2><p><a target="_blank" rel="noopener" href="https://draveness.me/consensus">分布式一致性与共识算法</a></p>
+<p><a target="_blank" rel="noopener" href="http://www.infoq.com/cn/articles/ipfs">IPFS：替代HTTP的分布式网络协议</a></p>
+<p><a target="_blank" rel="noopener" href="http://www.spovnet.de/files/publications/SKademlia2007.pdf">S&#x2F;Kademlia: A Practicable Approach Towards Secure Key-Based Routing</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.coralcdn.org/docs/coral-iptps03.pdf">Sloppy hashing and self-organizing clusters</a><br><a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/~petar/papers/maymounkov-kademlia-lncs.pdf">Kademlia: A Peer-to-Peer Information System Based on the XOR Metric</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/ipfs/faq/issues/48">How does Resolution and Routing work with IPFS?</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/ipfs/specs/tree/master/BitSwap">BitSwap Spec</a></p>
+<p><a target="_blank" rel="noopener" href="https://coincentral.com/FileCoin-beginners-guide-largest-ever-ico/">What is FileCoin? Beginner’s Guide to the Largest-Ever ICO</a></p>
+<p><a target="_blank" rel="noopener" href="https://filecoin.io/proof-of-replication.pdf">Proof of Replication</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/ipfs/go-ipfs">go-ipfs</a></p>
+<p>官网：<a target="_blank" rel="noopener" href="https://ipfs.io/">https://ipfs.io/</a></p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2019/07/08/blockchain/IPFS%E7%99%BD%E7%9A%AE%E4%B9%A6/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2019/07/08/blockchain/IPFS%E7%99%BD%E7%9A%AE%E4%B9%A6/')">分布式文件系统 IPFS 与 FileCoin</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2019/07/08/blockchain/IPFS%E7%99%BD%E7%9A%AE%E4%B9%A6/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=分布式文件系统 IPFS 与 FileCoin&amp;url=https://shippomx.github.io/2019/07/08/blockchain/IPFS%E7%99%BD%E7%9A%AE%E4%B9%A6/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/blockchain/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>blockchain<span class="tagsPageCount">1</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2019/05/28/golang/golang-tls-%E5%AE%9E%E7%8E%B0/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">GolangTLS的实现</div></div></a></div><div class="next-post pull-right"><a href="/2019/12/20/kidgets/%E6%8A%80%E6%9C%AF%E5%9B%BE%E8%B0%B1/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">后端架构师傅技术图谱</div></div></a></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-IPFS-%E4%B8%8E-FileCoin"><span class="toc-number">1.</span> <span class="toc-text">分布式文件系统 IPFS 与 FileCoin</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="toc-number">1.1.</span> <span class="toc-text">架构设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BA%AB%E4%BB%BD"><span class="toc-number">1.1.1.</span> <span class="toc-text">身份</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C"><span class="toc-number">1.1.2.</span> <span class="toc-text">网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1"><span class="toc-number">1.1.3.</span> <span class="toc-text">路由</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BA%A4%E6%8D%A2"><span class="toc-number">1.1.4.</span> <span class="toc-text">数据交换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="toc-number">1.1.5.</span> <span class="toc-text">文件系统</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%91%BD%E5%90%8D%E7%B3%BB%E7%BB%9F"><span class="toc-number">1.1.6.</span> <span class="toc-text">命名系统</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BF%80%E5%8A%B1"><span class="toc-number">1.2.</span> <span class="toc-text">激励</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8A%82%E7%82%B9"><span class="toc-number">1.2.1.</span> <span class="toc-text">节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B1%E8%AF%86%E7%AE%97%E6%B3%95"><span class="toc-number">1.2.2.</span> <span class="toc-text">共识算法</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Filecoin%E5%85%B1%E8%AF%86%E6%9C%BA%E5%88%B6"><span class="toc-number">2.</span> <span class="toc-text">Filecoin共识机制</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%91%98%E8%A6%81"><span class="toc-number">2.1.</span> <span class="toc-text">摘要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">2.2.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-number">2.3.</span> <span class="toc-text">背景</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E5%93%88%E5%B8%8C%E8%A1%A8-DHT"><span class="toc-number">2.3.1.</span> <span class="toc-text">分布式哈希表 (DHT)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#KADEMLIA-DHT"><span class="toc-number">2.3.2.</span> <span class="toc-text">KADEMLIA DHT</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CORAL-DSHT"><span class="toc-number">2.3.3.</span> <span class="toc-text">CORAL DSHT</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#S-x2F-KADEMLIA-DHT"><span class="toc-number">2.3.4.</span> <span class="toc-text">S&#x2F;KADEMLIA DHT</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9D%97%E4%BA%A4%E6%8D%A2-BitTorrent"><span class="toc-number">2.3.5.</span> <span class="toc-text">块交换 - BitTorrent</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6%E7%B3%BB%E7%BB%9F-Git"><span class="toc-number">2.3.6.</span> <span class="toc-text">版本控制系统 - Git</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E6%88%91%E8%AE%A4%E8%AF%81%E8%AE%A4%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-SFS"><span class="toc-number">2.3.7.</span> <span class="toc-text">自我认证认文件系统 - SFS</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1"><span class="toc-number">2.4.</span> <span class="toc-text">设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BA%AB%E4%BB%BD-1"><span class="toc-number">2.4.1.</span> <span class="toc-text">身份</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C-1"><span class="toc-number">2.4.2.</span> <span class="toc-text">网络</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E7%AD%89%E8%8A%82%E7%82%B9%E5%AF%BB%E5%9D%80%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9%EF%BC%9A"><span class="toc-number">2.4.3.</span> <span class="toc-text">对等节点寻址注意事项：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1-1"><span class="toc-number">2.4.4.</span> <span class="toc-text">路由</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9D%97%E4%BA%A4%E6%8D%A2-BitSwap-%E5%8D%8F%E8%AE%AE"><span class="toc-number">2.5.</span> <span class="toc-text">块交换 - BitSwap 协议</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#BITSWAP-%E4%BF%A1%E7%94%A8"><span class="toc-number">2.5.1.</span> <span class="toc-text">BITSWAP 信用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#BITSWAP-%E7%9A%84%E7%AD%96%E7%95%A5"><span class="toc-number">2.5.2.</span> <span class="toc-text">BITSWAP 的策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#BITSWAP-%E8%B4%A6%E6%9C%AC"><span class="toc-number">2.5.3.</span> <span class="toc-text">BITSWAP 账本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#BITSWAP-%E8%AF%A6%E8%A7%A3"><span class="toc-number">2.5.4.</span> <span class="toc-text">BITSWAP 详解</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Merkle-DAG-%E5%AF%B9%E8%B1%A1"><span class="toc-number">2.6.</span> <span class="toc-text">Merkle DAG 对象</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B7%AF%E7%BB%8F"><span class="toc-number">2.6.1.</span> <span class="toc-text">路经</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E5%AF%B9%E8%B1%A1"><span class="toc-number">2.6.2.</span> <span class="toc-text">本地对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E9%94%81%E5%AE%9A"><span class="toc-number">2.6.3.</span> <span class="toc-text">对象锁定</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%91%E5%B8%83%E5%AF%B9%E8%B1%A1"><span class="toc-number">2.6.4.</span> <span class="toc-text">发布对象</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E7%BA%A7%E5%88%AB%E7%9A%84%E5%8A%A0%E5%AF%86"><span class="toc-number">2.6.5.</span> <span class="toc-text">对象级别的加密</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E4%BB%B6"><span class="toc-number">2.7.</span> <span class="toc-text">文件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E5%AF%B9%E8%B1%A1%EF%BC%9ABLOB"><span class="toc-number">2.7.1.</span> <span class="toc-text">文件对象：BLOB</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E5%AF%B9%E8%B1%A1-LIST"><span class="toc-number">2.7.2.</span> <span class="toc-text">文件对象: LIST</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E5%AF%B9%E8%B1%A1%EF%BC%9ATREE"><span class="toc-number">2.7.3.</span> <span class="toc-text">文件对象：TREE</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E5%AF%B9%E8%B1%A1%EF%BC%9ACOMMIT"><span class="toc-number">2.7.4.</span> <span class="toc-text">文件对象：COMMIT</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6"><span class="toc-number">2.7.5.</span> <span class="toc-text">版本控制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E8%B7%AF%E5%BE%84"><span class="toc-number">2.8.</span> <span class="toc-text">文件系统路径</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E6%96%87%E4%BB%B6%E5%88%86%E9%9A%94%E6%88%90-LISTS-%E5%92%8C-BLOBS"><span class="toc-number">2.8.1.</span> <span class="toc-text">将文件分隔成 LISTS 和 BLOBS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B7%AF%E5%BE%84%E6%9F%A5%E6%89%BE%E6%80%A7%E8%83%BD"><span class="toc-number">2.8.2.</span> <span class="toc-text">路径查找性能</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IPNS%EF%BC%9A%E5%91%BD%E5%90%8D%E4%BB%A5%E5%8F%8A%E6%98%93%E5%8F%98%E7%8A%B6%E6%80%81"><span class="toc-number">2.9.</span> <span class="toc-text">IPNS：命名以及易变状态</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E6%88%91%E8%AE%A4%E8%AF%81%E5%90%8D%E7%A7%B0"><span class="toc-number">2.9.1.</span> <span class="toc-text">自我认证名称</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%BA%E7%B1%BB%E5%8F%8B%E5%A5%BD%E5%90%8D%E7%A7%B0"><span class="toc-number">2.9.2.</span> <span class="toc-text">人类友好名称</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-IPFS"><span class="toc-number">2.10.</span> <span class="toc-text">使用 IPFS</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%95%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">引用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E7%94%A8%E8%AE%BA%E6%96%87"><span class="toc-number">3.1.</span> <span class="toc-text">引用论文</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E7%94%A8%E5%A4%87%E5%BF%98%E5%BD%95"><span class="toc-number">3.2.</span> <span class="toc-text">引用备忘录</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Kubernetes%20CNI%20%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6/" title="Kubernetes CNI 网络插件">Kubernetes CNI 网络插件</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/Podman%E7%9A%84%E4%B8%80%E4%BA%9B%E7%89%B9%E6%80%A7/" title="Podman 的特性概述">Podman 的特性概述</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/06/containers/K8s%20scheduler%20%E8%AF%A6%E8%A7%A3/" title="Kubernetes scheduler详解">Kubernetes scheduler详解</a><time datetime="2023-10-06T06:44:56.000Z" title="发表于 2023-10-06 14:44:56">2023-10-06</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2023 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">74</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>27</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>10</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>16</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>
