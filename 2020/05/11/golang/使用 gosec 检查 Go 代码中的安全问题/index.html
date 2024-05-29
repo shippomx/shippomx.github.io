@@ -1,0 +1,467 @@
+<!DOCTYPE html><html lang="zh" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>使用gosec检查Go代码中安全问题 | 远辰</title><meta name="keywords" content="Golang"><meta name="author" content="哪吒藕霸"><meta name="copyright" content="哪吒藕霸"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="使用gosec检查Go代码中安全问题"><meta name="application-name" content="使用gosec检查Go代码中安全问题"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="使用gosec检查Go代码中安全问题"><meta property="og:url" content="https://shippomx.github.io/2020/05/11/golang/%E4%BD%BF%E7%94%A8%20gosec%20%E6%A3%80%E6%9F%A5%20Go%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98/index.html"><meta property="og:site_name" content="远辰"><meta property="og:description" content="深入理解Golang的反射"><meta property="og:locale" content="zh"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="哪吒藕霸"><meta property="article:tag"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="深入理解Golang的反射"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://shippomx.github.io/2020/05/11/golang/%E4%BD%BF%E7%94%A8%20gosec%20%E6%A3%80%E6%9F%A5%20Go%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 哪吒藕霸","link":"链接: ","source":"来源: 远辰","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '远辰',
+  title: '使用gosec检查Go代码中安全问题',
+  postAI: '',
+  pageFillDescription: '开始使用 gosec, 使用默认选项运行 gosec, 自定义 gosec 扫描, 用 gosec 检查容易被发现的问题语言写的代码越来越常见尤其是在容器或云生态相关的开发中是最早采用的项目之一随后是之后大量的新项目在众多编程语言中选择了像其他语言一样也有它的长处和短处如安全缺陷这些缺陷可能会因为语言本身的缺陷加上程序员编码不当而产生例如代码中的内存安全问题无论它们出现的原因是什么安全问题都应该在开发过程的早期修复以免在封装好的软件中出现幸运的是静态分析工具可以帮你以更可重复的方式处理这些问题静态分析工具通过解析用某种编程语言写的代码来找到问题这类工具中很多被称为传统意义上更注重的是检查代码中编码问题代码风格之类的问题它们可能不会发现代码中的安全问题例如是一个很流行的工具它可以帮助寻找代码中的问题然而也有一些工具专门用来检查源码中的安全问题例如可以检查代码中的安全缺陷而则用来搜寻源码中的安全缺陷通过扫描的抽象语法树来检查源码中的安全问题开始使用在开始学习和使用之前你需要准备一个语言写的项目有这么多开源软件我相信这不是问题你可以在的热门仓库中找一个本文中我随机选了项目但你可以选择任意的项目安装和如果你还没安装你可以先从仓库中拉取下来如果你用的是或其他基于的发行版本如果你用的是其他操作系统请参照安装页面使用参数来验证是否安装成功运行命令就可以轻松地安装上面这行命令会从下载的源码编译并安装到指定位置在仓库的中你还可以看到安装该工具的其他方法的源码会被下载到的位置编译出的二进制文件会被安装到你系统上设置的目录下你可以运行下面的命令来查看和目录如果命令执行成功那么二进制应该就可以使用了你可以把下的目录添加到中这样你就可以像使用系统上的其他命令一样来使用命令行工具了使用命令行工具的选项来看看运行是否符合预期之后创建一个目录把源码下载到这个目录作为实例项目本例中我用的是代码统计工具本例中用的是显示这个项目大部分是用写的恰好迎合了的功能使用默认选项运行在项目中使用默认选项运行执行命令屏幕上会有很多输出内容在末尾你会看到一个简短的列出了浏览的文件数所有文件的总行数以及源码中发现的问题数滚动屏幕你会看到不同颜色高亮的行红色表示需要尽快查看的高优先级问题黄色表示中优先级的问题关于误判在开始检查代码之前我想先分享几条基本原则默认情况下静态检查工具会基于一系列的规则对测试代码进行分析并报告出它们发现的所有问题这是否意味着工具报出来的每一个问题都需要修复非也这个问题最好的解答者是设计和开发这个软件的人他们最熟悉代码更重要的是他们了解软件会在什么环境下部署以及会被怎样使用这个知识点对于判定工具标记出来的某段代码到底是不是安全缺陷至关重要随着工作时间和经验的积累你会慢慢学会怎样让静态分析工具忽略非安全缺陷使报告内容的可执行性更高因此要判定报出来的某个问题是否需要修复让一名有经验的开发者对源码做人工审计会是比较好的办法高优先级问题从输出内容看发现了的一个高优先级问题它使用的是低版本的传输层安全无论什么时候使用软件和库的最新版本都是确保它更新及时没有安全问题的最好的方法它还发现了一个弱随机数生成器它是不是一个安全缺陷取决于生成的随机数的使用方式中优先级问题这个工具还发现了一些中优先级问题它标记了一个通过与相关的解压炸弹这种方式实现的潜在的威胁这种方式可能会被恶意的攻击者利用它还发现了一个通过变量访问文件的问题如果恶意使用者能访问这个变量那么他们就可以改变变量的值去读其他文件文件和目录通常是操作系统安全的最基础的元素这里报出了一个可能需要你检查目录的权限是否安全的问题你经常需要在源码中启动命令行工具使用内建的库来实现仔细地分析用来调用这些工具的变量就能发现安全缺陷低优先级问题在这个输出中报出了一个调用相关的低优先级问题这个调用会绕开提供的内存保护再仔细分析下你调用的方式看看是否有被别人利用的可能性它还标记了源码中未处理的错误源码中出现的错误你都应该处理自定义扫描使用的默认选项会带来很多的问题然而经过人工审计随着时间推移你会掌握哪些问题是不需要标记的你可以自己指定排除和包含哪些测试我上面提到过是基于一系列的规则从源码中查找问题的下面是它使用的完整的规则列表查找硬编码凭证绑定到所有接口审计块的使用审计未检查的错误审计的使用提供给请求的作为污点输入上自动暴露的剖析端点转换到或时潜在的整数溢出潜在的通过解压炸弹实现的查询构造使用格式字符串查询构造使用字符串连接在模板中使用未转义的数据审计命令执行情况创建目录时文件权限分配不合理使用时文件权限分配不合理使用可预测的路径创建临时文件通过污点输入提供的文件路径提取文档时遍历文件写到新文件时文件权限分配不合理把返回错误的函数放到内检测或的使用查找错误的连接设置确保最小密钥长度为位不安全的随机数源导入黑名单列表导入黑名单列表导入黑名单列表导入黑名单列表导入黑名单列表在语句中使用隐式的元素别名排除指定的测试你可以自定义来避免对已知为安全的问题进行扫描和报告你可以使用选项和上面的规则编号来忽略指定的问题例如如果你不想让检查源码中硬编码凭证相关的未处理的错误那么你可以运行下面的命令来忽略这些错误有时候你知道某段代码是安全的但是还是会报出问题然而你又不想完全排除掉整个检查因为你想让检查新增的代码通过在你已知为安全的代码块添加标记可以避免扫描这样会继续扫描新增代码而忽略掉标记的代码块运行指定的检查另一方面如果你只想检查指定的问题你可以通过选项和规则编号来告诉运行哪些检查扫描测试文件语言自带对测试的支持通过单元测试来检验一个元素是否符合预期在默认模式下会忽略测试文件你可以使用选项把它们包含进来修改输出的格式找出问题只是它的一半功能另一半功能是把它检查到的问题以用户友好同时又方便工具处理的方式报告出来幸运的是可以用不同的方式输出例如如果你想看格式的报告那么就使用选项指定格式并把结果保存到文件中用检查容易被发现的问题静态检查工具不能完全代替人工代码审计然而当代码量变大有众多开发者时这样的工具往往有助于以可重复的方式找出容易被发现的问题它对于帮助新开发者识别和在编码时避免引入这些安全缺陷很有用作者选题译者校对本文由原创编译中国荣誉推出',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-05-29 15:00:32',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">远辰</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/DPDK/" style="font-size: 1.05rem;">DPDK<sup>3</sup></a><a href="/tags/ONOS/" style="font-size: 1.05rem;">ONOS<sup>1</sup></a><a href="/tags/algorithm/" style="font-size: 1.05rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 1.05rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 1.05rem;">c<sup>1</sup></a><a href="/tags/configuration/" style="font-size: 1.05rem;">configuration<sup>1</sup></a><a href="/tags/container/" style="font-size: 1.05rem;">container<sup>26</sup></a><a href="/tags/go/" style="font-size: 1.05rem;">go<sup>14</sup></a><a href="/tags/kidgets/" style="font-size: 1.05rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 1.05rem;">linux<sup>41</sup></a><a href="/tags/network/" style="font-size: 1.05rem;">network<sup>9</sup></a><a href="/tags/pppoe/" style="font-size: 1.05rem;">pppoe<sup>1</sup></a><a href="/tags/rust/" style="font-size: 1.05rem;">rust<sup>6</sup></a><a href="/tags/sdn/" style="font-size: 1.05rem;">sdn<sup>4</sup></a><a href="/tags/systemtap/" style="font-size: 1.05rem;">systemtap<sup>4</sup></a><a href="/tags/tools/" style="font-size: 1.05rem;">tools<sup>1</sup></a><a href="/tags/tvbox/" style="font-size: 1.05rem;">tvbox<sup>1</sup></a><a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 1.05rem;">网络<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span><a class="card-more-btn" href="/archives/" title="查看更多">
+    <i class="anzhiyufont anzhiyu-icon-angle-right"></i></a></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/12/"><span class="card-archive-list-date">December 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/11/"><span class="card-archive-list-date">November 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/10/"><span class="card-archive-list-date">October 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">12</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/07/"><span class="card-archive-list-date">July 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/06/"><span class="card-archive-list-date">June 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">8</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/05/"><span class="card-archive-list-date">May 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">3</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/04/"><span class="card-archive-list-date">April 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2023/03/"><span class="card-archive-list-date">March 2023</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item on" id="consoleCommentBarrage" onclick="anzhiyu.switchCommentBarrage()" title="热评开关"><a class="commentBarrage"><i class="anzhiyufont anzhiyu-icon-message"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/go/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>go</span></a></span></div></div><h1 class="post-title" itemprop="name headline">使用gosec检查Go代码中安全问题</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2020-05-11T11:44:56.000Z" title="发表于 2020-05-11 19:44:56">2020-05-11</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2024-05-29T07:00:32.454Z" title="更新于 2024-05-29 15:00:32">2024-05-29</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为长沙"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>长沙</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="https://shippomx.github.io/2020/05/11/golang/%E4%BD%BF%E7%94%A8%20gosec%20%E6%A3%80%E6%9F%A5%20Go%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98/"><header><a href="/tags/go/" tabindex="-1" itemprop="url">go</a><h1 id="CrawlerTitle" itemprop="name headline">使用gosec检查Go代码中安全问题</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">哪吒藕霸</span><time itemprop="dateCreated datePublished" datetime="2020-05-11T11:44:56.000Z" title="发表于 2020-05-11 19:44:56">2020-05-11</time><time itemprop="dateCreated datePublished" datetime="2024-05-29T07:00:32.454Z" title="更新于 2024-05-29 15:00:32">2024-05-29</time></header><p><a href="https://link.zhihu.com/?target=https://golang.org/">Go 语言</a>写的代码越来越常见，尤其是在容器、Kubernetes 或云生态相关的开发中。Docker 是最早采用 Golang 的项目之一，随后是 Kubernetes，之后大量的新项目在众多编程语言中选择了 Go。</p>
+<p>像其他语言一样，Go 也有它的长处和短处（如安全缺陷）。这些缺陷可能会因为语言本身的缺陷加上程序员编码不当而产生，例如，C 代码中的内存安全问题。</p>
+<p>无论它们出现的原因是什么，安全问题都应该在开发过程的早期修复，以免在封装好的软件中出现。幸运的是，静态分析工具可以帮你以更可重复的方式处理这些问题。静态分析工具通过解析用某种编程语言写的代码来找到问题。</p>
+<p>这类工具中很多被称为 linter。传统意义上，linter 更注重的是检查代码中编码问题、bug、代码风格之类的问题，它们可能不会发现代码中的安全问题。例如，<a href="https://link.zhihu.com/?target=https://www.synopsys.com/software-integrity/security-testing/static-analysis-sast.html">Coverity</a> 是一个很流行的工具，它可以帮助寻找 C&#x2F;C++ 代码中的问题。然而，也有一些工具专门用来检查源码中的安全问题。例如，<a href="https://link.zhihu.com/?target=https://pypi.org/project/bandit/">Bandit</a> 可以检查 Python 代码中的安全缺陷。而 <a href="https://link.zhihu.com/?target=https://github.com/securego/gosec">gosec</a> 则用来搜寻 Go 源码中的安全缺陷。<code>gosec</code> 通过扫描 Go 的 AST（ _抽象语法树 (abstract syntax tree)_）来检查源码中的安全问题。</p>
+<h2 id="开始使用-gosec"><a href="#开始使用-gosec" class="headerlink" title="开始使用 gosec"></a>开始使用 gosec</h2><p>在开始学习和使用 <code>gosec</code> 之前，你需要准备一个 Go 语言写的项目。有这么多开源软件，我相信这不是问题。你可以在 GitHub 的 <a href="https://link.zhihu.com/?target=https://github.com/trending/go">热门 Golang 仓库</a>中找一个。</p>
+<p>本文中，我随机选了 <a href="https://link.zhihu.com/?target=https://github.com/docker/docker-ce">Docker CE</a> 项目，但你可以选择任意的 Go 项目。</p>
+<p><strong>安装 Go 和 gosec</strong></p>
+<p>如果你还没安装 Go，你可以先从仓库中拉取下来。如果你用的是 Fedora 或其他基于 RPM 的 Linux 发行版本：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ dnf install golang.x86_64</span><br></pre></td></tr></table></figure>
+
+<p>如果你用的是其他操作系统，请参照 <a href="https://link.zhihu.com/?target=https://golang.org/doc/install">Golang 安装</a>页面。</p>
+<p>使用 <code>version</code> 参数来验证 Go 是否安装成功：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go version</span><br><span class="line">go version go1.14.6 linux/amd64</span><br></pre></td></tr></table></figure>
+
+<p>运行 <code>go get</code> 命令就可以轻松地安装 <code>gosec</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ go get github.com/securego/gosec/cmd/gosec</span><br></pre></td></tr></table></figure>
+
+<p>上面这行命令会从 GitHub 下载 <code>gosec</code> 的源码，编译并安装到指定位置。在仓库的 <code>README</code> 中你还可以看到<a href="https://link.zhihu.com/?target=https://github.com/securego/gosec%23install">安装该工具的其他方法</a>。</p>
+<p><code>gosec</code> 的源码会被下载到 <code>$GOPATH</code> 的位置，编译出的二进制文件会被安装到你系统上设置的 <code>bin</code> 目录下。你可以运行下面的命令来查看 <code>$GOPATH</code> 和 <code>$GOBIN</code> 目录：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ go env | grep GOBIN</span><br><span class="line">GOBIN=&quot;/root/go/gobin&quot;</span><br><span class="line">$ go env | grep GOPATH</span><br><span class="line">GOPATH=&quot;/root/go&quot;</span><br></pre></td></tr></table></figure>
+
+<p>如果 <code>go get</code> 命令执行成功，那么 <code>gosec</code> 二进制应该就可以使用了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ ls -l ~/go/bin/</span><br><span class="line">total 9260</span><br><span class="line">-rwxr-xr-x. 1 root root 9482175 Aug 20 04:17 gosec</span><br></pre></td></tr></table></figure>
+
+<p>你可以把 <code>$GOPATH</code> 下的 <code>bin</code> 目录添加到 <code>$PATH</code> 中。这样你就可以像使用系统上的其他命令一样来使用 <code>gosec</code> 命令行工具（CLI）了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ which gosec</span><br><span class="line">/root/go/bin/gosec</span><br><span class="line">$</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>gosec</code> 命令行工具的 <code>-help</code> 选项来看看运行是否符合预期：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ gosec -help</span><br><span class="line"></span><br><span class="line">gosec - Golang security checker</span><br><span class="line"></span><br><span class="line">gosec analyzes Go source code to look for common programming mistakes that</span><br><span class="line">can lead to security problems.</span><br><span class="line"></span><br><span class="line">VERSION: dev</span><br><span class="line">GIT TAG:</span><br><span class="line">BUILD DATE:</span><br><span class="line"></span><br><span class="line">USAGE:</span><br></pre></td></tr></table></figure>
+
+<p>之后，创建一个目录，把源码下载到这个目录作为实例项目（本例中，我用的是 Docker CE）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ mkdir gosec-demo</span><br><span class="line">$ cd gosec-demo/</span><br><span class="line">$ pwd</span><br><span class="line">/root/gosec-demo</span><br><span class="line">$ git clone https://github.com/docker/docker-ce.git</span><br><span class="line">Cloning into &#x27;docker-ce&#x27;...</span><br><span class="line">remote: Enumerating objects: 1271, done.</span><br><span class="line">remote: Counting objects: 100% (1271/1271), done.</span><br><span class="line">remote: Compressing objects: 100% (722/722), done.</span><br><span class="line">remote: Total 431003 (delta 384), reused 981 (delta 318), pack-reused 429732</span><br><span class="line">Receiving objects: 100% (431003/431003), 166.84 MiB | 28.94 MiB/s, done.</span><br><span class="line">Resolving deltas: 100% (221338/221338), done.</span><br><span class="line">Updating files: 100% (10861/10861), done.</span><br></pre></td></tr></table></figure>
+
+<p>代码统计工具（本例中用的是 <code>cloc</code>）显示这个项目大部分是用 Go 写的，恰好迎合了 <code>gosec</code> 的功能。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ ./cloc /root/gosec-demo/docker-ce/</span><br><span class="line">   10771 text files.</span><br><span class="line">    8724 unique files.                                          </span><br><span class="line">    2560 files ignored.</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">-----------------------------------------------------------------------------------</span><br><span class="line">Language                         files          blank        comment           code</span><br><span class="line">-----------------------------------------------------------------------------------</span><br><span class="line">Go                                7222         190785         230478        1574580</span><br><span class="line">YAML                                37           4831            817         156762</span><br><span class="line">Markdown                           529          21422              0          67893</span><br><span class="line">Protocol Buffers                   149           5014          16562          10071</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用默认选项运行-gosec"><a href="#使用默认选项运行-gosec" class="headerlink" title="使用默认选项运行 gosec"></a>使用默认选项运行 gosec</h2><p>在 Docker CE 项目中使用默认选项运行 <code>gosec</code>，执行 <code>gosec ./...</code> 命令。屏幕上会有很多输出内容。在末尾你会看到一个简短的 “Summary”，列出了浏览的文件数、所有文件的总行数，以及源码中发现的问题数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">$ pwd</span><br><span class="line">/root/gosec-demo/docker-ce</span><br><span class="line">$ time gosec ./...</span><br><span class="line">[gosec] 2020/08/20 04:44:15 Including rules: default</span><br><span class="line">[gosec] 2020/08/20 04:44:15 Excluding rules: default</span><br><span class="line">[gosec] 2020/08/20 04:44:15 Import directory: /root/gosec-demo/docker-ce/components/engine/opts</span><br><span class="line">[gosec] 2020/08/20 04:44:17 Checking package: opts</span><br><span class="line">[gosec] 2020/08/20 04:44:17 Checking file: /root/gosec-demo/docker-ce/components/engine/opts/address_pools.go</span><br><span class="line">[gosec] 2020/08/20 04:44:17 Checking file: /root/gosec-demo/docker-ce/components/engine/opts/env.go</span><br><span class="line">[gosec] 2020/08/20 04:44:17 Checking file: /root/gosec-demo/docker-ce/components/engine/opts/hosts.go</span><br><span class="line"></span><br><span class="line"># End of gosec run</span><br><span class="line"></span><br><span class="line">Summary:</span><br><span class="line">   Files: 1278</span><br><span class="line">   Lines: 173979</span><br><span class="line">   Nosec: 4</span><br><span class="line">  Issues: 644</span><br><span class="line"></span><br><span class="line">real    0m52.019s</span><br><span class="line">user    0m37.284s</span><br><span class="line">sys     0m12.734s</span><br><span class="line">$</span><br></pre></td></tr></table></figure>
+
+<p>滚动屏幕你会看到不同颜色高亮的行：红色表示需要尽快查看的高优先级问题，黄色表示中优先级的问题。</p>
+<p><strong>关于误判</strong></p>
+<p>在开始检查代码之前，我想先分享几条基本原则。默认情况下，静态检查工具会基于一系列的规则对测试代码进行分析，并报告出它们发现的_所有_问题。这是否意味着工具报出来的每一个问题都需要修复？非也。这个问题最好的解答者是设计和开发这个软件的人。他们最熟悉代码，更重要的是，他们了解软件会在什么环境下部署以及会被怎样使用。</p>
+<p>这个知识点对于判定工具标记出来的某段代码到底是不是安全缺陷至关重要。随着工作时间和经验的积累，你会慢慢学会怎样让静态分析工具忽略非安全缺陷，使报告内容的可执行性更高。因此，要判定 <code>gosec</code> 报出来的某个问题是否需要修复，让一名有经验的开发者对源码做人工审计会是比较好的办法。</p>
+<p><strong>高优先级问题</strong></p>
+<p>从输出内容看，<code>gosec</code> 发现了 Docker CE 的一个高优先级问题，它使用的是低版本的 TLS（ _传输层安全 (Transport Layer Security)()_）。无论什么时候，使用软件和库的最新版本都是确保它更新及时、没有安全问题的最好的方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[/root/gosec-demo/docker-ce/components/engine/daemon/logger/splunk/splunk.go:173] - G402 (CWE-295): TLS MinVersion too low. (Confidence: HIGH, Severity: HIGH)</span><br><span class="line">    172:</span><br><span class="line">  &gt; 173:        tlsConfig := &amp;tls.Config&#123;&#125;</span><br><span class="line">    174:</span><br></pre></td></tr></table></figure>
+
+<p>它还发现了一个弱随机数生成器。它是不是一个安全缺陷，取决于生成的随机数的使用方式。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[/root/gosec-demo/docker-ce/components/engine/pkg/namesgenerator/names-generator.go:843] - G404 (CWE-338): Use of weak random number generator (math/rand instead of crypto/rand) (Confidence: MEDIUM, Severity: HIGH)</span><br><span class="line">    842: begin:</span><br><span class="line">  &gt; 843:        name := fmt.Sprintf(&quot;%s_%s&quot;, left[rand.Intn(len(left))], right[rand.Intn(len(right))])</span><br><span class="line">    844:        if name == &quot;boring_wozniak&quot; /* Steve Wozniak is not boring */ &#123;</span><br></pre></td></tr></table></figure>
+
+<p><strong>中优先级问题</strong></p>
+<p>这个工具还发现了一些中优先级问题。它标记了一个通过与 <code>tar</code> 相关的解压炸弹这种方式实现的潜在的 DoS 威胁，这种方式可能会被恶意的攻击者利用。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[/root/gosec-demo/docker-ce/components/engine/pkg/archive/copy.go:357] - G110 (CWE-409): Potential DoS vulnerability via decompression bomb (Confidence: MEDIUM, Severity: MEDIUM)</span><br><span class="line">    356:</span><br><span class="line">  &gt; 357:                        if _, err = io.Copy(rebasedTar, srcTar); err != nil &#123;</span><br><span class="line">    358:                                w.CloseWithError(err)</span><br></pre></td></tr></table></figure>
+
+<p>它还发现了一个通过变量访问文件的问题。如果恶意使用者能访问这个变量，那么他们就可以改变变量的值去读其他文件。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[/root/gosec-demo/docker-ce/components/cli/cli/context/tlsdata.go:80] - G304 (CWE-22): Potential file inclusion via variable (Confidence: HIGH, Severity: MEDIUM)</span><br><span class="line">    79:         if caPath != &quot;&quot; &#123;</span><br><span class="line">  &gt; 80:                 if ca, err = ioutil.ReadFile(caPath); err != nil &#123;</span><br><span class="line">    81:                         return nil, err</span><br></pre></td></tr></table></figure>
+
+<p>文件和目录通常是操作系统安全的最基础的元素。这里，<code>gosec</code> 报出了一个可能需要你检查目录的权限是否安全的问题。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[/root/gosec-demo/docker-ce/components/engine/contrib/apparmor/main.go:41] - G301 (CWE-276): Expect directory permissions to be 0750 or less (Confidence: HIGH, Severity: MEDIUM)</span><br><span class="line">    40:         // make sure /etc/apparmor.d exists</span><br><span class="line">  &gt; 41:         if err := os.MkdirAll(path.Dir(apparmorProfilePath), 0755); err != nil &#123;</span><br><span class="line">    42:                 log.Fatal(err)</span><br></pre></td></tr></table></figure>
+
+<p>你经常需要在源码中启动命令行工具。Go 使用内建的 exec 库来实现。仔细地分析用来调用这些工具的变量，就能发现安全缺陷。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[/root/gosec-demo/docker-ce/components/engine/testutil/fakestorage/fixtures.go:59] - G204 (CWE-78): Subprocess launched with variable (Confidence: HIGH, Severity: MEDIUM)</span><br><span class="line">    58:</span><br><span class="line">  &gt; 59:              cmd := exec.Command(goCmd, &quot;build&quot;, &quot;-o&quot;, filepath.Join(tmp, &quot;httpserver&quot;), &quot;github.com/docker/docker/contrib/httpserver&quot;)</span><br><span class="line">    60:                 cmd.Env = append(os.Environ(), []string&#123;</span><br></pre></td></tr></table></figure>
+
+<p><strong>低优先级问题</strong></p>
+<p>在这个输出中，gosec 报出了一个 <code>unsafe</code> 调用相关的低优先级问题，这个调用会绕开 Go 提供的内存保护。再仔细分析下你调用 <code>unsafe</code> 的方式，看看是否有被别人利用的可能性。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[/root/gosec-demo/docker-ce/components/engine/pkg/archive/changes_linux.go:264] - G103 (CWE-242): Use of unsafe calls should be audited (Confidence: HIGH, Severity: LOW)</span><br><span class="line">    263:        for len(buf) &gt; 0 &#123;</span><br><span class="line">  &gt; 264:                dirent := (*unix.Dirent)(unsafe.Pointer(&amp;buf[0]))</span><br><span class="line">    265:                buf = buf[dirent.Reclen:]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">[/root/gosec-demo/docker-ce/components/engine/pkg/devicemapper/devmapper_wrapper.go:88] - G103 (CWE-242): Use of unsafe calls should be audited (Confidence: HIGH, Severity: LOW)</span><br><span class="line">    87: func free(p *C.char) &#123;</span><br><span class="line">  &gt; 88:         C.free(unsafe.Pointer(p))</span><br><span class="line">    89: &#125;</span><br></pre></td></tr></table></figure>
+
+<p>它还标记了源码中未处理的错误。源码中出现的错误你都应该处理。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[/root/gosec-demo/docker-ce/components/cli/cli/command/image/build/context.go:172] - G104 (CWE-703): Errors unhandled. (Confidence: HIGH, Severity: LOW)</span><br><span class="line">    171:                err := tar.Close()</span><br><span class="line">  &gt; 172:                os.RemoveAll(dockerfileDir)</span><br><span class="line">    173:                return err</span><br></pre></td></tr></table></figure>
+
+<h2 id="自定义-gosec-扫描"><a href="#自定义-gosec-扫描" class="headerlink" title="自定义 gosec 扫描"></a>自定义 gosec 扫描</h2><p>使用 <code>gosec</code> 的默认选项会带来很多的问题。然而，经过人工审计，随着时间推移你会掌握哪些问题是不需要标记的。你可以自己指定排除和包含哪些测试。</p>
+<p>我上面提到过，<code>gosec</code> 是基于一系列的规则从 Go 源码中查找问题的。下面是它使用的完整的<a href="https://link.zhihu.com/?target=https://github.com/securego/gosec%23available-rules">规则</a>列表：</p>
+<ul>
+<li>G101：查找硬编码凭证</li>
+<li>G102：绑定到所有接口</li>
+<li>G103：审计 <code>unsafe</code> 块的使用</li>
+<li>G104：审计未检查的错误</li>
+<li>G106：审计 <code>ssh.InsecureIgnoreHostKey</code> 的使用</li>
+<li>G107: 提供给 HTTP 请求的 url 作为污点输入</li>
+<li>G108: <code>/debug/pprof</code> 上自动暴露的剖析端点</li>
+<li>G109: <code>strconv.Atoi</code> 转换到 int16 或 int32 时潜在的整数溢出</li>
+<li>G110: 潜在的通过解压炸弹实现的 DoS</li>
+<li>G201：SQL 查询构造使用格式字符串</li>
+<li>G202：SQL 查询构造使用字符串连接</li>
+<li>G203：在 HTML 模板中使用未转义的数据</li>
+<li>G204：审计命令执行情况</li>
+<li>G301：创建目录时文件权限分配不合理</li>
+<li>G302：使用 <code>chmod</code> 时文件权限分配不合理</li>
+<li>G303：使用可预测的路径创建临时文件</li>
+<li>G304：通过污点输入提供的文件路径</li>
+<li>G305：提取 zip&#x2F;tar 文档时遍历文件</li>
+<li>G306: 写到新文件时文件权限分配不合理</li>
+<li>G307: 把返回错误的函数放到 <code>defer</code> 内</li>
+<li>G401：检测 DES、RC4、MD5 或 SHA1 的使用</li>
+<li>G402：查找错误的 TLS 连接设置</li>
+<li>G403：确保最小 RSA 密钥长度为 2048 位</li>
+<li>G404：不安全的随机数源（<code>rand</code>）</li>
+<li>G501：导入黑名单列表：crypto&#x2F;md5</li>
+<li>G502：导入黑名单列表：crypto&#x2F;des</li>
+<li>G503：导入黑名单列表：crypto&#x2F;rc4</li>
+<li>G504：导入黑名单列表：net&#x2F;http&#x2F;cgi</li>
+<li>G505：导入黑名单列表：crypto&#x2F;sha1</li>
+<li>G601: 在 <code>range</code> 语句中使用隐式的元素别名</li>
+</ul>
+<p><strong>排除指定的测试</strong></p>
+<p>你可以自定义 <code>gosec</code> 来避免对已知为安全的问题进行扫描和报告。你可以使用 <code>-exclude</code> 选项和上面的规则编号来忽略指定的问题。</p>
+<p>例如，如果你不想让 <code>gosec</code> 检查源码中硬编码凭证相关的未处理的错误，那么你可以运行下面的命令来忽略这些错误：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ gosec -exclude=G104 ./...</span><br><span class="line">$ gosec -exclude=G104,G101 ./...</span><br></pre></td></tr></table></figure>
+
+<p>有时候你知道某段代码是安全的，但是 <code>gosec</code> 还是会报出问题。然而，你又不想完全排除掉整个检查，因为你想让 <code>gosec</code> 检查新增的代码。通过在你已知为安全的代码块添加 <code>#nosec</code> 标记可以避免 <code>gosec</code> 扫描。这样 <code>gosec</code> 会继续扫描新增代码，而忽略掉 <code>#nosec</code> 标记的代码块。</p>
+<p><strong>运行指定的检查</strong></p>
+<p>另一方面，如果你只想检查指定的问题，你可以通过 <code>-include</code> 选项和规则编号来告诉 <code>gosec</code> 运行哪些检查：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ gosec -include=G201,G202 ./...</span><br></pre></td></tr></table></figure>
+
+<p><strong>扫描测试文件</strong></p>
+<p>Go 语言自带对测试的支持，通过单元测试来检验一个元素是否符合预期。在默认模式下，<code>gosec</code> 会忽略测试文件，你可以使用 <code>-tests</code> 选项把它们包含进来：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gosec -tests ./...</span><br></pre></td></tr></table></figure>
+
+<p><strong>修改输出的格式</strong></p>
+<p>找出问题只是它的一半功能；另一半功能是把它检查到的问题以用户友好同时又方便工具处理的方式报告出来。幸运的是，<code>gosec</code> 可以用不同的方式输出。例如，如果你想看 JSON 格式的报告，那么就使用 <code>-fmt</code> 选项指定 JSON 格式并把结果保存到 <code>results.json</code> 文件中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">$ gosec -fmt=json -out=results.json ./...</span><br><span class="line"></span><br><span class="line">$ ls -l results.json</span><br><span class="line">-rw-r--r--. 1 root root 748098 Aug 20 05:06 results.json</span><br><span class="line">$</span><br><span class="line"></span><br><span class="line">         &#123;</span><br><span class="line">             &quot;severity&quot;: &quot;LOW&quot;,</span><br><span class="line">             &quot;confidence&quot;: &quot;HIGH&quot;,</span><br><span class="line">             &quot;cwe&quot;: &#123;</span><br><span class="line">                 &quot;ID&quot;: &quot;242&quot;,</span><br><span class="line">                 &quot;URL&quot;: &quot;https://cwe.mitre.org/data/definitions/242.html&quot;</span><br><span class="line">             &#125;,</span><br><span class="line">             &quot;rule_id&quot;: &quot;G103&quot;,</span><br><span class="line">             &quot;details&quot;: &quot;Use of unsafe calls should be audited&quot;,</span><br><span class="line">             &quot;file&quot;: &quot;/root/gosec-demo/docker-ce/components/engine/daemon/graphdriver/graphtest/graphtest_unix.go&quot;,</span><br><span class="line">             &quot;code&quot;: &quot;304: \t// Cast to []byte\n305: \theader := *(*reflect.SliceHeader)(unsafe.Pointer(\u0026buf))\n306: \theader.      Len *= 8\n&quot;,</span><br><span class="line">             &quot;line&quot;: &quot;305&quot;,</span><br><span class="line">             &quot;column&quot;: &quot;36&quot;</span><br><span class="line">         &#125;,</span><br></pre></td></tr></table></figure>
+
+<h2 id="用-gosec-检查容易被发现的问题"><a href="#用-gosec-检查容易被发现的问题" class="headerlink" title="用 gosec 检查容易被发现的问题"></a>用 gosec 检查容易被发现的问题</h2><p>静态检查工具不能完全代替人工代码审计。然而，当代码量变大、有众多开发者时，这样的工具往往有助于以可重复的方式找出容易被发现的问题。它对于帮助新开发者识别和在编码时避免引入这些安全缺陷很有用。</p>
+<p>via: <a href="https://link.zhihu.com/?target=https://opensource.com/article/20/9/gosec">https://opensource.com/article/20/9/gosec</a></p>
+<p>作者：<a href="https://link.zhihu.com/?target=https://opensource.com/users/gkamathe">Gaurav Kamathe</a> 选题：<a href="https://link.zhihu.com/?target=https://github.com/lujun9972">lujun9972</a> 译者：<a href="https://link.zhihu.com/?target=https://github.com/lxbwolf">lxbowlf</a> 校对：<a href="https://link.zhihu.com/?target=https://github.com/wxy">wxy</a></p>
+<p>本文由 <a href="https://link.zhihu.com/?target=https://github.com/LCTT/TranslateProject">LCTT</a> 原创编译，<a href="https://link.zhihu.com/?target=https://linux.cn/">Linux 中国</a> 荣誉推出</p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">哪吒藕霸</div><div class="post-copyright__author_desc"></div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://shippomx.github.io/2020/05/11/golang/%E4%BD%BF%E7%94%A8%20gosec%20%E6%A3%80%E6%9F%A5%20Go%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://shippomx.github.io/2020/05/11/golang/%E4%BD%BF%E7%94%A8%20gosec%20%E6%A3%80%E6%9F%A5%20Go%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98/')">使用gosec检查Go代码中安全问题</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://shippomx.github.io/2020/05/11/golang/%E4%BD%BF%E7%94%A8%20gosec%20%E6%A3%80%E6%9F%A5%20Go%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=使用gosec检查Go代码中安全问题&amp;url=https://shippomx.github.io/2020/05/11/golang/%E4%BD%BF%E7%94%A8%20gosec%20%E6%A3%80%E6%9F%A5%20Go%20%E4%BB%A3%E7%A0%81%E4%B8%AD%E7%9A%84%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="rm.copyPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://shippomx.github.io" target="_blank">远辰</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/go/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>go<span class="tagsPageCount">14</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2020/05/11/Crack%20BeyondCompare4/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Crack BeyondCompare4</div></div></a></div><div class="next-post pull-right"><a href="/2020/05/11/tcpdump%20%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">tcpdump 使用指南</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2020/09/01/golang/20%E5%BC%A0%E5%8A%A8%E5%9B%BE%E4%B8%BA%E4%BD%A0%E6%BC%94%E7%A4%BAGo%E5%B9%B6%E5%8F%91/" title="20 张动图演示 Go 并发"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-09-01</div><div class="title">20 张动图演示 Go 并发</div></div></a></div><div><a href="/2020/07/11/golang/GO%20delve(dlv)%20%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/" title="go dlv使用"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-07-11</div><div class="title">go dlv使用</div></div></a></div><div><a href="/2020/07/12/golang/Go%20package%E7%9A%84%E7%BB%84%E7%BB%87%E6%96%B9%E5%BC%8F/" title="Go package的组织方式"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-07-12</div><div class="title">Go package的组织方式</div></div></a></div><div><a href="/2018/07/06/golang/Golang%20%E9%A2%98%E7%9B%AE/" title="一些go的笔试题目"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2018-07-06</div><div class="title">一些go的笔试题目</div></div></a></div><div><a href="/2020/07/18/golang/Golang%20Runtime%E7%B2%BE%E8%AE%B2/" title="go runtime 精讲"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2020-07-18</div><div class="title">go runtime 精讲</div></div></a></div><div><a href="/2019/05/28/golang/golang-tls-%E5%AE%9E%E7%8E%B0/" title="GolangTLS的实现"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2019-05-28</div><div class="title">GolangTLS的实现</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description"></div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8-gosec"><span class="toc-number">1.</span> <span class="toc-text">开始使用 gosec</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E9%BB%98%E8%AE%A4%E9%80%89%E9%A1%B9%E8%BF%90%E8%A1%8C-gosec"><span class="toc-number">2.</span> <span class="toc-text">使用默认选项运行 gosec</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-gosec-%E6%89%AB%E6%8F%8F"><span class="toc-number">3.</span> <span class="toc-text">自定义 gosec 扫描</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%A8-gosec-%E6%A3%80%E6%9F%A5%E5%AE%B9%E6%98%93%E8%A2%AB%E5%8F%91%E7%8E%B0%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-number">4.</span> <span class="toc-text">用 gosec 检查容易被发现的问题</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/12/10/%E5%8A%A0%E6%9D%83%E8%BD%AE%E8%AF%A2%E7%AE%97%E6%B3%95/" title="加权轮询算法">加权轮询算法</a><time datetime="2023-12-10T05:29:00.000Z" title="发表于 2023-12-10 13:29:00">2023-12-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/11/02/sdn/Using%20ONOS%20as%20a%20robust%20SDN%20controller%20with%20Mininet/" title="using onos as a robust sdn controller with mininet">using onos as a robust sdn controller with mininet</a><time datetime="2023-11-02T03:12:32.000Z" title="发表于 2023-11-02 11:12:32">2023-11-02</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/10/golang/%E8%B0%88%E8%B0%88%20go.mod%E3%80%81go.sum%E3%80%81go.work/" title="go modules">go modules</a><time datetime="2023-10-10T02:13:22.000Z" title="发表于 2023-10-10 10:13:22">2023-10-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/08/cmake%20starter/" title="cmake starters">cmake starters</a><time datetime="2023-10-08T03:25:56.000Z" title="发表于 2023-10-08 11:25:56">2023-10-08</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/10/07/containers/Docker%E5%AE%B9%E5%99%A8%EF%BC%9A%E8%99%9A%E6%8B%9F%E5%8C%96/" title="Docker与虚拟化">Docker与虚拟化</a><time datetime="2023-10-07T06:44:56.000Z" title="发表于 2023-10-07 14:44:56">2023-10-07</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2024 By <a class="footer-bar-link" href="/" title="哪吒藕霸" target="_blank">哪吒藕霸</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">97</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">18</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/DPDK/" style="font-size: 0.88rem;">DPDK<sup>3</sup></a><a href="/tags/ONOS/" style="font-size: 0.88rem;">ONOS<sup>1</sup></a><a href="/tags/algorithm/" style="font-size: 0.88rem;">algorithm<sup>1</sup></a><a href="/tags/blockchain/" style="font-size: 0.88rem;">blockchain<sup>1</sup></a><a href="/tags/c/" style="font-size: 0.88rem;">c<sup>1</sup></a><a href="/tags/configuration/" style="font-size: 0.88rem;">configuration<sup>1</sup></a><a href="/tags/container/" style="font-size: 0.88rem;">container<sup>26</sup></a><a href="/tags/go/" style="font-size: 0.88rem;">go<sup>14</sup></a><a href="/tags/kidgets/" style="font-size: 0.88rem;">kidgets<sup>3</sup></a><a href="/tags/linux/" style="font-size: 0.88rem;">linux<sup>41</sup></a><a href="/tags/network/" style="font-size: 0.88rem;">network<sup>9</sup></a><a href="/tags/pppoe/" style="font-size: 0.88rem;">pppoe<sup>1</sup></a><a href="/tags/rust/" style="font-size: 0.88rem;">rust<sup>6</sup></a><a href="/tags/sdn/" style="font-size: 0.88rem;">sdn<sup>4</sup></a><a href="/tags/systemtap/" style="font-size: 0.88rem;">systemtap<sup>4</sup></a><a href="/tags/tools/" style="font-size: 0.88rem;">tools<sup>1</sup></a><a href="/tags/tvbox/" style="font-size: 0.88rem;">tvbox<sup>1</sup></a><a href="/tags/%E7%BD%91%E7%BB%9C/" style="font-size: 0.88rem;">网络<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.20/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.4/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.8",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 哪吒藕霸 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "visitor@anheyu.com";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>
